@@ -1,4 +1,4 @@
-name: multimodal_cxr
+name: conv_multimodal_mimic
 ckpt_dir: ckpt
 dataset:
   proto: MultiDatasetRNN
@@ -6,7 +6,7 @@ dataset:
   src: findings.tok
   tgt: impression.tok
   npy_root: data/report_sum/features/
-  npy: mimic-cxr.resnet152.layer4.npz # xrv 49x1024 resnet 49x2048
+  npy: mimic-cxr.xrv.layer4.npz
   max_len: 80
 
 model:
@@ -41,7 +41,7 @@ model:
     transform_ctx: True
     mlp_bias: False
     dropout_out: 0.5
-    visual_ctx_size: 2048
+    visual_ctx_size: 1024
 
 
 trainor:

@@ -1,4 +1,4 @@
-name: multimodal_indiana
+name: avgpool_multimodal_mimic
 ckpt_dir: ckpt
 dataset:
   proto: MultiDatasetRNN
@@ -6,7 +6,7 @@ dataset:
   src: findings.tok
   tgt: impression.tok
   npy_root: data/report_sum/features/
-  npy: mimic-cxr.resnet152.avgpool.npz
+  npy: mimic-cxr.xrv.avgpool.npz
   max_len: 80
 
 model:
@@ -27,10 +27,10 @@ model:
     dropout_ctx: 0.5
     enc_init: feats
     enc_init_activ: tanh
-    enc_init_size: 2048
+    enc_init_size: 1024
     ctx_mul: feats
     ctx_mul_activ: tanh
-    ctx_mul_size: 2048
+    ctx_mul_size: 1024
 
   decoder:
     proto: ConditionalDecoder
@@ -41,7 +41,7 @@ model:
     tied_emb: True
     dec_init: feats
     dec_init_activ: tanh
-    dec_init_size: 2048
+    dec_init_size: 1024
     att_type: mlp
     att_activ: tanh
     att_bottleneck: hid

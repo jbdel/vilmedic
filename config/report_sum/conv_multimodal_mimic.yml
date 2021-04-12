@@ -1,0 +1,73 @@
+name: multimodal_cxr
+ckpt_dir: ckpt
+dataset:
+  proto: MultiDatasetRNN
+  root: data/report_sum/mimic-cxr/
+  src: findings.tok
+  tgt: impression.tok
+  npy_root: data/report_sum/features/
+  npy: mimic-cxr.resnet152.layer4.npz # xrv 49x1024 resnet 49x2048
+  max_len: 80
+
+model:
+  proto: RNN
+  encoder:
+    proto: TextEncoder
+    rnn_type: GRU
+    input_size: 200
+    hidden_size: 320
+    n_vocab: 8832
+    num_layers: 2
+    bidirectional: True
+    proj_dim: False
+    proj_activ: None
+    layer_norm: False
+    dropout_rnn: 0
+    dropout_emb: 0.4
+    dropout_ctx: 0.5
+
+  decoder:
+    proto: VisualConditionalDecoder
+    input_size: 200
+    hidden_size: 320
+    n_vocab: 6867 # impression
+    rnn_type: GRU
+    tied_emb: True
+    dec_init: zero
+    att_type: mlp
+    att_activ: tanh
+    att_bottleneck: hid
+    att_temp: 1.0
+    transform_ctx: True
+    mlp_bias: False
+    dropout_out: 0.5
+    visual_ctx_size: 2048
+
+
+trainor:
+  lr: 0.0004
+  weight_decay: 0.00001 #1e-05
+  batch_size: 64
+  lr_decay_factor: 0.5
+  lr_decay_patience: 2
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGE
+
+validator:
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE, BLEU, METEOR]
+  splits: [validate]
+
+
+ensemblor:
+  proto: Ensemblor
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE, BLEU, METEOR]
+  #  splits: [indiana_dev]
+  splits: [validate, test]
+  mode: all # best,all

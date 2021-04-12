@@ -98,7 +98,7 @@ class Trainor(InitTrainor):
                         early_stop,
                     ))
 
-                # if self.iteration == 100:
+                # if iteration == 100:
                 #     break
 
             # self.update_lr()

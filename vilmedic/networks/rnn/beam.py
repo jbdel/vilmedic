@@ -39,12 +39,11 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
 
     # Common parts
     encoders = [m.encode for m in models]
-    eos = Vocab.extra2idx('[SEP]')
-    unk = Vocab.extra2idx('[UNK]')
-    bos = Vocab.extra2idx('[CLS]')
-
     vocab = dl.dataset.tgt_vocab
     n_vocab = len(vocab)
+    eos = vocab.word2idx(vocab.get_eos())
+    unk = vocab.word2idx(vocab.get_unk())
+    bos = vocab.word2idx(vocab.get_bos())
 
     # Tensorized beam that will shrink and grow up to max_batch_size
     beam_storage = torch.zeros(

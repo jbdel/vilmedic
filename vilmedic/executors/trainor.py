@@ -22,11 +22,11 @@ class InitTrainor(Base):
 
         # Model
         self.model = create_model(self.opts)
+        # self.model = torch.nn.DataParallel(self.model)
+        assert hasattr(self.model, "eval_func")
         self.model.cuda()
         print('\033[1m\033[91mModel {} created \033[0m'.format(type(self.model).__name__))
         print(self.model)
-        # self.model = torch.nn.DataParallel(self.model)
-        assert hasattr(self.model, "eval_func")
 
         # Optimizer
         self.optimizer = self.create_optimizer()
@@ -83,7 +83,8 @@ class Trainor(InitTrainor):
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
             for batch in pbar:
                 self.optimizer.zero_grad()
-                loss = self.model(**batch)['loss']
+                out = self.model(**batch)
+                loss = out['loss']
                 loss.backward()
                 self.optimizer.step()
                 losses.append(loss.item())
@@ -98,8 +99,11 @@ class Trainor(InitTrainor):
                         early_stop,
                     ))
 
-                # if iteration == 100:
+                # if iteration >= 50:
                 #     break
+                    # self.model.eval()
+                    # print(self.model.enc_dec.generate(batch['input_ids'].cuda()))
+                    # self.model.train()
 
             # self.update_lr()
             if epoch > self.eval_start - 1:

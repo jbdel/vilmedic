@@ -1,0 +1,5 @@
+transformers==4.3.2
+omegaconf
+torch==1.7.1
+torchvision
+rouge_score

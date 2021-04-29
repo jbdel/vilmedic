@@ -1,0 +1,46 @@
+name: biorobert_mimic
+ckpt_dir: ckpt
+dataset:
+  proto: TextDatasetHug
+  root: data/report_sum/mimic-cxr/
+  src: findings.tok
+  tgt: impression.tok
+  tokenizer: data/report_sum/huggingface/biomed_roberta_base
+  max_len: 80
+
+model:
+  proto: Seq2SeqHug
+  encoder:
+    proto: data/report_sum/huggingface/biomed_roberta_base
+  decoder:
+    proto: data/report_sum/huggingface/biomed_roberta_base
+
+
+
+trainor:
+  lr: 0.00005
+  weight_decay: 0.00001 #1e-05
+  batch_size: 64
+  lr_decay_factor: 0.5
+  lr_decay_patience: 2
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGE
+
+validator:
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE, BLEU, METEOR]
+  splits: [validate]
+
+
+ensemblor:
+  proto: Ensemblor
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE, BLEU, METEOR]
+  #  splits: [indiana_dev]
+  splits: [validate, test]
+  mode: all # best,all

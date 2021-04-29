@@ -1,51 +1,54 @@
-import json
-import random
-
-
 class Vocab():
-    extra = [
-        "[PAD]",
-        "[SEP]",
-        "[CLS]",
-        "[UNK]",
-        "[MASK]"]
+    extra = None
 
-    def __init__(self, sentences=None):
+    def __init__(self, sentences=None,
+                 pad_token="[PAD]",
+                 eos_token="[SEP]",
+                 bos_token="[CLS]",
+                 unk_token="[UNK]",
+                 mask_token="[MASK]"):
+
         if sentences is not None:
             self.vocab = []
             for sentence in sentences:
                 self.vocab += sentence
             self.vocab = sorted(set(self.vocab))
-            # extra at first so that different vocabs share the same extra idxs
-            self.words = Vocab.extra + self.vocab
+            self.extra = [pad_token, bos_token, eos_token, unk_token, mask_token]
+
+            self.words = self.extra + self.vocab
             self.inv_words = {w: i for i, w in enumerate(self.words)}
             assert self.words[:len(self.extra)] == self.extra
 
-    @staticmethod
-    def extra2idx(e):
-        return Vocab.extra.index(e)
+    def get_eos(self):
+        return self.extra[2]
+
+    def get_bos(self):
+        return self.extra[1]
+
+    def get_unk(self):
+        return self.extra[3]
 
     def strip_beos_w(self, words):
-        if words[0] == '[CLS]':
+        if words[0] == self.get_bos():
             del words[0]
 
         result = []
         for w in words:
-            if w == '[SEP]':
+            if w == self.get_eos():
                 break
             result.append(w)
         return result
 
     def word2idx(self, word):
         if word not in self.inv_words:
-            word = '[UNK]'
+            word = self.get_unk()
         return self.inv_words[word]
 
     def idx2word(self, idx):
         if idx < len(self):
             return self.words[idx]
         else:
-            return '[UNK]'
+            return self.get_unk()
 
     def idxs2words(self, idxs):
         return [self.idx2word(idx) for idx in idxs]
@@ -57,8 +60,7 @@ class Vocab():
         return len(self.words)
 
     def __str__(self):
-        return "Vocab(#words={}, #vocab={}, #extra={})".format(len(self), len(self.vocab),
-                                                               len(self.extra))
+        return "Vocab(#words={}, #vocab={}, #extra={})".format(len(self), len(self.vocab), len(self.extra))
 
     def __iter__(self):
         for w in self.words:
@@ -69,9 +71,11 @@ class Vocab():
 
     def load(self, path):
         self.words = [w.strip() for w in open(path, "r").readlines()]
-        self.vocab = self.words[len(Vocab.extra):]
+        self.vocab = self.words[5:]
+        self.extra = self.words[:5:]
         self.inv_words = {w: i for i, w in enumerate(self.words)}
         return self
+
 
 class Labels(object):
     def __init__(self, answers):

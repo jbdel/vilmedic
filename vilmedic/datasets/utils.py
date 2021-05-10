@@ -78,9 +78,10 @@ class Vocab():
 
 
 class Labels(object):
-    def __init__(self, answers):
-        self.labels = sorted(set(answers))
-        self.inv_labels = {l: i for i, l in enumerate(self.labels)}
+    def __init__(self, answers=None):
+        if answers is not None:
+            self.labels = set(answers)
+            self.inv_labels = {l: i for i, l in enumerate(self.labels)}
 
     def label2idx(self, label):
         return self.inv_labels[label]
@@ -93,3 +94,11 @@ class Labels(object):
 
     def __str__(self):
         return "Label(#labels={})".format(len(self))
+
+    def dump(self, path):
+        open(path, "w").write("\n".join(str(w) for w in self.labels))
+
+    def load(self, path):
+        self.labels = [w.strip() for w in open(path, "r").readlines()]
+        self.inv_labels = {l: i for i, l in enumerate(self.labels)}
+        return self

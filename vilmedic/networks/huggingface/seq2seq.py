@@ -19,6 +19,7 @@ class Seq2SeqHug(nn.Module):
         if 'proto' in decoder and 'proto' in encoder:
             self.enc_dec = EncoderDecoderModel.from_encoder_decoder_pretrained(encoder.pop('proto'),
                                                                                decoder.pop('proto'))
+
             self.enc = self.enc_dec.encoder
             self.dec = self.enc_dec.decoder
         else:
@@ -45,12 +46,7 @@ class Seq2SeqHug(nn.Module):
 
         # Evaluation
         self.eval_func = beam_search
-
-        # Embeddings
-        if 'src_emb' in kwargs:
-            set_embeddings(kwargs['src_emb'], self.enc.embeddings.word_embeddings)
-        if 'tgt_emb' in kwargs:
-            set_embeddings(kwargs['tgt_emb'], self.dec.bert.embeddings.word_embeddings)
+        self.generate_opts = {}
 
     def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask):
         input_ids = input_ids.cuda()

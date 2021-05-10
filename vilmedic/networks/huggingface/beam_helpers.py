@@ -10,6 +10,7 @@ from transformers.generation_beam_search import BeamScorer, BeamHypotheses, User
 from transformers.generation_logits_process import (
     LogitsProcessorList,
 )
+import copy
 
 logger = logging.get_logger(__name__)
 
@@ -27,8 +28,18 @@ def beam_search(
         output_hidden_states: Optional[bool] = None,
         output_scores: Optional[bool] = None,
         return_dict_in_generate: Optional[bool] = None,
+        model_kwargs_list=None,
         **model_kwargs,
 ) -> Union[BeamSearchOutput, torch.LongTensor]:
+    # !!!! JB !!!
+    # **model_kwargs has lost keys from the function signature
+    # need to remove the keys from the dict in model_kwargs_list to match current state of **model_kwargs
+    ref_keys = model_kwargs.keys()
+    for m in model_kwargs_list:
+        to_del_k = [k for k in m.keys() if k not in ref_keys]
+        for k in to_del_k:
+            del m[k]
+
     # init values
     logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
     max_length = max_length if max_length is not None else self.config.max_length
@@ -42,18 +53,6 @@ def beam_search(
     return_dict_in_generate = (
         return_dict_in_generate if return_dict_in_generate is not None else self.config.return_dict_in_generate
     )
-
-    # init attention / hidden states / scores tuples
-    scores = () if (return_dict_in_generate and output_scores) else None
-    decoder_attentions = () if (return_dict_in_generate and output_attentions) else None
-    decoder_hidden_states = () if (return_dict_in_generate and output_hidden_states) else None
-
-    # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
-    if return_dict_in_generate and self.config.is_encoder_decoder:
-        encoder_attentions = model_kwargs["encoder_outputs"].get("attentions") if output_attentions else None
-        encoder_hidden_states = (
-            model_kwargs["encoder_outputs"].get("hidden_states") if output_hidden_states else None
-        )
 
     batch_size = len(beam_scorer._beam_hyps)
     num_beams = beam_scorer.num_beams
@@ -69,16 +68,16 @@ def beam_search(
     beam_scores = beam_scores.view((batch_size * num_beams,))
 
     while cur_len < max_length:
-        model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+        models_inputs = [encdec.prepare_inputs_for_generation(input_ids, **m)
+                         for encdec, m in zip(encdecs, model_kwargs_list)]
 
-        outputs = [encdec(
-            **model_inputs,
-            return_dict=True,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-        ).logits[:, -1, :] for encdec in encdecs]
+        outputs = [encdec(**model_inputs,
+                          return_dict=True,
+                          output_attentions=output_attentions,
+                          output_hidden_states=output_hidden_states)
+                   for encdec, model_inputs in zip(encdecs, models_inputs)]
 
-        next_token_logits = sum(outputs)
+        next_token_logits = sum(o.logits[:, -1, :] for o in outputs)
 
         # adjust tokens for Bart, *e.g.*
         next_token_logits = self.adjust_logits_during_generation(
@@ -86,25 +85,8 @@ def beam_search(
         )
 
         next_token_scores = F.log_softmax(next_token_logits, dim=-1)  # (batch_size * num_beams, vocab_size)
-
         next_token_scores = logits_processor(input_ids, next_token_scores)
         next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores)
-
-        # Store scores, attentions and hidden_states when required
-        if return_dict_in_generate:
-            if output_scores:
-                scores += (next_token_scores,)
-            if output_attentions:
-                decoder_attentions += (
-                    (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
-                )
-
-            if output_hidden_states:
-                decoder_hidden_states += (
-                    (outputs.decoder_hidden_states,)
-                    if self.config.is_encoder_decoder
-                    else (outputs.hidden_states,)
-                )
 
         # reshape for beam search
         vocab_size = next_token_scores.shape[-1]
@@ -134,11 +116,17 @@ def beam_search(
 
         cur_len = cur_len + 1
 
-        model_kwargs = self._update_model_kwargs_for_generation(
-            outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
-        )
-        if model_kwargs["past"] is not None:
-            model_kwargs["past"] = self._reorder_cache(model_kwargs["past"], beam_idx)
+        model_kwargs_list = [
+            encdec._update_model_kwargs_for_generation(o, m, is_encoder_decoder=self.config.is_encoder_decoder)
+            for encdec, o, m in zip(encdecs, outputs, model_kwargs_list)]
+
+        # model_kwargs = self._update_model_kwargs_for_generation(
+        #     outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
+        # )
+        #
+        for m in model_kwargs_list:
+            if m["past"] is not None:
+                m["past"] = self._reorder_cache(m["past"], beam_idx)
 
         if beam_scorer.is_done:
             break
@@ -147,29 +135,7 @@ def beam_search(
         input_ids, beam_scores, next_tokens, next_indices, pad_token_id=pad_token_id, eos_token_id=eos_token_id
     )
 
-    if return_dict_in_generate:
-        if not output_scores:
-            sequence_outputs["sequence_scores"] = None
-        if self.config.is_encoder_decoder:
-            return BeamSearchEncoderDecoderOutput(
-                sequences=sequence_outputs["sequences"],
-                sequences_scores=sequence_outputs["sequence_scores"],
-                scores=scores,
-                encoder_attentions=encoder_attentions,
-                encoder_hidden_states=encoder_hidden_states,
-                decoder_attentions=decoder_attentions,
-                decoder_hidden_states=decoder_hidden_states,
-            )
-        else:
-            return BeamSearchDecoderOnlyOutput(
-                sequences=sequence_outputs["sequences"],
-                sequences_scores=sequence_outputs["sequence_scores"],
-                scores=scores,
-                attentions=decoder_attentions,
-                hidden_states=decoder_hidden_states,
-            )
-    else:
-        return sequence_outputs["sequences"]
+    return sequence_outputs["sequences"]
 
 
 def generate(
@@ -205,6 +171,7 @@ def generate(
         **model_kwargs,
 ) -> Union[GreedySearchOutput, SampleOutput, BeamSearchOutput, BeamSampleOutput, torch.LongTensor]:
     # set init values
+
     num_beams = num_beams if num_beams is not None else self.config.num_beams
     num_beam_groups = num_beam_groups if num_beam_groups is not None else self.config.num_beam_groups
     max_length = max_length if max_length is not None else self.config.max_length
@@ -229,11 +196,11 @@ def generate(
     model_kwargs["output_attentions"] = output_attentions
     model_kwargs["output_hidden_states"] = output_hidden_states
 
-    if model_kwargs.get("attention_mask", None) is None:
-        # init `attention_mask` depending on `pad_token_id`
-        model_kwargs["attention_mask"] = self._prepare_attention_mask_for_generation(
-            input_ids, pad_token_id, eos_token_id
-        )
+    # if model_kwargs.get("attention_mask", None) is None:
+    #     # init `attention_mask` depending on `pad_token_id`
+    #     model_kwargs["attention_mask"] = self._prepare_attention_mask_for_generation(
+    #         input_ids, pad_token_id, eos_token_id
+    #     )
 
     # special case if pad_token_id is not defined
     if pad_token_id is None and eos_token_id is not None:
@@ -245,17 +212,19 @@ def generate(
 
     if self.config.is_encoder_decoder:
         # add encoder_outputs to model_kwargs
-        model_kwargs = self._prepare_encoder_decoder_kwargs_for_generation(input_ids, model_kwargs)
+        model_kwargs = [encdec._prepare_encoder_decoder_kwargs_for_generation(input_ids, copy.deepcopy(model_kwargs))
+                        for encdec in encdecs]
+        # model_kwargs = model_kwargs[0]
 
         # set input_ids as decoder_input_ids
-        if "decoder_input_ids" in model_kwargs:
-            input_ids = model_kwargs.pop("decoder_input_ids")
+        if "decoder_input_ids" in model_kwargs[0]:
+            input_ids = model_kwargs[0].pop("decoder_input_ids")
         else:
             input_ids = self._prepare_decoder_input_ids_for_generation(
                 input_ids, decoder_start_token_id=decoder_start_token_id, bos_token_id=bos_token_id
             )
 
-        if "encoder_outputs" not in model_kwargs or not isinstance(model_kwargs["encoder_outputs"], ModelOutput):
+        if "encoder_outputs" not in model_kwargs[0] or not isinstance(model_kwargs[0]["encoder_outputs"], ModelOutput):
             raise ValueError("Make sure that `model_kwargs` include `encoder_outputs` of type `ModelOutput`.")
 
     if input_ids.shape[-1] >= max_length:
@@ -269,7 +238,8 @@ def generate(
     is_beam_gen_mode = (num_beams > 1) and (num_beam_groups == 1) and do_sample is False
 
     # set model_kwargs
-    model_kwargs["use_cache"] = use_cache
+    for m in model_kwargs:
+        m["use_cache"] = use_cache
 
     # get distribution pre_processing samplers
     logits_processor = self._get_logits_processor(
@@ -279,11 +249,15 @@ def generate(
         encoder_input_ids=encoder_input_ids,
         bad_words_ids=bad_words_ids,
         min_length=min_length,
+        max_length=max_length,
         eos_token_id=eos_token_id,
         prefix_allowed_tokens_fn=prefix_allowed_tokens_fn,
         num_beams=num_beams,
         num_beam_groups=num_beam_groups,
         diversity_penalty=diversity_penalty,
+        remove_invalid_values=None,
+        forced_bos_token_id=None,
+        forced_eos_token_id=None,
     )
 
     if is_beam_gen_mode:
@@ -304,9 +278,20 @@ def generate(
             num_beam_hyps_to_keep=num_return_sequences,
         )
         # interleave with `num_beams`
-        input_ids, model_kwargs = self._expand_inputs_for_generation(
-            input_ids, expand_size=num_beams, is_encoder_decoder=self.config.is_encoder_decoder, **model_kwargs
+        old_inputs = copy.deepcopy(input_ids)
+        old_model_kwargs = copy.deepcopy(model_kwargs)
+
+        # need input_ids only once
+        input_ids, _ = self._expand_inputs_for_generation(
+            old_inputs, expand_size=num_beams, is_encoder_decoder=self.config.is_encoder_decoder, **model_kwargs[0]
         )
+
+        # need model_kwargs updated for each model
+        model_kwargs = [e._expand_inputs_for_generation(old_inputs,
+                                                        expand_size=num_beams,
+                                                        is_encoder_decoder=e.config.is_encoder_decoder, **m)[1]
+                        for m, e in zip(old_model_kwargs, encdecs)]
+
         return beam_search(
             self,
             encdecs,
@@ -318,7 +303,8 @@ def generate(
             eos_token_id=eos_token_id,
             output_scores=output_scores,
             return_dict_in_generate=return_dict_in_generate,
-            **model_kwargs,
+            model_kwargs_list=model_kwargs,
+            **model_kwargs[0],
         )
     else:
         raise NotImplementedError

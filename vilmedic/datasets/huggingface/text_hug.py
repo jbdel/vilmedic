@@ -10,6 +10,10 @@ class TextDatasetHug(Dataset):
     def __init__(self, root, split, ckpt_dir, src, tgt, max_len=80, tokenizer=None, **kwargs):
         self.root = root
         self.split = split
+        self.src = src
+        self.tgt = tgt
+        self.ckpt_dir = ckpt_dir
+
         self.samples = make_samples(root, split, src, tgt)
 
         # If tokenizer exists, skip vocabulary creation

@@ -35,10 +35,12 @@ class InitTrainor(Base):
         self.lr = self.opts.lr
         self.early_stop_metric = self.opts.early_stop_metric
         self.eval_start = self.opts.eval_start
+        self.grad_accu = self.opts.grad_accu
+        if self.grad_accu is None:
+            self.grad_accu = 1
 
         # Validator is None at init
         self.evaluator: Validator = None
-
 
     def set_seed(self, seed=None):
         if seed is None:
@@ -77,35 +79,52 @@ class Trainor(InitTrainor):
 
         for epoch in range(0, self.opts.epochs + 1):
             self.model.train()
-            iteration = 0
+            self.optimizer.zero_grad()
             losses = []
-
+            iteration = 0
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
             for batch in pbar:
-                self.optimizer.zero_grad()
                 out = self.model(**batch)
                 loss = out['loss']
-                loss.backward()
-                self.optimizer.step()
-                losses.append(loss.item())
-                iteration += 1
-                pbar.set_description(
-                    'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
-                        epoch + 1,
-                        self.lr,
-                        sum(losses) / iteration,
-                        self.early_stop_metric,
-                        self.evaluator.mean_eval_metric,
-                        early_stop,
-                    ))
+                # logits = out['logits']
+                # #
+                # ma = torch.argmax(logits, dim=-1)
+                # print(ma)
+                # print(ma)
+                # print(self.dl.dataset.tgt_tokenizer.decode(ma, skip_special_tokens=True, clean_up_tokenization_spaces=False))
+                # # ma = torch.argmax(logits, dim=-1)[1]
+                # # print(self.dl.dataset.tgt_tokenizer.decode(ma, skip_special_tokens=True, clean_up_tokenization_spaces=False))
+                # print("#####")
 
+                loss.backward()
+                iteration += 1
+                losses.append(loss.item())
+
+                if iteration % self.grad_accu == 0:
+                    self.optimizer.step()
+                    self.optimizer.zero_grad()
+
+                    pbar.set_description(
+                        'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
+                            epoch + 1,
+                            self.lr,
+                            sum(losses) / iteration,
+                            self.early_stop_metric,
+                            self.evaluator.mean_eval_metric,
+                            early_stop,
+                        ))
+                # break
                 # if iteration >= 50:
                 #     break
-                    # self.model.eval()
-                    # print(self.model.enc_dec.generate(batch['input_ids'].cuda()))
-                    # self.model.train()
+                # self.model.eval()
+                # print(self.model.enc_dec.generate(batch['input_ids'].cuda()))
+                # self.model.train()
 
-            # self.update_lr()
+            # Perform last update if needed
+            if iteration % self.grad_accu != 0:
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+
             if epoch > self.eval_start - 1:
                 self.evaluator.epoch = epoch
                 self.evaluator.start()

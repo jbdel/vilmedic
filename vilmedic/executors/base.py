@@ -4,6 +4,8 @@ import os
 class InitBase(object):
     def __init__(self, opts):
         self.opts = opts
+        assert self.opts.ckpt_dir is not None
+        assert self.opts.name is not None
         self.ckpt_dir = os.path.join(self.opts.ckpt_dir, self.opts.name)
 
 

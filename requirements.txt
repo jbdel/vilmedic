@@ -1,4 +1,4 @@
-transformers==4.3.2
+transformers==4.5.1
 omegaconf
 torch==1.7.1
 torchvision

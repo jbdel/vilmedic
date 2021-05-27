@@ -1,41 +1,69 @@
-Report sum:
+#### Monomodal
 
-Download mimic-cxr file [here](https://drive.google.com/drive/folders/1So1-aZuEsqAYC3bQLAy1go6H09POntEW?usp=sharing) 
-and place it in data/report_sum/mimic-cxr. For each split, you have three aligned files. For eg:
+Download mimic-cxr/indiana folders [here](https://drive.google.com/drive/folders/1So1-aZuEsqAYC3bQLAy1go6H09POntEW?usp=sharing) 
+and place it in data/report_sum/. For each split, you have three aligned files. For eg:
 
 ```
 train.impression.tok
 train.findings.tok
 train.image.tok
+val.impression.tok
+...
 ```
-If you want to train a multimodal model download the visual features from [here](https://drive.google.com/drive/folders/1Z3sST5qUfMvm3ndSzEpfotycsO1VXwUh?usp=sharing).
-For example, download xrv-conv features:
-```
-train.mimic-cxr.xrv.layer4.npz
-validate.mimic-cxr.xrv.layer4.npz
-test.mimic-cxr.xrv.layer4.npz
-```
-and place it in data/report_sum/features/.
 
-You can train a model using convolutional features using `config/report_sum/conv_multimodal_mimic.yml`.
-The training command is:
+To train a roberta model, also download the huggingface folder, and place it in data/report_sum/.
+
+You can train five models using the following command:
 ```
 for i in {1..5}; 
 do 
-    python bin/train.py config/report_sum/conv_multimodal_mimic.yml
+    python bin/train.py config/rnn_mono.yml \
+            model.encoder.hidden_size=1024 \
+            model.encoder.input_size=768 \
+            model.decoder.hidden_size=1024 \
+            model.decoder.input_size=768 \
+            trainor.batch_size=64
 done
 ```
-This will train 5 models. The output will be in `conv_multimodal_mimic`
 
-You can then ensemble models using:
+for indiana 
 ```
-python bin/ensemblor.py config/report_sum/conv_multimodal_mimic.yml
+python bin/train.py config/rnn_mono.yml \
+            dataset.root=data/report_sum/indiana/ \
+            name=rnn_mono_indiana \
+            model.encoder.n_vocab=1546 \
+            model.decoder.n_vocab=1192 \
+            model.encoder.hidden_size=1024 \
+            model.encoder.input_size=768 \
+            model.decoder.hidden_size=1024 \
+            model.decoder.input_size=768 \
+            trainor.batch_size=8
 ```
-The [ensemblor] part of config will be called. <br/>
-ensemblor.mode can be 'best-n' to ensemble n models, or 'all' to take all trained models
 
-You can easily override arguments using `-o` argument. for eg:
+when using biobert:
 ```
-python bin/ensemblor.py config/report_sum/conv_multimodal_mimic.yml -o ensemblor.mode=best-2 ensemblor.beam_width=12
+python bin/train.py config/biorobert_mono.yml \
+            validator.batch_size=4 \
+            trainor.batch_size=8 \
+            trainor.grad_accu=4 \
+            trainor.lr=0.00005 \
+            weight_decay=0.00001
+
+python bin/train.py config/biorobert_mono.yml \
+            dataset.root=data/report_sum/indiana/ \
+            validator.batch_size=4 \
+            trainor.batch_size=8 \
+            trainor.grad_accu=1 \
+            name=biorobert_mono_indiana \
+            trainor.lr=0.00005 \
+            weight_decay=0.00001
 ```
-Same goes for training.
+
+#### Multimodal
+
+You can train a multimodal model by downloading mimic images from [here](https://drive.google.com/file/d/1V3RcFKzfFZgfs0-yXqZaUHET3CktTxiM/view?usp=sharing
+) and indiana images from [here](https://drive.google.com/file/d/10Heokxw-22CLSUEluEBsSSgK90efxQll/view?usp=sharing).
+
+The training command are the same as above, just replace <br/>
+rnn_mono => rnn_multi.yml<br/>
+biorobert_mono => biorobert_multi.yml

@@ -58,7 +58,7 @@ class CheckpointSaver(object):
     def save(self, model, tag, current_step):
         if self.current_tag is not None:
             old_ckpt = os.path.join(self.root, '{}_{}_{}.pth'.format(self.current_tag, self.current_step, self.seed))
-            assert os.path.exists(old_ckpt)
+            assert os.path.exists(old_ckpt), old_ckpt
             os.remove(old_ckpt)
 
         path = os.path.join(self.root, '{}_{}_{}.pth'.format(tag, current_step, self.seed))

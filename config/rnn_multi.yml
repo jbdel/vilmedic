@@ -1,14 +1,24 @@
-name: monomodal_mimic
+name: conv_multimodal_mimic
 ckpt_dir: ckpt
 dataset:
-  proto: TextDatasetRNN
+  proto: ImageTextDataset
   root: data/report_sum/mimic-cxr/
   src: findings.tok
   tgt: impression.tok
   max_len: 80
+  images: image.tok
+  load_memory: False
+  image_path: data/report_sum/
 
 model:
   proto: RNN
+  cnn:
+    proto: CNN
+    backbone: densenet169
+    output_layer: features
+    dropout_out: 0.0
+    permute: batch_first
+    visual_embedding_dim: 1664
 
   encoder:
     proto: TextEncoder
@@ -26,15 +36,13 @@ model:
     dropout_ctx: 0.5
 
   decoder:
-    proto: ConditionalDecoder
+    proto: VisualConditionalDecoder
     input_size: 200
     hidden_size: 320
     n_vocab: 6867 # impression
     rnn_type: GRU
     tied_emb: True
     dec_init: zero
-    dec_init_activ: tanh
-    dec_init_size: None
     att_type: mlp
     att_activ: tanh
     att_bottleneck: hid
@@ -42,6 +50,7 @@ model:
     transform_ctx: True
     mlp_bias: False
     dropout_out: 0.5
+    visual_ctx_size: 1024
 
 
 trainor:
@@ -54,12 +63,12 @@ trainor:
   epochs: 99
   early_stop: 10
   eval_start: 0
-  early_stop_metric: ROUGE
+  early_stop_metric: ROUGE2
 
 validator:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE, BLEU, METEOR]
+  metrics: [ROUGE2, BLEU, METEOR]
   splits: [validate]
 
 
@@ -67,7 +76,7 @@ ensemblor:
   proto: Ensemblor
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE, BLEU, METEOR]
+  metrics: [ROUGE2, BLEU, METEOR]
   #  splits: [indiana_dev]
   splits: [validate, test]
   mode: all # best,all

@@ -2,11 +2,10 @@ import os
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from transformers import BertTokenizer
-from ..text_rnn import make_samples
-from ..utils import Vocab
+from .utils import Vocab, make_samples
 
 
-class TextDatasetHug(Dataset):
+class TextDataset(Dataset):
     def __init__(self, root, split, ckpt_dir, src, tgt, max_len=80, tokenizer=None, **kwargs):
         self.root = root
         self.split = split

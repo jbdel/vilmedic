@@ -1,17 +1,15 @@
-import torch
-import os
 from PIL import Image
-from torch.nn.utils.rnn import pad_sequence
 from torchvision.transforms import *
-from .text_rnn import TextDatasetRNN
+from .text import TextDataset
+import os
+import torch
 
 
-class MimicCaptioningDataset(TextDatasetRNN):
-
+class ImageTextDataset(TextDataset):
     def __init__(self, images, image_path, load_memory, **kwargs):
         super().__init__(**kwargs)
         self.image_path = image_path
-        self.load_memory = False
+        self.load_memory = load_memory
         self.images = self.make_images(self.root, image_path, self.split, images)
 
         if self.split == 'train':
@@ -32,6 +30,7 @@ class MimicCaptioningDataset(TextDatasetRNN):
         assert len(self) == super().__len__()
 
         self.processed_images = []
+
         for idx in range(len(self)):
             i = self.images[idx]
             if self.load_memory:
@@ -40,13 +39,10 @@ class MimicCaptioningDataset(TextDatasetRNN):
                 sample = i
             self.processed_images.append(sample)
 
-    def make_images(self, root, image_path, split, file):
-        images = self.load_file(os.path.join(root, split + '.' + file))
-        return [os.path.join(image_path, i) for i in images]
 
-    def __len__(self):
-        'Denotes the total number of samples'
-        return len(self.images)
+    def make_images(self, root, image_path, split, file):
+        images = open(os.path.join(root, split + '.' + file), 'r').readlines()
+        return [os.path.join(image_path, i.strip()) for i in images]
 
     def __getitem__(self, index):
         'Generates one sample of data'
@@ -60,10 +56,18 @@ class MimicCaptioningDataset(TextDatasetRNN):
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            collated = {'src': torch.stack([s['image'] for s in batch]),
-                        # 'src': pad_sequence([s['src'] for s in batch], batch_first=False), # dont use
-                        'tgt': pad_sequence([s['tgt'] for s in batch], batch_first=False)
-                        }
+            src = self.src_tokenizer([s['src'] for s in batch], padding=True, return_tensors="pt",
+                                     add_special_tokens=False)
+            tgt = self.tgt_tokenizer([s['tgt'] for s in batch], padding=True, return_tensors="pt")
+            collated = {'images': torch.stack([s['image'] for s in batch]),
+                        'input_ids': src.input_ids,
+                        'attention_mask': src.attention_mask,
+                        'decoder_input_ids': tgt.input_ids,
+                        'decoder_attention_mask': tgt.attention_mask}
             return collated
 
         return collate_fn
+
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.images)

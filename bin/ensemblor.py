@@ -3,8 +3,7 @@ import sys
 import glob
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import get_args, get
-from vilmedic.executors import Validator, create_model, create_data_loader
-
+from vilmedic.executors import Trainor, Validator, create_model, create_data_loader
 
 def get_n_best(mode):
     n = 1
@@ -32,9 +31,12 @@ def main():
     ensemble_opts = get(opts, 'ensemblor')
     evaluator = Validator(opts=ensemble_opts,
                           models=None,
-                          seed='{}_{}'.format(ensemble_opts.mode, ensemble_opts.beam_width))
+                          seed='{}_{}_{}'.format(ensemble_opts.mode, ensemble_opts.beam_width, Trainor.generate_seed()))
 
     ckpts = get_ckpts(os.path.join(evaluator.ckpt_dir, '*.pth'), ensemble_opts.mode)
+    # specific checkpoint is specified
+    if ensemble_opts.checkpoint is not None:
+        ckpts = [ensemble_opts.checkpoint]
     evaluator.models = [create_model(opts=ensemble_opts, state_dict=ckpt).cuda().eval() for ckpt in ckpts]
 
     # Boom

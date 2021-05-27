@@ -2,17 +2,14 @@ import torch.nn as nn
 from .textencoder import TextEncoder
 from .decoder import ConditionalDecoder
 from .visualdecoder import VisualConditionalDecoder
-from vilmedic.networks.vqa.cnn import CNN
+from ..vision import CNN
 from .beam import beam_search
-
-import numpy as np
-
 import torch
 from .utils import get_n_params, set_embeddings
 
 
 class RNN(nn.Module):
-    def __init__(self, encoder, decoder, **kwargs):
+    def __init__(self, encoder, decoder, cnn=None, **kwargs):
         super().__init__()
         self.kwargs = kwargs
 
@@ -26,6 +23,11 @@ class RNN(nn.Module):
         self.eval_func = beam_search
 
         self.reset_parameters()
+
+        self.cnn = None
+        if cnn is not None:
+            self.cnn = CNN(**cnn)
+            self.visual_projection = nn.Linear(cnn.pop("visual_embedding_dim"), self.dec.hidden_size)
 
     def reset_parameters(self):
         for name, param in self.named_parameters():
@@ -43,19 +45,36 @@ class RNN(nn.Module):
             with torch.no_grad():
                 self.enc.emb.weight.data[0].fill_(0)
 
-    def encode(self, src, feats=None, **kwargs):
+    def encode(self, input_ids, feats=None, images=None, **kwargs):
+        # RNN model is batch_first = False
+        input_ids = input_ids.permute(1, 0)
+
         if feats is not None:
             feats = feats.cuda().permute(1, 0, 2)  # RNN takes (n, bs, feat)
-            return {'enc': self.enc(src, feats), 'feats': (feats, None)}
+            return {'enc': self.enc(input_ids, feats), 'feats': (feats, None)}
+        elif images is not None:
+            with torch.no_grad():
+                feats, _ = self.cnn(images.cuda())
+            feats = self.visual_projection(feats)
+            feats = feats.permute(1, 0, 2)  # RNN takes (n, bs, feat)
+            return {'enc': self.enc(input_ids), 'feats': (feats, None)}
         else:
-            return {'enc': self.enc(src)}
+            return {'enc': self.enc(input_ids)}
 
-    def forward(self, src, tgt, **kwargs):
-        # Get loss dict
-        src = src.cuda()
-        tgt = tgt.cuda()
-        result = self.dec(self.encode(src, **kwargs), tgt)
-        result['n_items'] = torch.nonzero(tgt[1:]).shape[0]
+    def decode(self, enc_outputs, decoder_input_ids):
+        # RNN model is batch_first = False
+        decoder_input_ids = decoder_input_ids.permute(1, 0)
+        result = self.dec(enc_outputs, decoder_input_ids)
+        result['n_items'] = torch.nonzero(decoder_input_ids[1:]).shape[0]
+        return result
+
+    def forward(self, input_ids, decoder_input_ids, **kwargs):
+        input_ids = input_ids.cuda()
+        decoder_input_ids = decoder_input_ids.cuda()
+
+        enc_outputs = self.encode(input_ids, **kwargs)
+        result = self.decode(enc_outputs, decoder_input_ids)
+
         result['loss'] = result['loss'] / result['n_items']
 
         return result

@@ -133,7 +133,7 @@ def google_rouge(refs, hyps, rouges):
     # for score in scores:
     #     aggregator.add_scores(score)
     # print(aggregator.aggregate())
-    return np.mean([s['rouge2'].fmeasure for s in scores])
+    return np.mean([s[rouges[0]].fmeasure for s in scores])
 
 
 def accuracy(refs, hyps):
@@ -159,8 +159,12 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
     for metric in metrics:
         if metric == 'BLEU':
             scores["BLEU"] = round(bleu_score(refs_file, hyps_file), 2)
-        elif metric == 'ROUGE':
-            scores["ROUGE"] = round(google_rouge(refs, hyps, rouges=['rouge2']) * 100, 2)
+        elif metric == 'ROUGE1':
+            scores["ROUGE1"] = round(google_rouge(refs, hyps, rouges=['rouge1']) * 100, 2)
+        elif metric == 'ROUGE2':
+            scores["ROUGE2"] = round(google_rouge(refs, hyps, rouges=['rouge2']) * 100, 2)
+        elif metric == 'ROUGEL':
+            scores["ROUGEL"] = round(google_rouge(refs, hyps, rouges=['rougeL']) * 100, 2)
         elif metric == 'METEOR':
             scores["METEOR"] = round(meteor_score(refs_file, hyps_file) * 100, 2)
         elif metric == 'accuracy':

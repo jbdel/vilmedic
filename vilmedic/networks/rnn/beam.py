@@ -1,4 +1,3 @@
-from vilmedic.datasets.utils import Vocab
 import torch
 from tqdm import tqdm
 
@@ -39,11 +38,18 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
 
     # Common parts
     encoders = [m.encode for m in models]
-    vocab = dl.dataset.tgt_vocab
-    n_vocab = len(vocab)
-    eos = vocab.word2idx(vocab.get_eos())
-    unk = vocab.word2idx(vocab.get_unk())
-    bos = vocab.word2idx(vocab.get_bos())
+    # vocab = dl.dataset.tgt_vocab
+    # n_vocab = len(vocab)
+    # eos = vocab.word2idx(vocab.get_eos())
+    # unk = vocab.word2idx(vocab.get_unk())
+    # bos = vocab.word2idx(vocab.get_bos())
+
+    #
+    tgt_tokenizer = dl.dataset.tgt_tokenizer
+    n_vocab = tgt_tokenizer.vocab_size
+    unk = tgt_tokenizer.vocab.get(tgt_tokenizer.unk_token)
+    bos = tgt_tokenizer.vocab.get(tgt_tokenizer.cls_token)
+    eos = tgt_tokenizer.vocab.get(tgt_tokenizer.sep_token)
 
     # Tensorized beam that will shrink and grow up to max_batch_size
     beam_storage = torch.zeros(
@@ -51,8 +57,13 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
     mask = torch.arange(max_batch_size * k).cuda()
     nll_storage = torch.zeros(max_batch_size).cuda()
 
+    # store refs
+    refs = []
     pbar = tqdm(dl, total=len(dl))
     for batch in pbar:
+        # Get refs
+        refs.extend(batch['decoder_input_ids'].tolist())
+
         # Encode source modalities
         batch = {k: v.cuda() for k, v in batch.items()}
         ctx_dicts = [encode(**batch) for encode in encoders]
@@ -150,15 +161,7 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
         results = [results[i] for i, j in sorted(
             enumerate(dl.batch_sampler.orig_idxs), key=lambda k: k[1])]
 
-    ret_refs = []
-    for i in range(len(dl.dataset)):
-        _, tgt = dl.dataset.samples[i]
-        ret_refs.append(tgt)
+    hyps = [tgt_tokenizer.decode(hyp, skip_special_tokens=True, clean_up_tokenization_spaces=False) for hyp in results]
+    refs = [tgt_tokenizer.decode(ref, skip_special_tokens=True, clean_up_tokenization_spaces=False) for ref in refs]
 
-    ret_hyps = [vocab.strip_beos_w(vocab.idxs2words(hyp))
-                for hyp in results]
-
-    ret_refs = list(map(' '.join, ret_refs))
-    ret_hyps = list(map(' '.join, ret_hyps))
-
-    return 0.0, ret_refs, ret_hyps
+    return 0.0, refs, hyps

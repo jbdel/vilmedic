@@ -7,7 +7,7 @@ import sys
 from .base import Base
 from .validator import Validator
 from .utils import CheckpointSaver, create_model, create_data_loader
-
+import time
 
 class InitTrainor(Base):
     def __init__(self, opts):
@@ -42,9 +42,13 @@ class InitTrainor(Base):
         # Validator is None at init
         self.evaluator: Validator = None
 
+    @staticmethod
+    def generate_seed():
+        return int(repr(round(time.time() * 1000))[-7:])
+
     def set_seed(self, seed=None):
         if seed is None:
-            seed = int(random.randint(0, 9999999))
+            seed = InitTrainor.generate_seed()
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
@@ -114,7 +118,7 @@ class Trainor(InitTrainor):
                             early_stop,
                         ))
                 # break
-                # if iteration >= 50:
+                # if iteration >= 1:
                 #     break
                 # self.model.eval()
                 # print(self.model.enc_dec.generate(batch['input_ids'].cuda()))

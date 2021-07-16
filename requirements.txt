@@ -1,5 +1,5 @@
 transformers==4.5.1
-omegaconf
+omegaconf==2.0.6
 torch==1.7.1
 torchvision
 rouge_score

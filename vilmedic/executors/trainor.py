@@ -1,81 +1,47 @@
 import numpy as np
-import random
-import torch
+import logging
 import tqdm
 import sys
 
-from .base import Base
 from .validator import Validator
-from .utils import CheckpointSaver, create_model, create_data_loader
-import time
+from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer
 
-class InitTrainor(Base):
-    def __init__(self, opts):
-        super().__init__(opts)
-        self.seed = self.set_seed()
+
+class InitTrainor(object):
+    def __init__(self, opts, seed):
+        self.seed = seed
+        self.opts = opts
+
+        # Logger
+        self.logger = logging.getLogger(str(seed))
 
         # Checkpoints
-        self.saver = CheckpointSaver(root=self.ckpt_dir, seed=self.seed)
+        self.saver = CheckpointSaver(ckpt_dir=self.opts.ckpt_dir, logger=self.logger, seed=self.seed)
 
         # Dataloader
-        self.dl = create_data_loader(self.opts, 'train', self.ckpt_dir)
+        self.dl = create_data_loader(self.opts, split='train', logger=self.logger)
 
         # Model
-        self.model = create_model(self.opts)
+        self.model = create_model(self.opts, logger=self.logger)
         # self.model = torch.nn.DataParallel(self.model)
-        assert hasattr(self.model, "eval_func")
         self.model.cuda()
-        print('\033[1m\033[91mModel {} created \033[0m'.format(type(self.model).__name__))
-        print(self.model)
 
         # Optimizer
-        self.optimizer = self.create_optimizer()
+        self.optimizer = create_optimizer(opts=self.opts, logger=self.logger, params=self.model.parameters())
 
         # Hyper
-        self.lr = self.opts.lr
+        self.lr = self.optimizer.defaults['lr']
         self.early_stop_metric = self.opts.early_stop_metric
         self.eval_start = self.opts.eval_start
-        self.grad_accu = self.opts.grad_accu
-        if self.grad_accu is None:
-            self.grad_accu = 1
+        self.grad_accu = self.opts.grad_accu or 1
 
         # Validator is None at init
         self.evaluator: Validator = None
 
-    @staticmethod
-    def generate_seed():
-        return int(repr(round(time.time() * 1000))[-7:])
-
-    def set_seed(self, seed=None):
-        if seed is None:
-            seed = InitTrainor.generate_seed()
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        return seed
-
-    def create_optimizer(self):
-        if self.opts.optimizer is not None:
-            optimizer = self.opts.optimizer
-        else:
-            optimizer = 'adam'
-
-        params = self.model.parameters()
-
-        if optimizer.lower() == 'sgd':
-            optimizer = torch.optim.SGD(params, lr=self.opts.lr, weight_decay=self.opts.weight_decay)
-        elif optimizer.lower() == 'adam':
-            optimizer = torch.optim.Adam(params, lr=self.opts.lr, weight_decay=self.opts.weight_decay)
-        else:
-            raise Exception("Unknown optimizer {}.".format(optimizer))
-
-        return optimizer
-
 
 class Trainor(InitTrainor):
-    def __init__(self, opts):
-        super().__init__(opts=opts)
+    def __init__(self, opts, seed):
+        super().__init__(opts=opts, seed=seed)
 
     def start(self):
         lr_patience = 0
@@ -86,20 +52,11 @@ class Trainor(InitTrainor):
             self.optimizer.zero_grad()
             losses = []
             iteration = 0
+            log = ""
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
             for batch in pbar:
                 out = self.model(**batch)
                 loss = out['loss']
-                # logits = out['logits']
-                # #
-                # ma = torch.argmax(logits, dim=-1)
-                # print(ma)
-                # print(ma)
-                # print(self.dl.dataset.tgt_tokenizer.decode(ma, skip_special_tokens=True, clean_up_tokenization_spaces=False))
-                # # ma = torch.argmax(logits, dim=-1)[1]
-                # # print(self.dl.dataset.tgt_tokenizer.decode(ma, skip_special_tokens=True, clean_up_tokenization_spaces=False))
-                # print("#####")
-
                 loss.backward()
                 iteration += 1
                 losses.append(loss.item())
@@ -107,27 +64,23 @@ class Trainor(InitTrainor):
                 if iteration % self.grad_accu == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
-
-                    pbar.set_description(
-                        'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
-                            epoch + 1,
-                            self.lr,
-                            sum(losses) / iteration,
-                            self.early_stop_metric,
-                            self.evaluator.mean_eval_metric,
-                            early_stop,
-                        ))
+                    log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
+                        epoch + 1,
+                        self.lr,
+                        sum(losses) / iteration,
+                        self.early_stop_metric,
+                        self.evaluator.mean_eval_metric,
+                        early_stop,
+                    )
+                    pbar.set_description(log)
                 # break
-                # if iteration >= 1:
-                #     break
-                # self.model.eval()
-                # print(self.model.enc_dec.generate(batch['input_ids'].cuda()))
-                # self.model.train()
 
             # Perform last update if needed
             if iteration % self.grad_accu != 0:
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+
+            self.logger.info(log)
 
             if epoch > self.eval_start - 1:
                 self.evaluator.epoch = epoch
@@ -159,5 +112,5 @@ class Trainor(InitTrainor):
 
     def check_early_stop(self, early_stop):
         if early_stop == self.opts.early_stop:
-            print("Early stopped reached")
+            self.logger.info("Early stopped reached")
             sys.exit()

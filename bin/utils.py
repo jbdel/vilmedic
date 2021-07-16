@@ -1,13 +1,21 @@
 import argparse
+import logging
 import copy
 import json
+import time
+import random
+import torch
+import os
+import numpy as np
 from omegaconf import OmegaConf
 
 
-def print_args(opts, mode):
-    d = OmegaConf.to_container(opts)
-    print('\033[1m\033[91m' + mode + '\033[0m')
-    print(json.dumps(d, indent=4, sort_keys=True))
+def print_args(opts, splits, seed):
+    for split in splits:
+        d = OmegaConf.to_container(getattr(opts, split))
+        logger = logging.getLogger(str(seed))
+        logger.debug(split)
+        logger.info(json.dumps(d, indent=4, sort_keys=True))
 
 
 def get_args():
@@ -25,20 +33,27 @@ def get_args():
         print('Overriding dict:', override)
 
     opts = OmegaConf.merge(config, override)
+    opts.ckpt_dir = os.path.join(opts.ckpt_dir, opts.name)
+    os.makedirs(opts.ckpt_dir, exist_ok=True)
     return opts
 
 
 def get(opts, mode):
     """ Create a personal dict for each executor (trainor, validator or ensemblor)
-    For an executor, we give everything but the other executors args
+    For an executor, we give every args but the other executors args
     """
     exec_opts = copy.deepcopy(getattr(opts, mode))
     for att in list(opts.keys()):
         if att not in ['trainor', 'validator', 'ensemblor']:
             exec_opts[att] = opts[att]
-
-    if mode == 'trainor':
-        print_args(exec_opts, mode)
-    else:
-        print_args(getattr(opts, mode), mode)
     return exec_opts
+
+
+def get_seed(seed=None):
+    if seed is None:
+        seed = int(str(time.time_ns())[-7:])
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    return seed

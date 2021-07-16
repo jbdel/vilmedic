@@ -9,21 +9,42 @@ from torch.utils.data.sampler import BatchSampler, SequentialSampler, RandomSamp
 from vilmedic.networks import *
 from vilmedic.datasets import *
 
-def create_model(opts, state_dict=None):
+from torch.optim import *
+
+
+def create_optimizer(opts, logger, params):
+    assert 'lr' in opts.optim_params
+    optim = getattr(torch.optim, opts.optimizer)
+    optimizer = optim(params, **opts.optim_params)
+
+    logger.debug('Optimizer {} created'.format(type(optimizer).__name__))
+    logger.info(optimizer)
+    return optimizer
+
+
+def create_model(opts, logger, state_dict=None):
     opts = copy.deepcopy(opts.model)
     model = eval(opts.proto)(**opts)
+
+    # eval_func is the method called by the Validator to evaluate the model
+    assert hasattr(model, "eval_func")
+
+    logger.debug('Model {} created'.format(type(model).__name__))
+
     if state_dict is not None:
         model.load_state_dict(torch.load(state_dict))
-        print(state_dict, 'loaded.')
+        logger.info('{} loaded.'.format(state_dict))
+    else:
+        logger.info(model)
     return model
 
 
-def create_data_loader(opts, split, ckpt_dir):
+def create_data_loader(opts, split, logger):
     if split == 'train':
-        print('\033[1m\033[91mDataLoader \033[0m')
+        logger.debug('DataLoader')
 
     dataset_opts = copy.deepcopy(opts.dataset)
-    dataset = eval(dataset_opts.proto)(split=split, ckpt_dir=ckpt_dir, **dataset_opts)
+    dataset = eval(dataset_opts.proto)(split=split, ckpt_dir=opts.ckpt_dir, **dataset_opts)
 
     if hasattr(dataset, 'get_collate_fn'):
         collate_fn = dataset.get_collate_fn()
@@ -34,7 +55,7 @@ def create_data_loader(opts, split, ckpt_dir):
         sampler = BatchSampler(
             RandomSampler(dataset),
             batch_size=opts.batch_size, drop_last=False)
-        print('Using \033[1m\033[94m' + type(sampler.sampler).__name__ + '\033[0m')
+        logger.info('Using' + type(sampler.sampler).__name__)
 
     else:  # eval or test
         sampler = BatchSampler(
@@ -48,22 +69,22 @@ def create_data_loader(opts, split, ckpt_dir):
 
 
 class CheckpointSaver(object):
-    def __init__(self, root, seed):
-        self.root = root
+    def __init__(self, ckpt_dir, logger, seed):
+        self.ckpt_dir = ckpt_dir
         self.seed = seed
+        self.logger = logger
         self.current_tag = None
         self.current_step = None
-        os.makedirs(self.root, exist_ok=True)
 
     def save(self, model, tag, current_step):
         if self.current_tag is not None:
-            old_ckpt = os.path.join(self.root, '{}_{}_{}.pth'.format(self.current_tag, self.current_step, self.seed))
+            old_ckpt = os.path.join(self.ckpt_dir, '{}_{}_{}.pth'.format(self.current_tag, self.current_step, self.seed))
             assert os.path.exists(old_ckpt), old_ckpt
             os.remove(old_ckpt)
 
-        path = os.path.join(self.root, '{}_{}_{}.pth'.format(tag, current_step, self.seed))
+        path = os.path.join(self.ckpt_dir, '{}_{}_{}.pth'.format(tag, current_step, self.seed))
         torch.save(model, path)
-        print('{} saved.'.format(path))
+        self.logger.info('{} saved.'.format(path))
 
-        self.current_tag = tag
+        self.current_tag = str(tag)
         self.current_step = current_step

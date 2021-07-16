@@ -39,7 +39,6 @@ class ImageTextDataset(TextDataset):
                 sample = i
             self.processed_images.append(sample)
 
-
     def make_images(self, root, image_path, split, file):
         images = open(os.path.join(root, split + '.' + file), 'r').readlines()
         return [os.path.join(image_path, i.strip()) for i in images]

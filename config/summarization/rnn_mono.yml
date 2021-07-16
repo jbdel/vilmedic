@@ -45,8 +45,8 @@ model:
 
 
 trainor:
-  lr: 0.0004
-  weight_decay: 0.00001 #1e-05
+  optimizer: Adam
+  optim_params: {lr: 0.0004, weight_decay: 0.00001}
   batch_size: 64
   lr_decay_factor: 0.5
   lr_decay_patience: 2

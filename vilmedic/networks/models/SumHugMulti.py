@@ -1,20 +1,23 @@
 import torch.nn as nn
-from ..rnn.utils import get_n_params
+from .utils import get_n_params
 
 # v4.3.2
 import torch
-from .beam import beam_search
+from vilmedic.networks.huggingface.beam import beam_search
+from vilmedic.networks.vision import *
+
 from transformers.models.encoder_decoder.modeling_encoder_decoder import EncoderDecoderModel
 from transformers.modeling_outputs import Seq2SeqLMOutput
-from ..vision.cnn import CNN
 
 
 class MultimodalEnc(nn.Module):
     def __init__(self, encoder, cnn):
         super().__init__()
         self.encoder = encoder
-        self.cnn = CNN(**cnn)
+
+        cnn_func = cnn.pop('proto')
         self.visual_projection = nn.Linear(cnn.pop("visual_embedding_dim"), self.encoder.config.hidden_size)
+        self.cnn = eval(cnn_func)(**cnn)
 
     def forward(self, input_ids, images, **kwargs):
         # Encoder
@@ -128,16 +131,12 @@ class MultimodalEncDec(EncoderDecoderModel):
         )
 
 
-class VisualSeq2SeqHug(nn.Module):
-    """
-    If proto is mentioned in encoder and decoder dict, loads pretrained models from proto strings.
-    Otherwise, loads a BertGenerationEncoder/BertGenerationDecoder model from encoder and decoder dict.
-    """
+class SumHugMulti(nn.Module):
 
-    def __init__(self, encoder, decoder, **kwargs):
+    def __init__(self, encoder, decoder, cnn, **kwargs):
         super().__init__()
 
-        self.enc_dec = MultimodalEncDec(encoder, decoder, **kwargs)
+        self.enc_dec = MultimodalEncDec(encoder, decoder, cnn, **kwargs)
         self.enc = self.enc_dec.encoder
         self.dec = self.enc_dec.decoder
 

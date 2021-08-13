@@ -1,0 +1,82 @@
+name: mysiim
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImSeqLabel
+
+  label:
+    root: data/siim/
+    file: a.txt
+
+  image:
+    root: data/siim/
+    file: ids.txt
+    image_path: data/siim/images/
+    load_memory: False
+    resize: (255, 255)
+    ext: .dcm
+
+  src:
+    root: data/siim/
+    file: reports.txt
+    max_len: 80
+
+model:
+  proto: SIM_MCAN
+
+  visual:
+    proto: CNN
+    backbone: densenet169
+    output_layer: features
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: True
+
+  adapter:
+    input_size: 1664
+    output_size: 768
+
+  linguistic:
+    TOKEN_SIZE: 565
+    WORD_EMBED_SIZE: 300
+    LAYER: 6
+    HIDDEN_SIZE: 768
+    BBOXFEAT_EMB_SIZE: 2048
+    FF_SIZE: 2048
+    MULTI_HEAD: 8
+    DROPOUT_R: 0.1
+    FLAT_MLP_SIZE: 512
+    FLAT_GLIMPSES: 1
+    FLAT_OUT_SIZE: 1024
+
+  answer_size: 4
+
+  loss:
+    #      proto: LabelSmoothingCrossEntropy
+    proto: CrossEntropyLoss
+
+trainor:
+  #  optimizer: sgd
+  optimizer: RAdam
+  optim_params: {lr: 1e-4, weight_decay: 5e-4}
+  #  momentum: 0.9
+  batch_size: 32
+  lr_decay_factor: 0.5
+  lr_decay_patience: 5
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: accuracy
+
+validator:
+  batch_size: 16
+  metrics: [accuracy, auroc]
+  splits: [test]
+
+ensemblor:
+  proto: Ensemblor
+  batch_size: 16
+  metrics: [accuracy, f1-score, auroc]
+  splits: [test]
+  mode: all # best,all

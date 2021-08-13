@@ -8,6 +8,7 @@ import torch
 import os
 import numpy as np
 from omegaconf import OmegaConf
+from random import randrange
 
 
 def print_args(opts, splits, seed):
@@ -51,7 +52,7 @@ def get(opts, mode):
 
 def get_seed(seed=None):
     if seed is None:
-        seed = int(str(time.time_ns())[-7:])
+        seed = randrange(100000, 999999)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

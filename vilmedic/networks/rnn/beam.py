@@ -164,4 +164,4 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
     hyps = [tgt_tokenizer.decode(hyp, skip_special_tokens=True, clean_up_tokenization_spaces=False) for hyp in results]
     refs = [tgt_tokenizer.decode(ref, skip_special_tokens=True, clean_up_tokenization_spaces=False) for ref in refs]
 
-    return 0.0, refs, hyps
+    return {'losses': 0.0, 'refs': refs, 'hyps': hyps}

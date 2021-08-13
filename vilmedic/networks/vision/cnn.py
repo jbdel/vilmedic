@@ -3,46 +3,45 @@ import torch.nn as nn
 from torchvision.models import *
 from .vgg_hgap import *
 
-class Network(nn.Module):
-    def __init__(self, backbone, dropout_out, freeze, output_layer=None, **kwargs):
-        super(Network, self).__init__()
-        self.output_layer = output_layer
-        self.backbone = backbone
-        self.network = eval(backbone)(pretrained=True, **kwargs)
-        self.dropout_out = nn.Dropout(p=dropout_out)
-        self.freeze = freeze
 
-        if output_layer is not None and (not output_layer == 'classifier'):
-            layers = [n for n, _ in self.network.named_children()]
-            assert output_layer in layers, '{} not in {}'.format(output_layer, layers)
-            sub_network = []
-            for n, c in self.network.named_children():
-                sub_network.append(c)
-                if n == output_layer:
-                    break
-            self.network = nn.Sequential(*sub_network)
+def get_network(backbone, output_layer, pretrained, **kwargs):
+    network = eval(backbone)(pretrained=pretrained, **kwargs)
 
-        if freeze:
-            for name, param in self.network.named_parameters():
-                param.requires_grad = False
+    if output_layer is not None and (not output_layer == 'classifier'):
+        layers = [n for n, _ in network.named_children()]
+        assert output_layer in layers, '{} not in {}'.format(output_layer, layers)
+        sub_network = []
+        for n, c in network.named_children():
+            sub_network.append(c)
+            if n == output_layer:
+                break
+        network = nn.Sequential(*sub_network)
 
-    def forward(self, images):
-        out = self.network(images)
-        out = self.dropout_out(out)
-        return out
+    return network
 
 
 class CNN(nn.Module):
-    def __init__(self, backbone, dropout_out, permute, freeze=True, **kwargs):
+    def __init__(self, backbone, dropout_out, permute, freeze=True, output_layer=None, pretrained=True, **kwargs):
         super(CNN, self).__init__()
-        self.network = Network(backbone, dropout_out, freeze, **kwargs)
+        self.backbone = backbone
+        self.output_layer = output_layer
         self.permute = permute
         self.freeze = freeze
+        self.pretrained = pretrained
+
+        self.cnn = get_network(self.backbone, self.output_layer, self.pretrained, **kwargs)
+        self.dropout_out = nn.Dropout(p=dropout_out)
+
         assert permute in ["batch_first", "spatial_first", "no_permute"]
+
+        if freeze:
+            for name, param in self.cnn.named_parameters():
+                param.requires_grad = False
 
     def forward(self, images, **kwargs):
         mask = None
-        out = self.network(images)
+        out = self.cnn(images)
+        out = self.dropout_out(out)
 
         if self.permute == "no_permute":
             out = out
@@ -66,6 +65,7 @@ class CNN(nn.Module):
         return self
 
     def __repr__(self):
-        s = str(self.network.backbone) + '(output_layer=' + self.network.output_layer + ', dropout_out=' + str(
-            self.network.dropout_out.p) + ', freeze=' + str(self.freeze) + ')'
+        s = str(self.backbone) + '(output_layer=' + self.output_layer + ', dropout_out=' + str(
+            self.dropout_out.p) + ', freeze=' + str(self.freeze) + ', pretrained=' + str(self.pretrained) + \
+            '\n classifier= {}'.format(self.cnn.classifier) if self.output_layer == 'classifier' else '' + ')'
         return s

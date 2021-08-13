@@ -1,19 +1,19 @@
-name: myvqa
+name: mysiim
 ckpt_dir: ckpt
 
 dataset:
   proto: ImLabel
   label:
-    root: data/2021-VQA
+    root: data/siim
     file: a.txt
 
   image:
-    root: data/2021-VQA
-    image_path: data/2021-VQA/images
+    root: data/siim
+    image_path: data/siim/images
     file: ids.txt
     load_memory: False
-    resize: (232, 232)
-    ext: .jpg
+    resize: (256, 256)
+    ext: .dcm
 
 model:
   proto: VQA
@@ -27,23 +27,20 @@ model:
 
   classif:
     input_size: 1664
-    num_classes: 330
+    num_classes: 4
 
   loss:
-      proto: LabelSmoothingCrossEntropy
-#      proto: MixUpLoss
-#      criterion: LabelSmoothingCrossEntropy
-#      classes: 332
-
+    #      proto: LabelSmoothingCrossEntropy
+    proto: CrossEntropyLoss
 
 trainor:
-#  optimizer: sgd
+  #  optimizer: sgd
   optimizer: Adam
-  optim_params: {lr: 1e-3, weight_decay: 5e-4}
-#  momentum: 0.9
+  optim_params: {lr: 5e-4, weight_decay: 5e-4}
+  #  momentum: 0.9
   batch_size: 32
   lr_decay_factor: 0.5
-  lr_decay_patience: 2
+  lr_decay_patience: 5
   lr_min: 0.000001
   epochs: 99
   early_stop: 10
@@ -52,12 +49,12 @@ trainor:
 
 validator:
   batch_size: 16
-  metrics: [accuracy]
-  splits: [val]
+  metrics: [accuracy, auroc]
+  splits: [test]
 
 ensemblor:
   proto: Ensemblor
   batch_size: 16
-  metrics: [accuracy]
-  splits: [val]
+  metrics: [accuracy, f1-score, auroc]
+  splits: [test]
   mode: all # best,all

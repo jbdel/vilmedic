@@ -1,14 +1,20 @@
 name: monomodal_mimic
 ckpt_dir: ckpt
+
 dataset:
-  proto: TextDataset
-  root: data/report_sum/mimic-cxr/
-  src: findings.tok
-  tgt: impression.tok
-  max_len: 80
+  proto: Seq2Seq
+  src:
+    root: data/report_sum/mimic-cxr/
+    file: findings.tok
+    max_len: 80
+  tgt:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    max_len: 80
+
 
 model:
-  proto: RNN
+  proto: SumRNN
 
   encoder:
     proto: TextEncoder

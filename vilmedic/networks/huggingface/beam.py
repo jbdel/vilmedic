@@ -33,4 +33,4 @@ def beam_search(models, opts, dl):
                 hyp_list.append(tgt_tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False))
                 ref_list.append(tgt_tokenizer.decode(r, skip_special_tokens=True, clean_up_tokenization_spaces=False))
 
-        return 0.0, ref_list, hyp_list
+        return {'losses': 0.0, 'refs': ref_list, 'hyps': hyp_list}

@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from vilmedic.networks.vision import *
 from vilmedic.networks.classifier import *
-from vilmedic.networks.rnn.utils import get_n_params
 from vilmedic.networks.classifier.evaluation import evaluation
 from vilmedic.networks.classifier.losses import get_loss
+
+from .utils import get_n_params
 
 
 class VQA(nn.Module):
@@ -17,11 +18,8 @@ class VQA(nn.Module):
 
         self.encoder = eval(visual_func)(**visual)
         # self.classifier = eval(classif_func)(**classif)
-        self.encoder.classifier = nn.Sequential(
+        self.encoder.cnn.classifier = nn.Sequential(
             nn.Linear(classif.pop('input_size'), 4096),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
             nn.ReLU(True),
             nn.Dropout(),
             nn.Linear(4096, classif.pop('num_classes')),
@@ -30,10 +28,9 @@ class VQA(nn.Module):
         # Evaluation
         self.eval_func = evaluation
 
-    def forward(self, image, label, **kwargs):
-        output, mask = self.encoder(image.cuda())
-        # output = self.classifier(enc)
-        loss = self.loss_func(output, label.cuda(), **kwargs)
+    def forward(self, images, labels, **kwargs):
+        output, mask = self.encoder(images.cuda())
+        loss = self.loss_func(output, labels.cuda(), **kwargs)
         return {'loss': loss, 'output': output}
 
     def __repr__(self):

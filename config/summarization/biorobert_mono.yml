@@ -2,15 +2,20 @@ name: biorobert_mimic
 ckpt_dir: ckpt
 
 dataset:
-  proto: TextDataset
-  root: data/report_sum/mimic-cxr/
-  src: findings.tok
-  tgt: impression.tok
-  tokenizer: data/report_sum/huggingface/biomed_roberta_base
-  max_len: 80
+  proto: Seq2Seq
+  src:
+    root: data/report_sum/mimic-cxr/
+    file: findings.tok
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
+    max_len: 80
+  tgt:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
+    max_len: 80
 
 model:
-  proto: Seq2SeqHug
+  proto: SumHugMono
   encoder:
     proto: data/report_sum/huggingface/biomed_roberta_base
   decoder:

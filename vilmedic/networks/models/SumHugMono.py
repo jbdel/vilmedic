@@ -1,14 +1,14 @@
 import torch.nn as nn
-from ..rnn.utils import get_n_params, set_embeddings
+from .utils import get_n_params
 import copy
 
 # v4.3.2
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
 from transformers import EncoderDecoderModel
-from .beam import beam_search
+from vilmedic.networks.huggingface.beam import beam_search
 
 
-class Seq2SeqHug(nn.Module):
+class SumHugMono(nn.Module):
     """
     If proto is mentioned in encoder and decoder dict, loads pretrained models from proto strings.
     Otherwise, loads a BertGenerationEncoder/BertGenerationDecoder model from encoder and decoder dict.

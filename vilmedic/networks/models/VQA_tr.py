@@ -2,11 +2,13 @@ import torch
 import torch.nn as nn
 from vilmedic.networks.vision import *
 from vilmedic.networks.classifier import *
-from vilmedic.networks.rnn.utils import get_n_params
 from vilmedic.networks.classifier.evaluation import evaluation
 from vilmedic.networks.classifier.losses import get_loss
 from transformers.models.bert.modeling_bert import BertEncoder, BertPooler
 from transformers.models.bert_generation import BertGenerationConfig
+
+from .utils import get_n_params
+
 
 class VQA_tr(nn.Module):
     def __init__(self, visual, classif, adapter, transformer, loss, **kwargs):
@@ -24,15 +26,6 @@ class VQA_tr(nn.Module):
 
         self.transformer = BertEncoder(bert_conf)
         self.pooler = BertPooler(bert_conf)
-        # self.classifier = nn.Sequential(
-        #     nn.Linear(classif.pop('input_size'), 4096),
-        #     nn.ReLU(True),
-        #     nn.Dropout(),
-        #     nn.Linear(4096, 4096),
-        #     nn.ReLU(True),
-        #     nn.Dropout(),
-        #     nn.Linear(4096, classif.pop('num_classes')),
-        # )
         self.classifier = nn.Sequential(
             nn.Linear(classif.pop('input_size'), classif.pop('num_classes')),
         )
@@ -41,15 +34,17 @@ class VQA_tr(nn.Module):
         # Evaluation
         self.eval_func = evaluation
 
-    def forward(self, image, label, **kwargs):
-        out, mask = self.encoder(image.cuda())
+    def forward(self, images, labels, **kwargs):
+        out, mask = self.encoder(images.cuda())
         out = self.adapter(out)
-        out = self.transformer(out)
-        out = out[0]
-        out = self.pooler(out)
+        out = self.transformer(out, output_attentions=True)
+
+        attentions = out.attentions  # num_layers, batch_size, num_heads, sequence_length, sequence_length
+
+        out = self.pooler(out.last_hidden_state)
         out = self.classifier(out)
-        loss = self.loss_func(out, label.cuda(), **kwargs)
-        return {'loss': loss, 'output': out}
+        loss = self.loss_func(out, labels.cuda(), **kwargs)
+        return {'loss': loss, 'output': out, 'attentions': attentions}
 
     def __repr__(self):
         s = super().__repr__() + '\n'

@@ -17,7 +17,7 @@ You can train five models using the following command:
 ```
 for i in {1..5}; 
 do 
-    python bin/train.py config/rnn_mono.yml \
+    python bin/train.py config/summarization/rnn_mono.yml \
             model.encoder.hidden_size=1024 \
             model.encoder.input_size=768 \
             model.decoder.hidden_size=1024 \
@@ -28,8 +28,9 @@ done
 
 for indiana 
 ```
-python bin/train.py config/rnn_mono.yml \
-            dataset.root=data/report_sum/indiana/ \
+    python bin/train.py config/summarization/rnn_mono.yml \
+            dataset.src.root=data/report_sum/indiana/ \
+            dataset.tgt.root=data/report_sum/indiana/ \
             name=rnn_mono_indiana \
             model.encoder.n_vocab=1546 \
             model.decoder.n_vocab=1192 \
@@ -42,15 +43,16 @@ python bin/train.py config/rnn_mono.yml \
 
 when using biobert:
 ```
-python bin/train.py config/biorobert_mono.yml \
+python bin/train.py config/summarization/biorobert_mono.yml \
             validator.batch_size=4 \
             trainor.batch_size=8 \
             trainor.grad_accu=4 \
             trainor.lr=0.00005 \
             weight_decay=0.00001
 
-python bin/train.py config/biorobert_mono.yml \
-            dataset.root=data/report_sum/indiana/ \
+python bin/train.py config/summarization/biorobert_mono.yml \
+            dataset.src.root=data/report_sum/indiana/ \
+            dataset.tgt.root=data/report_sum/indiana/ \
             validator.batch_size=4 \
             trainor.batch_size=8 \
             trainor.grad_accu=1 \

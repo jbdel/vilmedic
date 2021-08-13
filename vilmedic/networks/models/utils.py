@@ -1,7 +1,4 @@
 import numpy as np
-import torch
-import os
-
 
 def readable_size(n):
     """Return a readable size string."""
@@ -32,16 +29,3 @@ def get_n_params(module):
     return "# parameters: {} ({} learnable)".format(
         readable_size(n_param_all), readable_size(n_param_learnable))
 
-
-def set_embeddings(path, obj):
-    filename = os.path.basename(path)
-    embs = np.load(path, allow_pickle=True)
-    assert len(embs) == obj.weight.size(0)
-    success = 0
-    with torch.no_grad():
-        for i, emb in enumerate(embs):
-            if emb is None:
-                continue
-            obj.weight.data[i] = torch.from_numpy(emb)
-            success += 1
-    print(filename, success, '/', len(embs), 'words loaded')

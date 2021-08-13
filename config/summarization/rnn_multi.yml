@@ -1,17 +1,26 @@
 name: conv_multimodal_mimic
 ckpt_dir: ckpt
 dataset:
-  proto: ImageTextDataset
-  root: data/report_sum/mimic-cxr/
-  src: findings.tok
-  tgt: impression.tok
-  max_len: 80
-  images: image.tok
-  load_memory: False
-  image_path: data/report_sum/
+  proto: ImSeq2Seq
+  src:
+    root: data/report_sum/mimic-cxr/
+    file: findings.tok
+    max_len: 80
+  tgt:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    max_len: 80
+  image:
+    root: data/report_sum/mimic-cxr/
+    file: image.tok
+    image_path: data/report_sum/
+    load_memory: False
+    resize: 256
+    ext: .jpg
+
 
 model:
-  proto: RNN
+  proto: SumRNN
   cnn:
     proto: CNN
     backbone: densenet169

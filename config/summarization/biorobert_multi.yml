@@ -1,18 +1,28 @@
 name: multimodal_biorobert_mimic
 ckpt_dir: ckpt
 dataset:
-  proto: ImageTextDataset
-  root: data/report_sum/mimic-cxr/
-  src: findings.tok
-  tgt: impression.tok
-  tokenizer: data/report_sum/huggingface/biomed_roberta_base
-  max_len: 80
-  images: image.tok
-  load_memory: False
-  image_path: data/report_sum/
+  proto: ImSeq2Seq
+  src:
+    root: data/report_sum/mimic-cxr/
+    file: findings.tok
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
+    max_len: 80
+  tgt:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
+    max_len: 80
+  image:
+    root: data/report_sum/mimic-cxr/
+    file: image.tok
+    image_path: data/report_sum/
+    load_memory: False
+    resize: 256
+    ext: .jpg
+
 
 model:
-  proto: VisualSeq2SeqHug
+  proto: SumHugMulti
   encoder:
     proto: data/report_sum/huggingface/biomed_roberta_base
   decoder:

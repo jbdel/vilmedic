@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-from .Seq2Seq import Seq2Seq
+
 from .base.ImageDataset import ImageDataset
 from .base.LabelDataset import LabelDataset
 from .base.TextDataset import TextDataset
@@ -15,9 +15,13 @@ class ImSeqLabel(Dataset):
 
         assert len(self.image) == len(self.label) == len(self.src)
 
+        # For decoding
+        self.tokenizer = self.src.tokenizer
+        self.max_len = self.src.max_len
+
     def __getitem__(self, index):
         return {'image': self.image.__getitem__(index),
-                'src': ' '.join(self.src.__getitem__(index)[:self.src.max_len]),
+                'src': ' '.join(self.src.__getitem__(index)[:self.max_len]),
                 'label': self.label.__getitem__(index)}
 
     def get_collate_fn(self):

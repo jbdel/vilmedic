@@ -1,0 +1,57 @@
+name: mysiim
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImageDataset
+  root: data/report_sum/mimic-cxr/
+  file: image.tok
+  image_path: data/report_sum/
+  load_memory: False
+  custom_transform_train: >
+    transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(256),
+                    transforms.ToTensor()])
+  custom_transform_val: >
+    transforms.Compose([
+                    transforms.Resize(256),
+                    transforms.CenterCrop(256),
+                    transforms.ToTensor()])
+  ext: .jpg
+
+model:
+  proto: VAE
+  image_size: 256
+  num_layers: 3  # number of downsamples - ex. 256 / (2 ** 3) :  (32 x 32 feature map)
+  num_tokens: 8192
+  # number of visual tokens. in the paper, they used 8192, but could be smaller for downsized projects
+  codebook_dim: 1024  # codebook dimension
+  hidden_dim: 64  # hidden dimension
+  num_resnet_blocks: 1  # number of resnet blocks
+  temperature: 0.9  # gumbel softmax temperature, the lower this is, the harder the discretization
+  straight_through: False
+
+trainor:
+  optimizer: RAdam
+  optim_params: {lr: 1e-3}
+  batch_size: 16
+  lr_decay_factor: 0.8
+  lr_decay_patience: 5
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: loss
+
+validator:
+  batch_size: 16
+  metrics: []
+  splits: [validate]
+
+
+ensemblor:
+  proto: Ensemblor
+  batch_size: 16
+  metrics: []
+  splits: [validate]
+  mode: all # best,all

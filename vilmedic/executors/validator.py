@@ -1,8 +1,10 @@
 import os
+import json
 import torch
 import logging
-from .utils import create_data_loader
+from .utils import create_data_loader, get_eval_func
 from vilmedic.scorers.scores import compute_scores
+from vilmedic.scorers.post_processing import post_processing
 
 
 class InitValidator(object):
@@ -15,8 +17,8 @@ class InitValidator(object):
 
         self.models = models
         self.metrics = opts.metrics
-        self.mean_eval_metric = 0.0
-
+        self.post_processing = opts.post_processing
+        self.current_best_metric = None
         self.epoch = 0
 
 
@@ -39,19 +41,45 @@ class Validator(InitValidator):
                                                 type(dl.batch_sampler.sampler).__name__,
                                                 ))
 
-            eval_func = self.models[0].eval_func
+            eval_func = get_eval_func(self.models)
             with torch.no_grad():
-                losses, refs, hyps = eval_func(self.models, self.opts, dl)
+                results = eval_func(self.models, self.opts, dl)
 
-            # Handle scores
-            scores = compute_scores(metrics=self.metrics,
-                                    refs=refs,
-                                    hyps=hyps,
-                                    split=split,
-                                    seed=self.seed,
-                                    ckpt_dir=self.opts.ckpt_dir,
-                                    epoch=self.epoch
-                                    )
+            # model must return at least loss or (refs and hyps)
+            # TODO check refs and hyps together
+            assert type(results) is dict and \
+                   any(key in results for key in ['loss', 'refs', 'hyps']), \
+                self.logger.error('Evaluation func does not return any evaluation keys')
 
-            self.logger.info(scores)
+            scores = dict()
+
+            # Handle metrics
+            metrics = compute_scores(metrics=self.metrics,
+                                     refs=results.pop('refs', None),
+                                     hyps=results.pop('hyps', None),
+                                     split=split,
+                                     seed=self.seed,
+                                     ckpt_dir=self.opts.ckpt_dir,
+                                     epoch=self.epoch
+                                     )
+            scores.update(metrics)
+
+            # Handle loss
+            scores['loss'] = results.pop("loss", 0.0)
+
+            # Dumping things for potential post processing
+            post_processing(post_processing=self.post_processing,
+                            results=results,
+                            split=split,
+                            seed=self.seed,
+                            ckpt_dir=self.opts.ckpt_dir,
+                            epoch=self.epoch,
+                            dl=dl
+                            )
+
+            # Logging scores
+            for k, v in scores.items():
+                self.logger.info("'{}': {}".format(k, v))
+
+            # Saving the metrics for current split
             self.scores.append(scores)

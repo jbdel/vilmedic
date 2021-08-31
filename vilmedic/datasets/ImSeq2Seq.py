@@ -10,6 +10,10 @@ class ImSeq2Seq(Dataset):
         self.seq2seq = Seq2Seq(src, tgt, split, ckpt_dir)
         self.image = ImageDataset(**image, split=split)
 
+        # For decoding
+        self.tgt_tokenizer = self.seq2seq.tgt.tokenizer
+        self.tgt_len = self.seq2seq.tgt.max_len
+
         assert len(self.image) == len(self.seq2seq)
 
     def __getitem__(self, index):

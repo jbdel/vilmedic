@@ -18,6 +18,7 @@ dataset:
 
   src:
     root: data/siim/
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
     file: reports.txt
     max_len: 80
 

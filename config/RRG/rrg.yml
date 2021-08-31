@@ -1,0 +1,58 @@
+name: RRG
+ckpt_dir: ckpt
+dataset:
+  proto: ImSeqDataset
+  image:
+    root: data/report_sum/mimic-cxr/
+    file: image.tok
+    image_path: data/report_sum/
+    load_memory: False
+    ext: .jpg
+  seq:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    tokenizer: data/report_sum/huggingface/biomed_roberta_base
+    max_len: 80
+    tokenizer_max_len: 250
+    source: tgt
+
+model:
+  proto: RRG
+  decoder:
+    proto: data/report_sum/huggingface/biomed_roberta_base
+  cnn:
+    proto: CNN
+    backbone: densenet169
+    output_layer: features
+    dropout_out: 0.0
+    permute: batch_first
+    visual_embedding_dim: 1664
+    freeze: True
+
+trainor:
+  optimizer: Adam
+  optim_params: {lr: 0.00005, weight_decay: 0.}
+  batch_size: 8
+  lr_decay_factor: 0.5
+  lr_decay_patience: 2
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGE2
+
+validator:
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE2, BLEU, METEOR]
+  splits: [validate]
+
+
+ensemblor:
+  proto: Ensemblor
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGE2, BLEU, METEOR]
+  #  splits: [indiana_dev]
+  splits: [validate, test]
+  mode: all # best,all

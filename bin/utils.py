@@ -9,6 +9,13 @@ import os
 import numpy as np
 from omegaconf import OmegaConf
 from random import randrange
+import re
+
+
+def extract_seed_from_ckpt(ckpt):
+    # 1.68_10_560435.pth to 560435
+    assert os.path.exists(ckpt), '{} does not exist'.format(ckpt)
+    return re.match(".*_(.*?).pth", ckpt).group(1)
 
 
 def print_args(opts, splits, seed):

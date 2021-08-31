@@ -7,6 +7,9 @@ from six.moves import zip_longest
 from rouge_score import rouge_scorer
 from rouge_score import scoring
 import numpy as np
+from sklearn.metrics import classification_report, roc_auc_score
+import torch.nn.functional as F
+import torch
 
 
 def meteor_score(refs, hyps, language="en"):
@@ -141,6 +144,10 @@ def accuracy(refs, hyps):
 
 
 def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
+    scores = {}
+    if metrics is None or not metrics:
+        return scores
+
     assert len(refs) == len(hyps), '{} vs {}'.format(len(refs), len(hyps))
 
     # Dump
@@ -155,7 +162,6 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
     with open(hyps_file, 'w') as f:
         f.write('\n'.join(map(str, hyps)))
 
-    scores = {}
     for metric in metrics:
         if metric == 'BLEU':
             scores["BLEU"] = round(bleu_score(refs_file, hyps_file), 2)
@@ -168,7 +174,11 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
         elif metric == 'METEOR':
             scores["METEOR"] = round(meteor_score(refs_file, hyps_file) * 100, 2)
         elif metric == 'accuracy':
-            scores["accuracy"] = round(accuracy(refs, hyps) * 100, 2)
+            scores["accuracy"] = round(accuracy(refs, np.argmax(hyps, axis=-1)) * 100, 2)
+        elif metric == 'f1-score':
+            scores["f1-score"] = classification_report(refs, np.argmax(hyps, axis=-1))
+        elif metric == 'auroc':
+            scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         else:
             raise NotImplementedError(metric)
 

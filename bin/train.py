@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from utils import get_args, get, print_args, get_seed
+from utils import get_args, get, print_args, get_seed, extract_seed_from_ckpt
 from logger import set_logger
 from vilmedic.executors import Trainor, Validator
 
@@ -11,6 +11,10 @@ from vilmedic.executors import Trainor, Validator
 def main():
     opts = get_args()
     seed = get_seed()
+
+    if opts.ckpt is not None:
+        opts.ckpt = os.path.join(opts.ckpt_dir, opts.ckpt)
+        seed = extract_seed_from_ckpt(opts.ckpt)
 
     set_logger(opts.ckpt_dir, seed)
 

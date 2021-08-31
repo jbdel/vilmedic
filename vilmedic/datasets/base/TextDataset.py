@@ -11,13 +11,15 @@ def make_sentences(root, split, file):
 
 
 class TextDataset(Dataset):
-    def __init__(self, root, file, split, ckpt_dir, source='src', max_len=80, tokenizer=None, **kwargs):
+    def __init__(self, root, file, split, ckpt_dir, source='src', max_len=80, tokenizer=None, tokenizer_max_len=None,
+                 **kwargs):
 
         self.root = root
         self.split = split
         self.source = source
         self.ckpt_dir = ckpt_dir
         self.max_len = max_len
+        self.tokenizer_max_len = tokenizer_max_len
 
         self.sentences = make_sentences(root, split, file)
 
@@ -38,6 +40,7 @@ class TextDataset(Dataset):
             print('Training {} with max_len {}'.format(self.source, self.max_len))
 
     def __getitem__(self, index):
+        # ['w1', 'w2', 'w3']
         return self.sentences[index]
 
     def __len__(self):

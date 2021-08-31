@@ -34,7 +34,7 @@ def set_logger(ckpt_dir, seed):
         level=logging.DEBUG,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)",
         handlers=[
-            logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed))),
+            logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed)), mode='a+'),
             ch
         ]
     )

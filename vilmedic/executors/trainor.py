@@ -1,10 +1,12 @@
 import numpy as np
 import logging
+import torch
 import tqdm
 import sys
+import os
 
 from .validator import Validator
-from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer
+from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer, get_metric_comparison_func
 
 
 class InitTrainor(object):
@@ -16,24 +18,27 @@ class InitTrainor(object):
         self.logger = logging.getLogger(str(seed))
 
         # Checkpoints
-        self.saver = CheckpointSaver(ckpt_dir=self.opts.ckpt_dir, logger=self.logger, seed=self.seed)
+        self.saver = CheckpointSaver(ckpt_dir=self.opts.ckpt_dir, logger=self.logger, seed=self.seed,
+                                     ckpt=self.opts.ckpt)
 
         # Dataloader
         self.dl = create_data_loader(self.opts, split='train', logger=self.logger)
 
         # Model
-        self.model = create_model(self.opts, logger=self.logger)
-        # self.model = torch.nn.DataParallel(self.model)
+        self.model = create_model(self.opts, logger=self.logger, state_dict=self.opts.ckpt)
         self.model.cuda()
 
         # Optimizer
         self.optimizer = create_optimizer(opts=self.opts, logger=self.logger, params=self.model.parameters())
 
-        # Hyper
+        # Training
         self.lr = self.optimizer.defaults['lr']
-        self.early_stop_metric = self.opts.early_stop_metric
         self.eval_start = self.opts.eval_start
         self.grad_accu = self.opts.grad_accu or 1
+
+        # Model selection
+        self.early_stop_metric = self.opts.early_stop_metric
+        self.metric_comp_func = get_metric_comparison_func(self.early_stop_metric)
 
         # Validator is None at init
         self.evaluator: Validator = None
@@ -44,10 +49,18 @@ class Trainor(InitTrainor):
         super().__init__(opts=opts, seed=seed)
 
     def start(self):
+        # setting up training parameters
         lr_patience = 0
         early_stop = 0
+        start_epoch = 0
+        self.evaluator.current_best_metric = 0.0 if self.metric_comp_func.__name__ == 'gt' else float('inf')
 
-        for epoch in range(0, self.opts.epochs + 1):
+        # If we loaded a checkpoint, adjust parameters
+        self.evaluator.current_best_metric = self.saver.current_tag or self.evaluator.current_best_metric
+        start_epoch = self.saver.current_epoch or start_epoch
+
+        # Training
+        for epoch in range(int(start_epoch), self.opts.epochs + 1):
             self.model.train()
             self.optimizer.zero_grad()
             losses = []
@@ -55,8 +68,14 @@ class Trainor(InitTrainor):
             log = ""
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
             for batch in pbar:
-                out = self.model(**batch)
+                if type(batch) is dict:
+                    out = self.model(**batch)
+                else:
+                    out = self.model(batch)
+
                 loss = out['loss']
+                if isinstance(self.model, torch.nn.DataParallel):
+                    loss = loss.mean()
                 loss.backward()
                 iteration += 1
                 losses.append(loss.item())
@@ -69,11 +88,18 @@ class Trainor(InitTrainor):
                         self.lr,
                         sum(losses) / iteration,
                         self.early_stop_metric,
-                        self.evaluator.mean_eval_metric,
+                        self.evaluator.current_best_metric,
                         early_stop,
                     )
                     pbar.set_description(log)
-                # break
+
+            # self.model.eval()
+            # out = self.model(**batch)
+            # logits = torch.argmax(out["logits"], dim=-1)
+            # for l in logits:
+            #     self.logger.info(self.dl.dataset.tokenizer.decode(l, skip_special_tokens=True,
+            #                                                       clean_up_tokenization_spaces=False))
+            # self.model.train()
 
             # Perform last update if needed
             if iteration % self.grad_accu != 0:
@@ -88,9 +114,9 @@ class Trainor(InitTrainor):
 
                 # Fetch eval score and compute early stop
                 mean_eval_metric = np.mean([s[self.early_stop_metric] for s in self.evaluator.scores])
-                if mean_eval_metric > self.evaluator.mean_eval_metric:
-                    self.saver.save(model=self.model.state_dict(), tag=mean_eval_metric, current_step=epoch)
-                    self.evaluator.mean_eval_metric = mean_eval_metric
+                if self.metric_comp_func(mean_eval_metric, self.evaluator.current_best_metric):
+                    self.saver.save(model=self.model.state_dict(), tag=mean_eval_metric, current_epoch=epoch)
+                    self.evaluator.current_best_metric = mean_eval_metric
                     early_stop = 0
                     lr_patience = 0
                 else:

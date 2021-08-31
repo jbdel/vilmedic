@@ -1,0 +1,75 @@
+name: mysiim
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImSeqDataset
+
+  image:
+    root: data/report_sum/mimic-cxr/
+    file: image.tok
+    image_path: data/report_sum/
+    load_memory: False
+    ext: .jpg
+    custom_transform_train: >
+      transforms.Compose([
+                      transforms.Resize((256, 256)),
+                      transforms.ToTensor()])
+    custom_transform_val: >
+      transforms.Compose([
+                      transforms.Resize((256, 256)),
+                      transforms.ToTensor()])
+
+  seq:
+    root: data/report_sum/mimic-cxr/
+    file: impression.tok
+    max_len: 80
+
+model:
+  proto: DALLE
+  vae:
+    image_size: 256
+    num_layers: 3
+    num_tokens: 8192
+    codebook_dim: 1024
+    hidden_dim: 64
+    num_resnet_blocks: 1
+    temperature: 0.9
+    straight_through: False
+    ckpt: ckpt/vae_base/0.003458679188042879_0_651727.pth
+
+  dalle:
+    dim: 1024
+    num_text_tokens: 6867     # vocab size for text
+    text_seq_len: 80          # text sequence length
+    depth: 12                 # should aim to be 64
+    heads: 16                 # attention heads
+    dim_head: 64              # attention head dimension
+    attn_dropout: 0.1         # attention dropout
+    ff_dropout: 0.1
+
+trainor:
+  optimizer: RAdam
+  optim_params: {lr: 3e-4}
+  batch_size: 2
+  lr_decay_factor: 0.5
+  lr_decay_patience: 9
+  lr_min: 0.000001
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: loss
+
+validator:
+  batch_size: 16
+  metrics: []
+  splits: [validate]
+
+
+ensemblor:
+  proto: Ensemblor
+  generate_images: True
+  num_images: 4
+  batch_size: 2
+  metrics: []
+  splits: [validate]
+  mode: all # best,all

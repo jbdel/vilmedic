@@ -46,12 +46,11 @@ def main():
 
     # fetching all ckpt according to 'mode"
     ckpts = get_ckpts(os.path.join(evaluator.opts.ckpt_dir, '*.pth'), ensemble_opts.mode)
-
     # if specific checkpoint is specified
-    if ensemble_opts.checkpoint is not None:
-        ckpts = [ensemble_opts.checkpoint]
+    if ensemble_opts.ckpt is not None:
+        ckpts = [os.path.join(evaluator.opts.ckpt_dir, ensemble_opts.ckpt)]
 
-    # Give models to eveluator
+    # Give models to evaluator
     evaluator.models = [create_model(opts=ensemble_opts, logger=evaluator.logger, state_dict=ckpt).cuda().eval() for
                         ckpt in ckpts]
 

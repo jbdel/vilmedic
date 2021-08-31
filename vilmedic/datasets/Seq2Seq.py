@@ -7,6 +7,11 @@ class Seq2Seq(Dataset):
         self.split = split
         self.src = TextDataset(**src, split=split, ckpt_dir=ckpt_dir, source="src")
         self.tgt = TextDataset(**tgt, split=split, ckpt_dir=ckpt_dir, source="tgt")
+
+        # For decoding
+        self.tgt_tokenizer = self.tgt.tokenizer
+        self.tgt_len = self.tgt.max_len
+
         assert len(self.src) == len(self.tgt)
 
     def __getitem__(self, index):

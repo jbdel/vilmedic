@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-from .Seq2Seq import Seq2Seq
+
 from .base.ImageDataset import ImageDataset
 from .base.LabelDataset import LabelDataset
 

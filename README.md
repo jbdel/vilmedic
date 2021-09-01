@@ -1,15 +1,14 @@
 
-<div align="center">
-<img src="" width="50%"/>
-</div>
-
-#
-<div align="center">
+<p align="center">
+  <img src="docs/logo.png" width="150">
+  <br />
+  <br />
   <a href="https://vilmedic.readthedocs.io/en/latest/">
   <img alt="Documentation Status" src="https://readthedocs.org/projects/vilmedic/badge/?version=latest"/>
   </a>
+   <a href="https://github.com/pytorch/fairseq/blob/master/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-red.svg" /></a>
   <img src="https://img.shields.io/badge/Stanford-Medicine-red" />
-</div>
+</p>
 
 ---
 
@@ -43,5 +42,4 @@ If you use ViLMedic in your work or use any models published in ViLMedic, please
 ```
 
 ## License
-
-ViLMedic is licensed under BSD license available in [LICENSE](LICENSE) file
+ViLMedic is MIT-licensed. The license applies to the pre-trained models as well.

@@ -1,12 +1,7 @@
-.. OpenVQA documentation master file, created by
-   sphinx-quickstart on Sun Aug  4 13:54:29 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 :github_url: https://github.com/jbdel/vilmedic
 
 
-OpenVQA Documentation
+VilMedic Documentation
 =====================
 
 .. raw:: html

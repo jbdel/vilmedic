@@ -3,7 +3,7 @@
 # Written by Yuhao Cui https://github.com/cuiyuhao1996
 # --------------------------------------------------------
 
-from vilmedic.networks.mcan.fc import FC, MLP
+from .fc import FC, MLP
 
 import torch.nn as nn
 import torch.nn.functional as F

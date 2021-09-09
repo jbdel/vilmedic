@@ -2,8 +2,7 @@ name: mysiim
 ckpt_dir: ckpt
 
 dataset:
-  proto: ImSeqDataset
-
+  proto: ImSeq
   image:
     root: data/report_sum/mimic-cxr/
     file: image.tok
@@ -22,7 +21,7 @@ dataset:
   seq:
     root: data/report_sum/mimic-cxr/
     file: impression.tok
-    max_len: 80
+    tokenizer_max_len: 100
 
 model:
   proto: DALLE
@@ -40,7 +39,7 @@ model:
   dalle:
     dim: 1024
     num_text_tokens: 6867     # vocab size for text
-    text_seq_len: 80          # text sequence length
+    text_seq_len: 100         # text sequence length
     depth: 12                 # should aim to be 64
     heads: 16                 # attention heads
     dim_head: 64              # attention head dimension
@@ -52,7 +51,7 @@ trainor:
   optim_params: {lr: 3e-4}
   batch_size: 2
   lr_decay_factor: 0.5
-  lr_decay_patience: 9
+  lr_decay_patience: 2
   lr_min: 0.000001
   epochs: 99
   early_stop: 10
@@ -66,7 +65,6 @@ validator:
 
 
 ensemblor:
-  proto: Ensemblor
   generate_images: True
   num_images: 4
   batch_size: 2

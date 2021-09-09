@@ -1,7 +1,7 @@
 name: RRG
 ckpt_dir: ckpt
 dataset:
-  proto: ImSeqDataset
+  proto: ImSeq
   image:
     root: data/report_sum/mimic-cxr/
     file: image.tok
@@ -12,8 +12,7 @@ dataset:
     root: data/report_sum/mimic-cxr/
     file: impression.tok
     tokenizer: data/report_sum/huggingface/biomed_roberta_base
-    max_len: 80
-    tokenizer_max_len: 250
+    max_len: 100
     source: tgt
 
 model:
@@ -49,7 +48,6 @@ validator:
 
 
 ensemblor:
-  proto: Ensemblor
   batch_size: 16
   beam_width: 8
   metrics: [ROUGE2, BLEU, METEOR]

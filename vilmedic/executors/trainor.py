@@ -93,6 +93,7 @@ class Trainor(InitTrainor):
                     )
                     pbar.set_description(log)
 
+                # break
             # self.model.eval()
             # out = self.model(**batch)
             # logits = torch.argmax(out["logits"], dim=-1)

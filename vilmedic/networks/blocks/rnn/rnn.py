@@ -3,7 +3,7 @@ from .textencoder import TextEncoder
 from .decoder import ConditionalDecoder
 from .visualdecoder import VisualConditionalDecoder
 from ..vision import CNN
-from .beam import beam_search
+from .evaluation import beam_search
 import torch
 from .utils import get_n_params, set_embeddings
 

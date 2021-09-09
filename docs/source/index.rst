@@ -1,7 +1,7 @@
 :github_url: https://github.com/jbdel/vilmedic
 
 
-VilMedic Documentation
+ViLMedic Documentation
 =====================
 
 .. raw:: html
@@ -11,24 +11,24 @@ VilMedic Documentation
     </a>
   <img src="https://img.shields.io/badge/Stanford-Medicine-red" />
 
-ViLmedic (Vision-and-Language medical research) is a modular framework for vision and language multimodal research in the medical field.
-ViLmedic contains reference implementations of state-of-the-art vision and language architectures, referred as "blocks" and full solutions for multimodal medical tasks using one or several blocks.
+ViLMedic (Vision-and-Language medical research) is a modular framework for vision and language multimodal research in the medical field.
+ViLMedic contains reference implementations of state-of-the-art vision and language architectures, referred as "blocks" and full solutions for multimodal medical tasks using one or several blocks.
 
 .. toctree::
     :caption: The Basics
     :name: basics
     :maxdepth: 1
 
-    Installation                      <basic/getting_started>
-    General concepts                  <basic/install>
+    Installation                      <basic/installation>
+    General concepts                  <basic/concepts>
 
 .. toctree::
     :caption: ViLMedic
     :name: ViLMedic
     :maxdepth: 1
-
+    Blocks                 <vilmedic/configs>
     Blocks                 <vilmedic/blocks>
-    Solutions               <vilmedic/Solutions>
+    Models               <vilmedic/Models>
 
 .. toctree::
     :caption: Advance Topics

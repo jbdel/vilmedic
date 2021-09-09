@@ -61,14 +61,6 @@ def beam_search(
     while cur_len < max_length:
         models_inputs = [prepare_inputs_for_generation(input_ids, **m)
                          for hm, m in zip(hugg_models, model_kwargs_list)]
-        # print(models_inputs)
-        # We need to rename the input keys if we give that directly to a decoder
-        if hugg_model.config.is_decoder:
-            for model_inputs in models_inputs:
-                model_inputs["input_ids"] = model_inputs.pop("decoder_input_ids")
-                model_inputs["encoder_attention_mask"] = model_inputs.pop("attention_mask")
-                model_inputs["attention_mask"] = model_inputs.pop("decoder_attention_mask")
-                model_inputs["encoder_hidden_states"] = model_inputs.pop("encoder_outputs").last_hidden_state
 
         outputs = [hm(**model_inputs,
                           return_dict=True,
@@ -147,7 +139,6 @@ def generate(
 
 ):
     hugg_model = hugg_models[0]
-    assert hugg_model.config.is_encoder_decoder or hugg_model.config.is_decoder
     assert "attention_mask" in batch
     assert "input_ids" in batch
 
@@ -170,9 +161,8 @@ def generate(
     )
 
     # Huggingface seq2seq : Get each encoder output.
-    if encoder_outputs is None:
-        encoder_outputs = [{"encoder_outputs": hm.get_encoder()(**{**batch, **{'return_dict': True}})}
-                           for hm in hugg_models]
+    encoder_outputs = [{"encoder_outputs": hm.get_encoder()(**{**batch, **{'return_dict': True}})}
+                       for hm in hugg_models]
 
     # get distribution pre_processing samplers
     logits_processor = hugg_model._get_logits_processor(

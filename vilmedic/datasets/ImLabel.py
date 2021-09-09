@@ -27,3 +27,6 @@ class ImLabel(Dataset):
 
     def __len__(self):
         return len(self.image)
+
+    def __repr__(self):
+        return "ImLabel\n" + str(self.image) + '\n' + str(self.label)

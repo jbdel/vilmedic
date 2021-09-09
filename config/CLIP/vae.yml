@@ -50,7 +50,6 @@ validator:
 
 
 ensemblor:
-  proto: Ensemblor
   batch_size: 16
   metrics: []
   splits: [validate]

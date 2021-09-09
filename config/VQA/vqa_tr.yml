@@ -70,7 +70,6 @@ validator:
   splits: [val]
 
 ensemblor:
-  proto: Ensemblor
   batch_size: 16
   metrics: [accuracy]
   post_processing: [attentions]

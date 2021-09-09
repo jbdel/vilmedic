@@ -68,7 +68,6 @@ validator:
   splits: [test]
 
 ensemblor:
-  proto: Ensemblor
   batch_size: 16
   metrics: [accuracy, f1-score, auroc]
   splits: [test]

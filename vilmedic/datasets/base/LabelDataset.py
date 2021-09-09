@@ -7,6 +7,7 @@ import os
 import pydicom
 import numpy as np
 from .utils import Labels, load_file
+import json
 
 
 def make_labels(root, split, file):
@@ -16,23 +17,25 @@ def make_labels(root, split, file):
 class LabelDataset(Dataset):
 
     def __init__(self, root, ckpt_dir, split, file, **kwargs):
-
         self.root = root
         self.split = split
 
         self.labels = make_labels(root, split, file)
         label_file = os.path.join(ckpt_dir, 'labels')
 
-        if split == 'train':
-            labels_map = Labels(self.labels)
-            if not os.path.exists(label_file): labels_map.dump(label_file)
-            print('Labels:', labels_map)
+        if split == 'train' and not os.path.exists(label_file):
+            Labels(self.labels).dump(label_file)
 
         self.labels_map = Labels().load(label_file)
-        self.labels = [torch.tensor(self.labels_map.label2idx(label)).long() for label in self.labels]
+        self.labels = [torch.tensor(self.labels_map.label2idx[label]).long() for label in self.labels]
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, index):
         return self.labels[index]
+
+    def __repr__(self):
+        return "LabelDataset\n" + \
+               json.dumps({"num_labels": len(self.labels_map.labels)}, indent=4,
+                          sort_keys=False, default=str)

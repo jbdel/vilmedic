@@ -6,7 +6,7 @@ from vilmedic.networks.blocks.rnn.textencoder import TextEncoder
 from vilmedic.networks.blocks.rnn.decoder import ConditionalDecoder
 from vilmedic.networks.blocks.rnn.visualdecoder import VisualConditionalDecoder
 from vilmedic.networks.blocks.vision import *
-from vilmedic.networks.blocks.rnn.beam import beam_search
+from vilmedic.networks.blocks.rnn.evaluation import beam_search
 from vilmedic.networks.models.utils import get_n_params
 
 

@@ -19,7 +19,7 @@ def beam_search(models, opts, dl):
 
     # Get tokenizer and reference sentences from dataloader
     ref_str = 'input_ids'
-    tokenizer = dl.dataset.tokenizer
+    tokenizer = dl.dataset.tgt_tokenizer
     max_len = dl.dataset.max_len
 
     ref_list = []

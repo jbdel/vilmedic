@@ -21,7 +21,8 @@ def get_network(backbone, output_layer, pretrained, **kwargs):
 
 
 class CNN(nn.Module):
-    def __init__(self, backbone, dropout_out, permute, freeze=True, output_layer=None, pretrained=True, **kwargs):
+    def __init__(self, backbone, dropout_out, permute, freeze=True, output_layer=None, pretrained=True,
+                 visual_embedding_dim=None, **kwargs):
         super(CNN, self).__init__()
         self.backbone = backbone
         self.output_layer = output_layer

@@ -29,3 +29,7 @@ class ImSeq2Seq(Dataset):
 
     def __len__(self):
         return len(self.seq2seq)
+
+    def __repr__(self):
+        return "ImSeq2Seq\n" + str(self.seq2seq) + '\n' + str(self.image)
+

@@ -1,13 +1,11 @@
-from vilmedic.networks.mcan.mca import MCA_ED
-from vilmedic.networks.mcan.layer_norm import LayerNorm
-from vilmedic.networks.mcan.make_mask import make_mask
-from vilmedic.networks.mcan.net import AttFlat
+from vilmedic.networks.blocks.others.mcan import MCA_ED
+from vilmedic.networks.blocks.others.mcan import LayerNorm
+from vilmedic.networks.blocks.others.mcan.make_mask import make_mask
+from vilmedic.networks.blocks.others.mcan import AttFlat
 
-from vilmedic.networks.vision import *
-from vilmedic.networks.classifier.evaluation import evaluation
-from vilmedic.networks.classifier.losses import get_loss
+from vilmedic.networks.blocks.classifier.evaluation import evaluation
+from vilmedic.networks.blocks.classifier.losses import get_loss
 import torch.nn as nn
-import torch
 
 
 class SIM_MCAN(nn.Module):

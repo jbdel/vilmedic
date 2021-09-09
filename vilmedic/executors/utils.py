@@ -70,9 +70,6 @@ def create_model(opts, logger, state_dict=None):
 
 
 def create_data_loader(opts, split, logger):
-    if split == 'train':
-        logger.debug('DataLoader')
-
     dataset_opts = copy.deepcopy(opts.dataset)
     dataset = eval(dataset_opts.proto)(split=split, ckpt_dir=opts.ckpt_dir, **dataset_opts)
 
@@ -82,6 +79,9 @@ def create_data_loader(opts, split, logger):
         collate_fn = default_collate
 
     if split == 'train':
+        logger.debug('DataLoader')
+        logger.info(dataset)
+
         sampler = BatchSampler(
             RandomSampler(dataset),
             batch_size=opts.batch_size, drop_last=False)

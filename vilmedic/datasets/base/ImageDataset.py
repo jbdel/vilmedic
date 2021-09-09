@@ -6,6 +6,7 @@ import os
 import pydicom
 import numpy as np
 from .utils import load_file
+import json
 
 
 def open_image(image, ext):
@@ -56,8 +57,6 @@ class ImageDataset(Dataset):
                 transforms.Normalize((0.485, 0.456, 0.406),
                                      (0.229, 0.224, 0.225))]) if custom_transform_train is None else eval(
                 custom_transform_train)
-
-            print(self.transform)
         else:
             self.transform = transforms.Compose([
                 transforms.Resize((self.crop, self.crop)),
@@ -77,3 +76,11 @@ class ImageDataset(Dataset):
         if not self.load_memory:
             image = open_image(image, self.ext).convert('RGB')
         return self.transform(image)
+
+    def __repr__(self):
+        return "ImageDataset\n" + \
+               json.dumps({
+                   "transforms": self.transform.transforms,
+                   "image_path": self.image_path,
+                   "ext": self.ext,
+               }, indent=4, sort_keys=False, default=str)

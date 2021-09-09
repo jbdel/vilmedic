@@ -10,7 +10,6 @@ def beam_search(models, opts, dl):
     ref_list = []
     hyp_list = collections.defaultdict(list)
 
-    print(len(models))
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
             ref_list.extend(batch['labels'].data.cpu().numpy())

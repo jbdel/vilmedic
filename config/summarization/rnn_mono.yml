@@ -70,7 +70,6 @@ validator:
 
 
 ensemblor:
-  proto: Ensemblor
   batch_size: 16
   beam_width: 8
   metrics: [ROUGE2, BLEU, METEOR]

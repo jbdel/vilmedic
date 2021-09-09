@@ -22,14 +22,14 @@ ensemblor:
   splits: [validate, test]
 ```
 
-####Name and exp <br/>
+#### Name and exp <br/>
 <hr/>
 
 All output files (logs, checkpoints,... ) will be stored in `ckpt/my_exp`.
 
 <br/>
 
-####Dataset <br/>
+#### Dataset <br/>
 <hr/>
 
 `proto` contains the dataset classname existing in the [dataset folder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/datasets/__init__.py).
@@ -61,7 +61,7 @@ class my_dataset(Dataset):
 
 <br/>
 
-####Model <br/>
+#### Model <br/>
 <hr/>
 
 `proto` contains the model classname existing in the [model folder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/__init__.py).
@@ -99,7 +99,7 @@ class my_model(nn.Module):
 
 <br/>
 
-####Trainor <br/>
+#### Trainor <br/>
 <hr/>
 
 Defines the training loop. Here are options available
@@ -123,7 +123,7 @@ trainor:
 
 <br/>
 
-####Validator <br/>
+#### Validator <br/>
 <hr/>
 
 
@@ -143,7 +143,7 @@ will return metrics for each split and the Trainor will use the averaged `early_
 
 <br/>
 
-####Ensemblor <br/>
+#### Ensemblor <br/>
 <hr/>
 
 

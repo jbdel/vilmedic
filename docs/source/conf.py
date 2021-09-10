@@ -12,8 +12,8 @@
 #
 import os
 import sys
-
 sys.path.insert(0, os.path.abspath('.'))
+
 
 # -- Project information -----------------------------------------------------
 
@@ -24,32 +24,13 @@ author = 'Jean-Benoit Delbrouck'
 # The full version, including alpha/beta/rc tags
 release = 'latest'
 
-master_doc = 'index'
 
-# The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-#
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.txt': 'markdown',
-    '.md': 'markdown',
-}
+# -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx_markdown_tables',
-    'recommonmark',
-]
+extensions = ['myst_parser']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +38,8 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = []
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -70,15 +52,3 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-
-# Add cusotm css overrides
-def setup(app):
-    app.add_css_file("custom.css")
-
-
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
-
-# Disable docstring inheritance
-autodoc_inherit_docstrings = False

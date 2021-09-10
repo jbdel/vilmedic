@@ -4,7 +4,7 @@ Here is the list of all available models in ViLMedic
 
 ## Radiology Report Generation
 
-```
+```bash
 for i in {1..6}
 do
     python bin/train.py config/RRG/rrg.yml \

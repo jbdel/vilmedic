@@ -74,7 +74,7 @@ html_static_path = ['_static']
 
 # Add cusotm css overrides
 def setup(app):
-    app.add_stylesheet("custom.css")
+    app.add_css_file("custom.css")
 
 
 # The name of the Pygments (syntax highlighting) style to use.

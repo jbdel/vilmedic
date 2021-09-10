@@ -12,7 +12,7 @@ def listify(l):
 
 class METEORScorer:
     def __init__(self):
-        self.jar = "cocoeval/meteor/meteor-1.5.jar"
+        self.jar = "./vilmedic/scorers/nlg/meteor/meteor-1.5.jar"
         self.__cmdline = ["java", "-Xmx2G", "-jar", self.jar,
                           "-", "-", "-stdio"]
         self.env = os.environ
@@ -68,7 +68,6 @@ class METEORScorer:
         # Compute final METEOR
         try:
             score = float(proc.stdout.readline().strip())
-            score = 100 * score
         except Exception as e:
             score = 0.0
         finally:

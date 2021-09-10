@@ -1,4 +1,5 @@
 from vilmedic.networks.models.vqa.VQA import VQA
+from vilmedic.networks.models.vqa.VQA_tr import VQA_tr
 from vilmedic.networks.models.summarization.SumRNN import SumRNN
 from vilmedic.networks.models.summarization.SumHugMulti import SumHugMulti
 from vilmedic.networks.models.summarization.SumHugMono import SumHugMono

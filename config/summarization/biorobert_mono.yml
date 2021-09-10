@@ -25,7 +25,7 @@ model:
 
 trainor:
   optimizer: RAdam
-  optim_params: {lr: 0.0005, weight_decay: 0.00001}
+  optim_params: {lr: 0.00005, weight_decay: 0.0}
   batch_size: 64
   lr_decay_factor: 0.5
   lr_decay_patience: 2
@@ -36,16 +36,15 @@ trainor:
   early_stop_metric: ROUGE2
 
 validator:
-  batch_size: 16
+  batch_size: 4
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
+  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
   splits: [validate]
 
 
 ensemblor:
-  batch_size: 16
+  batch_size: 4
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
-  #  splits: [indiana_dev]
+  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
   splits: [validate, test]
-  mode: all # best,all
+  mode: all

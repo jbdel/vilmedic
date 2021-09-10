@@ -17,7 +17,7 @@ dataset:
 
 model:
   proto: VQA_tr
-  visual:
+  cnn:
     proto: CNN
     backbone: densenet169
     output_layer: features
@@ -40,9 +40,11 @@ model:
     initializer_range: 0.02
     layer_norm_eps: 1.e-12
 
-  classif:
+  classifier:
+    proto: Classifier
     input_size: 768
     num_classes: 330
+    dropout: 0.
 
   loss:
       proto: LabelSmoothingCrossEntropy
@@ -66,12 +68,12 @@ trainor:
 validator:
   batch_size: 16
   metrics: [accuracy]
-  post_processing: [attentions]
+#  post_processing: [attentions]
   splits: [val]
 
 ensemblor:
   batch_size: 16
   metrics: [accuracy]
-  post_processing: [attentions]
-  splits: [val]
-  mode: all # best,all
+#  post_processing: [attentions]
+  splits: [val, test]
+  mode: all

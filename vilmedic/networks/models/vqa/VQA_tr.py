@@ -11,14 +11,15 @@ from transformers.models.bert_generation import BertGenerationConfig
 
 
 class VQA_tr(nn.Module):
-    def __init__(self, visual, classif, adapter, transformer, loss, **kwargs):
+    def __init__(self, cnn, classifier, adapter, transformer, loss, **kwargs):
         super(VQA_tr, self).__init__()
 
-        visual_func = visual.pop('proto')
+        cnn_func = cnn.pop('proto')
         loss_func = loss.pop('proto')
+        classifier_func = classifier.pop('proto')
         bert_conf = BertGenerationConfig(**transformer)
 
-        self.encoder = eval(visual_func)(**visual)
+        self.cnn = eval(cnn_func)(**cnn)
         self.adapter = nn.Sequential(
             nn.Linear(adapter.pop('input_size'), adapter.pop('output_size')),
             torch.nn.LayerNorm(bert_conf.hidden_size, eps=bert_conf.layer_norm_eps)
@@ -26,16 +27,15 @@ class VQA_tr(nn.Module):
 
         self.transformer = BertEncoder(bert_conf)
         self.pooler = BertPooler(bert_conf)
-        self.classifier = nn.Sequential(
-            nn.Linear(classif.pop('input_size'), classif.pop('num_classes')),
-        )
+        self.classifier = eval(classifier_func)(**classifier)
 
         self.loss_func = get_loss(loss_func, **loss).cuda()
+
         # Evaluation
         self.eval_func = evaluation
 
     def forward(self, images, labels, **kwargs):
-        out, mask = self.encoder(images.cuda())
+        out = self.cnn(images.cuda())
         out = self.adapter(out)
         out = self.transformer(out, output_attentions=True)
 

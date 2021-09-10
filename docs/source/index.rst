@@ -29,7 +29,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     :maxdepth: 1
 
     concepts                 <advance/concepts>
-    configs                 <advance/config>
+    configs                 <advance/configs>
     models                 <advance/models>
     blocks                 <advance/blocks>
 ------

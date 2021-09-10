@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class Classifier(nn.Module):
-    def __init__(self, input_size, num_classes, dropout, **kwargs):
+    def __init__(self, input_size, num_classes, dropout=0., **kwargs):
         super(Classifier, self).__init__()
         self.classifier = nn.Sequential(
             nn.Linear(in_features=input_size, out_features=num_classes)

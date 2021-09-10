@@ -50,14 +50,13 @@ trainor:
 validator:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
+  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
   splits: [validate]
 
 
 ensemblor:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
-  #  splits: [indiana_dev]
+  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
   splits: [validate, test]
-  mode: all # best,all
+  mode: all

@@ -1,4 +1,4 @@
-name: RRG
+name: rrg
 ckpt_dir: ckpt
 dataset:
   proto: ImSeq

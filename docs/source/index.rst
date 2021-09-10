@@ -15,27 +15,20 @@ ViLMedic (Vision-and-Language medical research) is a modular framework for visio
 ViLMedic contains reference implementations of state-of-the-art vision and language architectures, referred as "blocks" and full solutions for multimodal medical tasks using one or several blocks.
 
 .. toctree::
-    :caption: The Basics
-    :name: basics
-    :maxdepth: 1
-
-    Installation                      <basic/installation>
-    General concepts                  <basic/concepts>
-
-.. toctree::
     :caption: ViLMedic
-    :name: ViLMedic
+    :name: vilmedic
     :maxdepth: 1
-    Blocks                 <vilmedic/configs>
-    Blocks                 <vilmedic/blocks>
-    Models               <vilmedic/Models>
+    Installation                 <vilmedic/installation>
+    Models                 <vilmedic/models>
 
 .. toctree::
     :caption: Advance Topics
     :name: advance
     :maxdepth: 1
-
-    Adding a model                 <vilmedic/adding>
+    concepts                 <advance/concepts>
+    configs                 <advance/config>
+    models                 <advance/models>
+    blocks                 <advance/blocks>
 ------
 
 This repo is currently maintained by JB Delbrouck.

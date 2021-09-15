@@ -22,7 +22,7 @@ def print_args(opts, splits, seed):
     for split in splits:
         d = OmegaConf.to_container(getattr(opts, split))
         logger = logging.getLogger(str(seed))
-        logger.debug(split)
+        logger.settings(split)
         logger.info(json.dumps(d, indent=4, sort_keys=True))
 
 

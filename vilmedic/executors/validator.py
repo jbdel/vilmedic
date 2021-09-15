@@ -18,7 +18,6 @@ class InitValidator(object):
         self.models = models
         self.metrics = opts.metrics
         self.post_processing = opts.post_processing
-        self.current_best_metric = None
         self.epoch = 0
 
 

@@ -27,7 +27,15 @@ class LabelDataset(Dataset):
             Labels(self.labels).dump(label_file)
 
         self.labels_map = Labels().load(label_file)
-        self.labels = [torch.tensor(self.labels_map.label2idx[label]).long() for label in self.labels]
+
+        labels = []
+        for label in self.labels:
+            try:
+                labels.append(torch.tensor(self.labels_map.label2idx[label]).long())
+            except KeyError:
+                # Label in this split is not present in train set, this can happen
+                labels.append(torch.tensor(-100).long())
+        self.labels = labels
 
     def __len__(self):
         return len(self.labels)

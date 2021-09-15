@@ -1,3 +1,11 @@
+<div style="warning_box">
+	<b>Warning: </b> The models are resource-hungry. If you can run a configuration because the training batch-size 
+	is too big, you can use the following option:
+<pre>python bin/train.py config/RRG/rrg.yml \
+    trainor.batch_size=8 \
+    trainor.grad_accu=8     </pre>	
+</div>
+
 # Models
 
 Here is the list of all available models in ViLMedic
@@ -33,7 +41,7 @@ model:
 ### Results
 
 ```
-python bin/ensemblor.py config/RRG/rrg.yml \
+python bin/ensemble.py config/RRG/rrg.yml \
     ensemblor.batch_size=4 \
     ensemblor.beam_width=8 \
     ensemblor.mode=best-1 \
@@ -68,7 +76,7 @@ model:
 One model: 
 
 ```
-python bin/ensemblor.py config/RRG/biorobert_mono.yml \
+python bin/ensemble.py config/RRG/biorobert_mono.yml \
     ensemblor.batch_size=4 \
     ensemblor.beam_width=8 \
     ensemblor.mode=best-1 \
@@ -83,9 +91,9 @@ python bin/ensemblor.py config/RRG/biorobert_mono.yml \
 ## Medical VQA
 
 ```
-for i in {1..6}
+for i in {1..10}
 do
-    python bin/train.py config/VQA/vqa_tr.yml \
+    python bin/train.py config/VQA/vqa.yml \
         trainor.batch_size=32 \
         validator.batch_size=4 \
         name=vqa
@@ -128,19 +136,21 @@ model:
       proto: LabelSmoothingCrossEntropy
 ```
 ### Results
-One model: 
 
 ```
-python bin/ensemblor.py config/VQA/vqa_tr.yml \
+python bin/ensemble.py config/VQA/vqa_tr.yml \
     ensemblor.batch_size=4 \
-    ensemblor.mode=best-1 \
+    ensemblor.mode=best-7 \
     name=vqa
 ```
 
-| Split  |     Accuracy | 
-| ------------- |:-------------:|
-| VQA-Med-2021 val   | 67.60
-| VQA-Med-2021 test   |  -
+| Split  |  Model |   Accuracy | 
+| ------------- |:-------------:|:-------------:|
+| VQA-Med-2021 val-1 (in-domain)  | ours (single model) | 69.0
+|   | ours (ens-7) | 72.0
+|   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 69.2
+| VQA-Med-2021 val-2 (out-domain)  | ours (ens-7)  | 36.1
+|   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
 
 
 ## DALLE

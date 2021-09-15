@@ -49,17 +49,21 @@ model:
 trainor:
   optimizer: RAdam
   optim_params: {lr: 3e-4}
+  clip_grad_norm: 0.5
   batch_size: 2
-  lr_decay_factor: 0.5
-  lr_decay_patience: 2
-  lr_min: 0.000001
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.5
+    patience: 2
+    min_lr: 0.000001
+    threshold_mode: abs
   epochs: 99
   early_stop: 10
   eval_start: 0
   early_stop_metric: loss
 
 validator:
-  batch_size: 16
+  batch_size: 8
   metrics: []
   splits: [validate]
 

@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import torch
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -51,7 +52,7 @@ def main():
         ckpts = [os.path.join(evaluator.opts.ckpt_dir, ensemble_opts.ckpt)]
 
     # Give models to evaluator
-    evaluator.models = [create_model(opts=ensemble_opts, logger=evaluator.logger, state_dict=ckpt).cuda().eval() for
+    evaluator.models = [create_model(opts=ensemble_opts, logger=evaluator.logger, state_dict=torch.load(ckpt)).cuda().eval() for
                         ckpt in ckpts]
 
     # Boom

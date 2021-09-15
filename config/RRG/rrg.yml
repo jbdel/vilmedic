@@ -30,11 +30,16 @@ model:
 
 trainor:
   optimizer: Adam
-  optim_params: {lr: 0.00005, weight_decay: 0.}
+  optim_params:
+    lr: 0.00005
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.5
+    patience: 2
+    min_lr: 0.000001
+    threshold_mode: abs
   batch_size: 8
-  lr_decay_factor: 0.5
-  lr_decay_patience: 2
-  lr_min: 0.000001
   epochs: 99
   early_stop: 10
   eval_start: 0

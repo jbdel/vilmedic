@@ -1,7 +1,8 @@
-.rst-content code.literal {
-    color: inherit;
-    font-size: 85%;
-    border: none;
-    background: #F0F0F0;
-    padding: 2px 3px 1px;
+.warning_box {
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #aaa;
+    text-align: justify;
+    background-color:#ffeedd;border-color:#ff8822;
+    line-height: 1.8;
 }

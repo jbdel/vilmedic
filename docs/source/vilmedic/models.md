@@ -1,10 +1,11 @@
-<span style="warning_box">
+<div class="warning_box">
 	<b>Warning: </b> The models are resource-hungry. If you can run a configuration because the training batch-size 
 	is too big, you can use the following option:
-<pre>python bin/train.py config/RRG/rrg.yml \
+	<div class="highlight">
+<pre>python bin/train.py config/task/conf.yml \
     trainor.batch_size=8 \
-    trainor.grad_accu=8     </pre>	
-</span>
+    trainor.grad_accu=8     </pre></div>	
+</div>
 
 # Models
 
@@ -196,7 +197,7 @@ python bin/train.py config/CLIP/dalle.yml \
 
 **Pretrained DALLE checkpoint**
 
-[Download checkpoint](https://drive.google.com/file/d/111lGGkg0c7HPA5dBeLU8v7_pKWJWvuoT/view?usp=sharing)
+[Download DALLE checkpoint](https://drive.google.com/file/d/111lGGkg0c7HPA5dBeLU8v7_pKWJWvuoT/view?usp=sharing)
  and place it in `ckpt/dalle/`
 ```
 python bin/ensemble.py config/CLIP/dalle.yml \

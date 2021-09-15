@@ -7,3 +7,12 @@
     border-color: #ff8822;
     line-height: 1.8;
 }
+
+.data_box{
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #aaa;
+    background-color: #e6f0ff;
+    border-color: #002966;
+    line-height: 1.8;
+}

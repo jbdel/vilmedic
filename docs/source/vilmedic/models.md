@@ -155,6 +155,14 @@ python bin/ensemble.py config/VQA/vqa_tr.yml \
 
 
 ## DALLE
+
+<div class="data_box">
+	<b>Data requirements: </b> mimic-cxr-images and CLIP
+	<div class="highlight">
+<pre>python data/download.py mimic-cxr-images-512,CLIP </pre></div>	
+</div>
+
+
 It is advised to use gradient accumulation. First, we need to train a VAE.
 
 ``` 
@@ -213,5 +221,5 @@ python bin/ensemble.py config/CLIP/dalle.yml \
     ensemblor.generate_images=True
 ```
 
-This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/dalle/DALLE.py#L17) 
+This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/clip/DALLE.py#L17) 
 that generates a few images for one sample.

@@ -1,11 +1,11 @@
-name: mysiim
+name: vae
 ckpt_dir: ckpt
 
 dataset:
   proto: ImageDataset
-  root: data/report_sum/mimic-cxr/
+  root: data/CLIP/mimic-cxr/
   file: image.tok
-  image_path: data/report_sum/
+  image_path: data/images/
   load_memory: False
   custom_transform_train: >
     transforms.Compose([

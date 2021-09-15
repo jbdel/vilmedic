@@ -1,5 +1,5 @@
 omegaconf==2.0.6
-torch==1.7.1
+torch==1.8.1
 torchvision
 rouge_score
 scikit_image==0.18.2

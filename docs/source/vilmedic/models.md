@@ -1,10 +1,10 @@
-<div style="warning_box">
+<span style="warning_box">
 	<b>Warning: </b> The models are resource-hungry. If you can run a configuration because the training batch-size 
 	is too big, you can use the following option:
 <pre>python bin/train.py config/RRG/rrg.yml \
     trainor.batch_size=8 \
     trainor.grad_accu=8     </pre>	
-</div>
+</span>
 
 # Models
 
@@ -176,19 +176,41 @@ For details on the training parameters, please refer to the config files.
 
 Secondly, we need to train a DALLE model using the trained VAE:
 ```
-python bin/ensemble.py config/CLIP/dalle.yml \
-        model.vae.image_size=256 \
-        model.dalle.dim=768 \
-        model.dalle.heads=12 \
-        model.dalle.dim_head=64 \
-        model.dalle.depth=8 \
-        model.vae.ckpt=ckpt/vae.pth \
-        trainor.batch_size=8 \
-        trainor.optim_params.lr=3e-4 \
-        trainor.grad_accu=8 \
-        name=dalle
+python bin/train.py config/CLIP/dalle.yml \
+    model.vae.image_size=256 \
+    model.dalle.dim=1024 \
+    model.dalle.heads=16 \
+    model.dalle.dim_head=64 \
+    model.dalle.depth=16 \
+    trainor.batch_size=12 \
+    trainor.clip_grad_norm=0.5 \
+    trainor.grad_accu=5 \
+    trainor.lr_decay_params.patience=1 \
+    model.vae.ckpt=data/CLIP/0.0022899999748915434_32_951498.pth \
+    name="dalle" 
 ```     
 
 | Split  |     Loss | 
 | ------------- |:-------------:|
 | Mimic-CXR val   | 1.6828  
+
+**Pretrained DALLE checkpoint**
+
+[Download checkpoint](https://drive.google.com/file/d/111lGGkg0c7HPA5dBeLU8v7_pKWJWvuoT/view?usp=sharing)
+ and place it in `ckpt/dalle/`
+```
+python bin/ensemble.py config/CLIP/dalle.yml \
+    model.vae.image_size=256 \
+    model.dalle.dim=1024 \
+    model.dalle.heads=16 \
+    model.dalle.dim_head=64 \
+    model.dalle.depth=16 \
+    model.vae.ckpt=data/CLIP/0.0022899999748915434_32_951498.pth \
+    name="dalle" \
+    ckpt_dir=ckpt \
+    ckpt=1.661213994026184_4_406122.pth \
+    ensemblor.generate_images=True
+```
+
+This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/dalle/DALLE.py#L17) 
+that generates a few images for one sample.

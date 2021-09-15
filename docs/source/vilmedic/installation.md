@@ -2,7 +2,7 @@
 ViLMedic is built on top of important packages:
 
 - [python](https://www.python.org/downloads/) >= 3.5
-- [pytorch](http://pytorch.org/) == 1.7.1
+- [pytorch](http://pytorch.org/) == 1.8.1
 - [transformers](https://huggingface.co/transformers/) == 4.5.1
 
 All the packages and minor dependencies can be installed using

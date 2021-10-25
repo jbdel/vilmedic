@@ -13,6 +13,7 @@ def evaluation(models, opts, dl):
     pbar = tqdm(dl, total=len(dl))
     for batch in pbar:
         out = model(batch)
+        out['loss'] = out['loss'].mean()
         losses.append(out['loss'].cpu().data.numpy())
     return {'loss': np.ndarray.mean(np.array(losses))}
 

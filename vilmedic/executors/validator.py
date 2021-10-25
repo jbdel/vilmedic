@@ -30,7 +30,7 @@ class Validator(InitValidator):
         self.scores = []
         self.models = [m.eval() for m in self.models]
 
-        splits = [(split, create_data_loader(self.opts, split, self.opts.ckpt_dir))
+        splits = [(split, create_data_loader(self.opts, split, self.opts.logger, called_by_validator=True))
                   for split in self.opts.splits]
 
         for split, dl in splits:
@@ -52,6 +52,9 @@ class Validator(InitValidator):
 
             scores = dict()
 
+            # Handle loss
+            scores['loss'] = str(results.pop("loss", 0.0))
+
             # Handle metrics
             metrics = compute_scores(metrics=self.metrics,
                                      refs=results.pop('refs', None),
@@ -62,9 +65,6 @@ class Validator(InitValidator):
                                      epoch=self.epoch
                                      )
             scores.update(metrics)
-
-            # Handle loss
-            scores['loss'] = results.pop("loss", 0.0)
 
             # Dumping things for potential post processing
             post_processing(post_processing=self.post_processing,
@@ -77,8 +77,7 @@ class Validator(InitValidator):
                             )
 
             # Logging scores
-            for k, v in scores.items():
-                self.logger.info("'{}': {}".format(k, v))
+            self.logger.info(json.dumps(scores, indent=4, sort_keys=False))
 
             # Saving the metrics for current split
             self.scores.append(scores)

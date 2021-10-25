@@ -1,11 +1,17 @@
 import torch
 import torch.nn as nn
 from torchvision.models import *
+from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
 from .vgg_hgap import *
 
 
-def get_network(backbone, output_layer, pretrained, **kwargs):
-    network = eval(backbone)(pretrained=pretrained, **kwargs)
+def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
+    if "xrv" in backbone.lower():  # torchxrayvision
+        network = eval(backbone)(weights=weights)
+        if hasattr(network, 'model'):  # XrvResNet Fix
+            network = network.model
+    else:
+        network = eval(backbone)(pretrained=pretrained, **kwargs)
 
     if output_layer is not None and (not output_layer == 'classifier'):
         layers = [n for n, _ in network.named_children()]

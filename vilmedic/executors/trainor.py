@@ -42,7 +42,6 @@ class InitTrainor(object):
                                                             logger=self.logger, state_dict=self.state)
 
         # Training
-        self.lr = self.optimizer.defaults['lr']
         self.eval_start = self.opts.eval_start
         self.grad_accu = self.opts.grad_accu or 1
         self.clip_grad_norm = lambda x: clip_grad_norm_(x, self.opts.clip_grad_norm) if (
@@ -62,15 +61,21 @@ class Trainor(InitTrainor):
             self.model.train()
 
             losses = []
+            log = ""
             do_eval = epoch > self.eval_start - 1
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
 
             # Training
             for iteration, batch in enumerate(pbar, start=1):
                 if type(batch) is dict:
-                    out = self.model(**batch)
+                    out = self.model(**batch, dl=self.dl)
                 else:
-                    out = self.model(batch)
+                    out = self.model(batch, self.dl)
+
+                # If the model is taking care of it own training
+                if 'loss' not in out:
+                    pbar.set_description('Epoch {}, {}'.format(epoch + 1, out))
+                    continue
 
                 loss = out['loss']
                 if isinstance(self.model, torch.nn.DataParallel):
@@ -84,7 +89,7 @@ class Trainor(InitTrainor):
                     self.optimizer.zero_grad()
                     log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
                         epoch + 1,
-                        self.lr,
+                        [param_group['lr'] for param_group in self.optimizer.param_groups],
                         sum(losses) / iteration,
                         self.opts.early_stop_metric,
                         self.training_scheduler.current_best_metric,
@@ -94,7 +99,7 @@ class Trainor(InitTrainor):
                 # break
 
             # Perform last update if needed
-            if iteration % self.grad_accu != 0:
+            if (iteration % self.grad_accu != 0) and ('loss' in out):
                 self.clip_grad_norm(self.model.parameters())
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -117,5 +122,5 @@ class Trainor(InitTrainor):
                 self.saver.save(state_dict={"model": self.model.state_dict(),
                                             "training_scheduler": self.training_scheduler.state_dict(),
                                             "optimizer": self.optimizer.state_dict()},
-                                tag=10.0,
+                                tag=mean_eval_metric,
                                 current_epoch=epoch)

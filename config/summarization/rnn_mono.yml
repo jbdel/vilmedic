@@ -57,7 +57,7 @@ trainor:
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
     factor: 0.5
-    patience: 2
+    patience: 1
     min_lr: 0.000001
     threshold_mode: abs
   epochs: 99

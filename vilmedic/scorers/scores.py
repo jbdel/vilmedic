@@ -1,21 +1,28 @@
 import os
 import numpy as np
+import json
 import torch.nn.functional as F
 import torch
 
-from .nlg import ROUGEScorer
-from .nlg import METEORScorer
-from .nlg import BLEUScorer
+from .NLG import ROUGEScorer
+from .NLG import METEORScorer
+from .NLG import BLEUScorer
+
+from .CheXbert.chexbert import CheXbert
 
 from sklearn.metrics import classification_report, roc_auc_score
 
 
 def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
     scores = {}
+    # If metric is None or empty list
     if metrics is None or not metrics:
         return scores
 
-    assert len(refs) == len(hyps), '{} vs {}'.format(len(refs), len(hyps))
+    assert refs is not None and hyps is not None, \
+        "You specified metrics but your evaluation does not return hyps nor refs"
+
+    assert len(refs) == len(hyps), 'refs and hyps must have same length : {} vs {}'.format(len(refs), len(hyps))
 
     # Dump
     base = os.path.join(ckpt_dir, '{}_{}_{}'.format(split, seed, '{}'))
@@ -47,15 +54,17 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
         elif metric == 'auroc':
             scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         elif metric == 'chexbert':
-            pass
+            scores["chexbert"], scores["chexbert-5"] = CheXbert(refs_filename=base.format('refs.chexbert.txt'),
+                                                                hyps_filename=base.format('hyps.chexbert.txt'))(hyps,
+                                                                                                                refs)
+            scores["chexbert-5_micro avg_f1-score"] = scores["chexbert-5"]["micro avg"]["f1-score"]
         else:
             raise NotImplementedError(metric)
 
     with open(metrics_file, 'a+') as f:
-        f.write(str({
+        f.write(json.dumps({
             'split': split,
             'epoch': epoch,
-            'scores': scores,
-        }) + '\n')
-
+            'scores': scores
+        }, indent=4, sort_keys=False))
     return scores

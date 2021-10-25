@@ -12,8 +12,8 @@ from vilmedic.networks.blocks.huggingface.decoder.beam_search import beam_search
 
 class DecoderModel(nn.Module):
     """
-    If proto is mentioned in encoder and decoder dict, loads pretrained models from proto strings.
-    Otherwise, loads a BertGenerationEncoder/BertGenerationDecoder model from encoder and decoder dict.
+    If proto is mentioned in decoder dict, loads pretrained models from proto strings.
+    Otherwise, loads a BertGenerationDecoder model from decoder dict.
     """
 
     def __init__(self, decoder, **kwargs):

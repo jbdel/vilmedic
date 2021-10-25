@@ -51,6 +51,12 @@ def main():
     if ensemble_opts.ckpt is not None:
         ckpts = [os.path.join(evaluator.opts.ckpt_dir, ensemble_opts.ckpt)]
 
+    if not ckpts:
+        evaluator.logger.settings("No checkpoints found")
+        sys.exit()
+
+    evaluator.logger.settings("Checkpoints are {}".format("\n".join(ckpts)))
+
     # Give models to evaluator
     evaluator.models = [create_model(opts=ensemble_opts, logger=evaluator.logger, state_dict=torch.load(ckpt)).cuda().eval() for
                         ckpt in ckpts]

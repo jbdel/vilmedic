@@ -34,7 +34,7 @@ if __name__ == '__main__':
         try:
             res = [list_files.index(r.strip()) for r in res]
         except ValueError as e:
-            sys.exit("{} of availble downloads".format(e))
+            sys.exit("{} of available downloads".format(e))
     else:
         res = [int(r.strip()) for r in res]
 

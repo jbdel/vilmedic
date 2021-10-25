@@ -55,19 +55,21 @@ def create_model(opts, logger, state_dict=None):
     # eval_func is the method called by the Validator to evaluate the model
     assert hasattr(model, "eval_func")
 
+    if state_dict is not None and "model" in state_dict:
+        params = {k.replace('module.', ''): v for k, v in state_dict["model"].items()}
+        model.load_state_dict(params)
+        logger.info('Model state loaded')
+    else:
+        logger.info(model)
+
     if torch.cuda.device_count() > 1:
         logger.info("Using {} GPUs!".format(torch.cuda.device_count()))
         model = torch.nn.DataParallel(model)
 
-    if state_dict is not None and "model" in state_dict:
-        model.load_state_dict(state_dict["model"])
-        logger.info('Model state loaded')
-    else:
-        logger.info(model)
     return model.cuda()
 
 
-def create_data_loader(opts, split, logger):
+def create_data_loader(opts, split, logger, called_by_validator=False):
     dataset_opts = copy.deepcopy(opts.dataset)
     dataset = eval(dataset_opts.proto)(split=split, ckpt_dir=opts.ckpt_dir, **dataset_opts)
 
@@ -76,7 +78,7 @@ def create_data_loader(opts, split, logger):
     else:
         collate_fn = default_collate
 
-    if split == 'train':
+    if split == 'train' and not called_by_validator:
         logger.settings('DataLoader')
         logger.info(dataset)
 
@@ -135,9 +137,7 @@ def create_training_scheduler(opts, optimizer, logger, state_dict=None):
                                            optimizer=optimizer,
                                            early_stop_metric=opts.early_stop_metric,
                                            early_stop_limit=opts.early_stop,
-                                           state_dict=opts.ckpt,
                                            **opts.lr_decay_params)
-
     logger.settings('Training scheduler created')
     if state_dict is not None and "training_scheduler" in state_dict:
         training_scheduler.load_state_dict(state_dict["training_scheduler"])
@@ -147,8 +147,8 @@ def create_training_scheduler(opts, optimizer, logger, state_dict=None):
     return training_scheduler
 
 
-class TrainingScheduler(nn.Module):
-    def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, state_dict, **lr_decay_params):
+class TrainingScheduler(object):
+    def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, **lr_decay_params):
         super().__init__()
 
         self.epoch = 0
@@ -172,7 +172,7 @@ class TrainingScheduler(nn.Module):
 
     def step(self, mean_eval_metric=None, training_loss=None):
         ret = {
-            "done_trainig": False,
+            "done_training": False,
             "save_state": False,
         }
         self.epoch = self.epoch + 1
@@ -195,7 +195,8 @@ class TrainingScheduler(nn.Module):
         else:
             self.early_stop += 1
             if self.early_stop == self.early_stop_limit:
-                ret["done_trainig"] = True
+                ret["done_training"] = True
+        return ret
 
     def __repr__(self):
         s = "TrainingScheduler (\n"
@@ -208,3 +209,14 @@ class TrainingScheduler(nn.Module):
         s += '    {0}: {1}\n'.format("current_best_metric", self.current_best_metric)
         s += ')'
         return s
+
+    def state_dict(self):
+        training_sched = {key: value for key, value in self.__dict__.items() if key != 'scheduler'}
+        training_sched["scheduler"] = self.scheduler.state_dict()
+        return training_sched
+
+    def load_state_dict(self, state_dict):
+        if "scheduler" in state_dict:  # Retro compatible with older checkpoint version
+            scheduler = state_dict.pop("scheduler")
+            self.__dict__.update(state_dict)
+            self.scheduler.load_state_dict(scheduler)

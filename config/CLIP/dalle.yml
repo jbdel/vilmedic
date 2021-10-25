@@ -11,11 +11,13 @@ dataset:
     ext: .jpg
     custom_transform_train: >
       transforms.Compose([
-                      transforms.Resize((256, 256)),
+                      transforms.Resize(256),
+                      transforms.CenterCrop(256),
                       transforms.ToTensor()])
     custom_transform_val: >
       transforms.Compose([
-                      transforms.Resize((256, 256)),
+                      transforms.Resize(256),
+                      transforms.CenterCrop(256),
                       transforms.ToTensor()])
 
   seq:
@@ -49,13 +51,13 @@ model:
 trainor:
   optimizer: RAdam
   optim_params: {lr: 3e-4}
-  clip_grad_norm: 0.5
   batch_size: 2
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
-    factor: 0.5
-    patience: 1
+    factor: 0.8
+    patience: 0
     min_lr: 0.000001
+    threshold: 0.01
     threshold_mode: abs
   epochs: 99
   early_stop: 10

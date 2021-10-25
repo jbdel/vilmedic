@@ -1,0 +1,68 @@
+name: convirt
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImSeq
+  image:
+    root: data/conVIRT/mimic-cxr/
+    file: image.tok
+    image_path: data/images/
+    load_memory: False
+    resize: 256
+    crop: 224
+    ext: .jpg
+  seq:
+    root: data/conVIRT/mimic-cxr/
+    tokenizer: data/conVIRT/huggingface/biomed_roberta_base
+    file: report.tok
+    tokenizer_max_len: 512
+
+model:
+  proto: ConVIRT
+  encoder:
+    proto: data/conVIRT/huggingface/biomed_roberta_base
+  cnn:
+    proto: CNN
+    backbone: resnet50
+    output_layer: avgpool
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+
+  projection:
+    visual_embedding_dim: 2048
+    textual_embedding_dim: 768
+    projection_dim: 768
+
+  loss:
+    proto: ConVIRTLoss
+    tau: 0.1
+    lambda_: 0.75
+trainor:
+  optimizer: RAdam
+  optim_params:
+    lr: 0.00005
+  batch_size: 64
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.5
+    patience: 1
+    min_lr: 0.000001
+    threshold: 0.01
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: loss
+
+validator:
+  batch_size: 16
+  beam_width: 8
+  splits: [validate]
+
+
+ensemblor:
+  batch_size: 16
+  beam_width: 8
+  splits: [validate, test]
+  mode: all

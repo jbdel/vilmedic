@@ -22,7 +22,7 @@ def evaluation(models, opts, dl):
                 print("Generating {} images in dir {}".format(opts.num_images, opts.ckpt_dir))
                 # text_tokens = repeat(input_id.unsqueeze(0), '() n -> b n', b=opts.num_images)
                 for i in range(opts.num_images):
-                    print("doing",i)
+                    print("doing", i)
                     output = model.dalle.generate_images(input_id.unsqueeze(0).cuda(), filter_thres=0.9)
                     print("done output")
                     save_image(output, os.path.join(opts.ckpt_dir, '{}.jpg'.format(i)), normalize=True)
@@ -47,7 +47,10 @@ class DALLE(nn.Module):
 
         assert 'ckpt' in vae, 'please specify vae checkpoint'
         self.vae = VAE(**vae)
-        self.vae.load_state_dict(torch.load(vae.pop('ckpt'))["model"], strict=True)
+
+        vae_weights = torch.load(vae.pop('ckpt'))["model"]
+        vae_weights = {name.replace('module.', ''): param for name, param in vae_weights.items()}
+        self.vae.load_state_dict(vae_weights, strict=True)
 
         self.dalle_config = dalle
         self.dalle = PyDALLE(

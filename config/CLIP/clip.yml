@@ -1,0 +1,71 @@
+name: clip
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImSeq
+  image:
+    root: data/CLIP/mimic-cxr/
+    file: image.tok
+    image_path: data/images/
+    load_memory: False
+    ext: .jpg
+    custom_transform_train: >
+      transforms.Compose([
+                      transforms.Resize(256),
+                      transforms.CenterCrop(256),
+                      transforms.ToTensor()])
+    custom_transform_val: >
+      transforms.Compose([
+                      transforms.Resize(256),
+                      transforms.CenterCrop(256),
+                      transforms.ToTensor()])
+
+  seq:
+    root: data/CLIP/mimic-cxr/
+    file: impression.tok
+    tokenizer_max_len: 256
+
+model:
+  proto: CLIP
+  clip:
+    dim_text: 512
+    dim_image: 512
+    dim_latent: 512
+    num_text_tokens: 6867
+    text_enc_depth: 6
+    text_seq_len: 256
+    text_heads: 8
+    num_visual_tokens: 512
+    visual_enc_depth: 6
+    visual_image_size: 256
+    visual_patch_size: 32
+    visual_heads: 8
+
+trainor:
+  optimizer: RAdam
+  optim_params: {lr: 3e-4}
+  batch_size: 2
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 0
+    min_lr: 0.000001
+    threshold: 0.01
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: loss
+
+validator:
+  batch_size: 8
+  metrics: []
+  splits: [validate]
+
+
+ensemblor:
+  generate_images: True
+  batch_size: 16
+  metrics: []
+  splits: [validate]
+  mode: all # best,all

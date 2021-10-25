@@ -20,6 +20,8 @@ def get_n_params(module):
     n_param_frozen = 0
 
     for param in module.parameters():
+        if not param.data.size():
+            continue
         if param.requires_grad:
             n_param_learnable += np.cumprod(param.data.size())[-1]
         else:

@@ -1,24 +1,26 @@
-name: rrg
+name: RRG
 ckpt_dir: ckpt
 dataset:
   proto: ImSeq
   image:
-    root: data/report_sum/mimic-cxr/
+    root: data/RRG/r2gen/mimic-cxr/
     file: image.tok
-    image_path: data/report_sum/
+    image_path: data/images/mimic-cxr-images-512/files/
     load_memory: False
+    resize: 256
+    crop: 224
     ext: .jpg
   seq:
-    root: data/report_sum/mimic-cxr/
-    file: impression.tok
-    tokenizer: data/report_sum/huggingface/biomed_roberta_base
-    max_len: 100
+    root: data/RRG/r2gen/mimic-cxr/
+    tokenizer: data/RRG/huggingface/biomed_roberta_base
+    file: report.tok
+    tokenizer_max_len: 200
     source: tgt
 
 model:
   proto: RRG
   decoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
+    proto: data/RRG/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169
@@ -29,33 +31,33 @@ model:
     freeze: True
 
 trainor:
-  optimizer: Adam
+  batch_size: 8
+  optimizer: RAdam
   optim_params:
     lr: 0.00005
     weight_decay: 0.
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
-    factor: 0.5
-    patience: 2
+    factor: 0.8
+    patience: 1
     min_lr: 0.000001
     threshold_mode: abs
-  batch_size: 8
   epochs: 99
   early_stop: 10
   eval_start: 0
-  early_stop_metric: ROUGE2
+  early_stop_metric: ROUGEL
 
 validator:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
+  metrics: [ROUGEL, BLEU, METEOR]
   splits: [validate]
 
 
 ensemblor:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR]
+  metrics: [ROUGEL, BLEU, METEOR]
   #  splits: [indiana_dev]
   splits: [validate, test]
   mode: all # best,all

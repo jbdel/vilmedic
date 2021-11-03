@@ -110,7 +110,7 @@ trainor:
   optimizer: RAdam
   optim_params: {lr: 0.0005, weight_decay: 0.00001}
   lr_decay_factor: 0.5
-  lr_decay_patience: 2
+  lr_decay_patience: 1
   lr_min: 0.000001
   epochs: 99
   eval_start: 0

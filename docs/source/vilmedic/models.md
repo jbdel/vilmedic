@@ -1,6 +1,6 @@
 <div class="warning_box">
-	<b>Warning: </b> The models are resource-hungry. If you can run a configuration because the training batch-size 
-	is too big, you can use the following option:
+	<b>Warning: </b> The models are resource-hungry. If you can't run a configuration because the training batch-size 
+	is too big, you may use gradient accumulation as such:
 	<div class="highlight">
 <pre>python bin/train.py config/task/conf.yml \
     trainor.batch_size=8 \

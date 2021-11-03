@@ -50,7 +50,6 @@ class TextDataset(Dataset):
 
         if show_length:
             self.show_length()
-            sys.exit()
 
     def __getitem__(self, index):
         return self.sentences[index]  # ['w1', 'w2', 'w3']
@@ -83,7 +82,13 @@ class TextDataset(Dataset):
         for index in tqdm.tqdm(range(len(self))):
             sentence = self.__getitem__(index)
             x = self.tokenizer(' '.join(sentence), **self.tokenizer_args).input_ids[0]
-            tokenizer_len.append(((x == self.tokenizer.sep_token_id).nonzero(as_tuple=True)[0]).item())
+            if self.tokenizer.sep_token_id in x:
+                length = ((x == self.tokenizer.sep_token_id).nonzero(as_tuple=True)[0]).item()
+            elif self.tokenizer.pad_token_id in x:
+                length = ((x == self.tokenizer.pad_token_id).nonzero(as_tuple=True)[0][0]).item()
+            else:
+                length = len(x)
+            tokenizer_len.append(length)
             sentence_len.append(len(sentence))
 
         _, ax = plt.subplots(1, 2)

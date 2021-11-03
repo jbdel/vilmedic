@@ -58,8 +58,11 @@ def main():
     evaluator.logger.settings("Checkpoints are {}".format("\n".join(ckpts)))
 
     # Give models to evaluator
-    evaluator.models = [create_model(opts=ensemble_opts, logger=evaluator.logger, state_dict=torch.load(ckpt)).cuda().eval() for
-                        ckpt in ckpts]
+    evaluator.models = [create_model(opts=ensemble_opts,
+                                     # we give the first evaluation split's dataloader to model
+                                     dl=evaluator.splits[0][1],
+                                     logger=evaluator.logger,
+                                     state_dict=torch.load(ckpt)).cuda().eval() for ckpt in ckpts]
 
     # Boom
     evaluator.start()

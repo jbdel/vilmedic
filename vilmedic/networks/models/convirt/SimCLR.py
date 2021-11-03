@@ -64,10 +64,6 @@ class SimCLR(nn.Module):
         loss = self.loss_fn(embeddings, labels)
         return {"loss": loss, "visual": visual}
 
-    # Necessary for generation
-    def encoder(self, images, **kwargs):
-        return self.enc(images)
-
     def __repr__(self):
         s = "SimCLR\n"
         s += str(self.visual) + '\n'

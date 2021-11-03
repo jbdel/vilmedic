@@ -48,10 +48,12 @@ def create_optimizer(opts, logger, params, state_dict=None):
     return optimizer
 
 
-def create_model(opts, logger, state_dict=None):
+def create_model(opts, dl, logger, state_dict=None):
+    # Create model, give him dataloader also
     opts = copy.deepcopy(opts.model)
-    model = eval(opts.pop('proto'))(**opts)
+    model = eval(opts.pop('proto'))(**opts, dl=dl, logger=logger)
     logger.settings('Model {} created'.format(type(model).__name__))
+
     # eval_func is the method called by the Validator to evaluate the model
     assert hasattr(model, "eval_func")
 
@@ -84,13 +86,15 @@ def create_data_loader(opts, split, logger, called_by_validator=False):
 
         sampler = BatchSampler(
             RandomSampler(dataset),
-            batch_size=opts.batch_size, drop_last=False)
+            batch_size=opts.batch_size,
+            drop_last=False)
         logger.info('Using' + type(sampler.sampler).__name__)
 
     else:  # eval or test
         sampler = BatchSampler(
             SequentialSampler(dataset),
-            batch_size=opts.batch_size, drop_last=False)
+            batch_size=opts.batch_size,
+            drop_last=False)
 
     return DataLoader(dataset,
                       num_workers=4,
@@ -156,7 +160,7 @@ class TrainingScheduler(object):
         self.early_stop_limit = early_stop_limit
         self.metric_comp_func = operator.gt
         self.mode = 'max'
-        self.current_best_metric = 0.0
+        self.current_best_metric = -float('inf')
         self.lr_decay_params = lr_decay_params
 
         if early_stop_metric == 'loss':

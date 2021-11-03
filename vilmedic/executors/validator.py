@@ -20,6 +20,10 @@ class InitValidator(object):
         self.post_processing = opts.post_processing
         self.epoch = 0
 
+        # Evaluation splits
+        self.splits = [(split, create_data_loader(self.opts, split, self.opts.logger, called_by_validator=True))
+                       for split in self.opts.splits]
+
 
 class Validator(InitValidator):
     def __init__(self, **kwargs):
@@ -30,10 +34,7 @@ class Validator(InitValidator):
         self.scores = []
         self.models = [m.eval() for m in self.models]
 
-        splits = [(split, create_data_loader(self.opts, split, self.opts.logger, called_by_validator=True))
-                  for split in self.opts.splits]
-
-        for split, dl in splits:
+        for split, dl in self.splits:
             self.logger.info('Running split: {} by ensembling {} models. '
                              'Using {}.'.format(split,
                                                 len(self.models),
@@ -53,7 +54,7 @@ class Validator(InitValidator):
             scores = dict()
 
             # Handle loss
-            scores['loss'] = str(results.pop("loss", 0.0))
+            scores['loss'] = float(results.pop("loss", 0.0))
 
             # Handle metrics
             metrics = compute_scores(metrics=self.metrics,

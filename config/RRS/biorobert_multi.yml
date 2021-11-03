@@ -3,30 +3,31 @@ ckpt_dir: ckpt
 dataset:
   proto: ImSeq2Seq
   src:
-    root: data/report_sum/mimic-cxr/
+    root: data/RRS/mimic-cxr/
     file: findings.tok
-    tokenizer: data/report_sum/huggingface/biomed_roberta_base
-    max_len: 80
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 120
   tgt:
-    root: data/report_sum/mimic-cxr/
+    root: data/RRS/mimic-cxr/
     file: impression.tok
-    tokenizer: data/report_sum/huggingface/biomed_roberta_base
-    max_len: 80
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 80
   image:
-    root: data/report_sum/mimic-cxr/
+    root: data/RRS/mimic-cxr/
     file: image.tok
-    image_path: data/report_sum/
+    image_path: data/RRS/
     load_memory: False
     resize: 256
+    crop: 224
     ext: .jpg
 
 
 model:
   proto: SumHugMulti
   encoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
+    proto: data/RRS/huggingface/biomed_roberta_base
   decoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
+    proto: data/RRS/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169
@@ -34,14 +35,19 @@ model:
     dropout_out: 0.0
     permute: batch_first
     visual_embedding_dim: 1664
+    freeze: False
+
+
 
 trainor:
-  optimizer: Adam
-  optim_params: {lr: 0.00005, weight_decay: 0.00001}
-  batch_size: 64
+  batch_size: 8
+  optimizer: RAdam
+  optim_params:
+    lr: 0.00005
+    weight_decay: 0.
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
-    factor: 0.5
+    factor: 0.8
     patience: 1
     min_lr: 0.000001
     threshold_mode: abs
@@ -53,13 +59,13 @@ trainor:
 validator:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert]
   splits: [validate]
 
 
 ensemblor:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGE2, BLEU, METEOR, ROUGEL]
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert]
   splits: [validate, test]
   mode: all

@@ -4,10 +4,8 @@ import functools
 
 # v4.3.2
 from transformers.models.auto import AutoModelForCausalLM, AutoConfig
-from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
-from transformers import EncoderDecoderModel as HFEncoderDecoderModel
-from vilmedic.networks.models.utils import get_n_params
-from vilmedic.networks.blocks.huggingface.decoder.beam_search import beam_search
+from transformers.models.bert_generation import  BertGenerationConfig, BertGenerationDecoder
+from vilmedic.networks.blocks.huggingface.decoder.beam_search import beam_search, prepare_inputs_for_generation
 
 
 class DecoderModel(nn.Module):
@@ -32,6 +30,7 @@ class DecoderModel(nn.Module):
 
         # Evaluation
         self.decoder.beam_search = functools.partial(beam_search, self.decoder)
+        self.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation, self.decoder)
 
     def forward(self, input_ids, attention_mask, encoder_outputs=None, encoder_attention_mask=None, **kwargs):
         input_ids = input_ids.cuda()

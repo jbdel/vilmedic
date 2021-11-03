@@ -6,7 +6,19 @@ from .vgg_hgap import *
 
 
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
-    if "xrv" in backbone.lower():  # torchxrayvision
+    """
+    Create sub-network given a backbone and an output_layer
+    """
+    # Create avgpool for densenet, doesnt exist as such
+    if 'densenet' in backbone and output_layer == 'avgpool':
+        sub_network = get_network(backbone, 'features', pretrained, **kwargs)
+        sub_network.add_module('relu', nn.ReLU(inplace=True))
+        sub_network.add_module('avgpool', nn.AdaptiveAvgPool2d((1, 1)))
+        sub_network.add_module('flatten', nn.Flatten(1))
+        return sub_network
+
+    # torchxrayvision
+    if "xrv" in backbone.lower():
         network = eval(backbone)(weights=weights)
         if hasattr(network, 'model'):  # XrvResNet Fix
             network = network.model
@@ -48,7 +60,6 @@ class CNN(nn.Module):
     def forward(self, images, **kwargs):
         out = self.cnn(images)
         out = self.dropout_out(out)
-
         if self.permute == "no_permute":
             out = out
         elif self.permute == "batch_first":

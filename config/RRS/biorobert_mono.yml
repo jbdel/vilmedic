@@ -1,0 +1,53 @@
+name: biorobert_mimic
+ckpt_dir: ckpt
+
+dataset:
+  proto: Seq2Seq
+  src:
+    root: data/RRS/mimic-cxr/
+    file: findings.tok
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 128
+  tgt:
+    root: data/RRS/mimic-cxr/
+    file: impression.tok
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 80
+
+model:
+  proto: SumHugMono
+  encoder:
+    proto: data/RRS/huggingface/biomed_roberta_base
+  decoder:
+    proto: data/RRS/huggingface/biomed_roberta_base
+
+trainor:
+  batch_size: 8
+  optimizer: RAdam
+  optim_params:
+    lr: 0.00005
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGE2
+
+validator:
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert]
+  splits: [validate]
+
+
+ensemblor:
+  batch_size: 16
+  beam_width: 8
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert]
+  splits: [validate, test]
+  mode: all

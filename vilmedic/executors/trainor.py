@@ -31,7 +31,7 @@ class InitTrainor(object):
         self.dl = create_data_loader(self.opts, split='train', logger=self.logger)
 
         # Model
-        self.model = create_model(self.opts, logger=self.logger, state_dict=self.state)
+        self.model = create_model(self.opts, dl=self.dl, logger=self.logger, state_dict=self.state)
 
         # Optimizer
         self.optimizer = create_optimizer(opts=self.opts, logger=self.logger, params=self.model.parameters(),
@@ -68,9 +68,9 @@ class Trainor(InitTrainor):
             # Training
             for iteration, batch in enumerate(pbar, start=1):
                 if type(batch) is dict:
-                    out = self.model(**batch, dl=self.dl)
+                    out = self.model(**batch)
                 else:
-                    out = self.model(batch, self.dl)
+                    out = self.model(batch)
 
                 # If the model is taking care of it own training
                 if 'loss' not in out:

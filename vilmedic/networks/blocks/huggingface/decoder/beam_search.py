@@ -34,7 +34,7 @@ from transformers.generation_utils import BeamSearchEncoderDecoderOutput
 from transformers.generation_utils import BeamSearchDecoderOnlyOutput
 
 
-def prepare_inputs_for_generation(input_ids, past=None, attention_mask=None, **model_kwargs):
+def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **model_kwargs):
     input_shape = input_ids.shape
     # if model is used as a decoder in encoder-decoder model, the decoder attention mask is created on the fly
     if attention_mask is None:
@@ -111,7 +111,7 @@ def beam_search(
 
     while cur_len < max_length:
         # Changed by JB
-        models_inputs = [prepare_inputs_for_generation(input_ids, **m) for m in model_kwargs_list]
+        models_inputs = [hf_models[0].prepare_inputs_for_generation(input_ids, **m) for m in model_kwargs_list]
         outputs = [hf(**model_inputs,
                       return_dict=True,
                       output_attentions=output_attentions,

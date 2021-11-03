@@ -9,17 +9,20 @@ from vilmedic.executors import Trainor, Validator
 
 
 def main():
-    opts = get_args()
+    # Get args and create seed
+    opts, override = get_args()
     seed = get_seed()
 
+    # If ckpt is specified, we continue training. Lets extract seed
     if opts.ckpt is not None:
         opts.ckpt = os.path.join(opts.ckpt_dir, opts.ckpt)
         seed = extract_seed_from_ckpt(opts.ckpt)
 
+    # Create logger according to seed
     set_logger(opts.ckpt_dir, seed)
 
-    # Nice printing the args
-    print_args(opts, ['trainor', 'validator'], seed)
+    # Nice print args
+    print_args(opts, ['trainor', 'validator'], seed, override)
 
     # Fetch args for training and validation
     train_opts = get(opts, 'trainor')

@@ -18,10 +18,13 @@ def extract_seed_from_ckpt(ckpt):
     return re.match(".*_(.*?).pth", ckpt).group(1)
 
 
-def print_args(opts, splits, seed):
+def print_args(opts, splits, seed, override):
+    logger = logging.getLogger(str(seed))
+    logger.settings("Override dict")
+    logger.info(json.dumps(OmegaConf.to_container(override), indent=4, sort_keys=True))
+
     for split in splits:
         d = OmegaConf.to_container(getattr(opts, split))
-        logger = logging.getLogger(str(seed))
         logger.settings(split)
         logger.info(json.dumps(d, indent=4, sort_keys=True))
 
@@ -37,13 +40,10 @@ def get_args():
     config = OmegaConf.load(args.config)
     override = OmegaConf.from_dotlist(others)
 
-    if override:
-        print('Overriding dict:', override)
-
     opts = OmegaConf.merge(config, override)
     opts.ckpt_dir = os.path.join(opts.ckpt_dir, opts.name)
     os.makedirs(opts.ckpt_dir, exist_ok=True)
-    return opts
+    return opts, override
 
 
 def get(opts, mode):

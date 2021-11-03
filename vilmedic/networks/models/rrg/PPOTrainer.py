@@ -21,7 +21,7 @@ from .core import (logprobs_from_logits,
                    stack_dicts,
                    add_suffix)
 from collections import defaultdict
-
+from torch_optimizer import *
 
 # Cell
 
@@ -68,7 +68,7 @@ class PPOTrainer:
     """
 
     default_params = {
-        "lr": 1.41e-5,
+        "lr": 5e-6,
         "adap_kl_ctrl": True,
         "init_kl_coef": 0.2,
         "target": 6,
@@ -114,7 +114,7 @@ class PPOTrainer:
         self.model = model
         self.encoder = encoder
         self.v_head = v_head
-        self.optimizer = Adam(model.parameters(), lr=self.ppo_params['lr'])
+        self.optimizer = RAdam(model.parameters(), lr=self.ppo_params['lr'])
 
         self.kl_ctl = AdaptiveKLController(self.ppo_params['init_kl_coef'],
                                            self.ppo_params['target'],
@@ -190,7 +190,7 @@ class PPOTrainer:
         logprobs = []
         ref_logprobs = []
         values = []
-        for i in range(int(bs / fbs)):
+        for i in range(int(bs / min(fbs, bs))):
             m_input = input_ids[i * fbs:(i + 1) * fbs]
             m_mask = attention_mask[i * fbs:(i + 1) * fbs]
             encoder = encoder_hidden_states[i * fbs:(i + 1) * fbs]

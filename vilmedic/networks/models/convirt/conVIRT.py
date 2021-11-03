@@ -129,7 +129,7 @@ class ConVIRT(nn.Module):
         self.loss_fn = eval(loss.pop("proto"))(**loss)
 
         # Evaluation
-        self.eval_func = evaluation
+        self.eval_func = evaluation2
 
     def forward(self, input_ids, attention_mask, images, **kwargs):
         images = images.cuda()
@@ -146,9 +146,6 @@ class ConVIRT(nn.Module):
 
         return {"loss": loss, "loss_l": loss_l, "loss_v": loss_v, "linguistic": linguistic, "visual": visual}
 
-    # Necessary for generation
-    def encoder(self, images, **kwargs):
-        return self.enc(images)
 
     def __repr__(self):
         s = "ConVIRT\n"

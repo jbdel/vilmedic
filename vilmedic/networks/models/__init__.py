@@ -1,9 +1,9 @@
-from vilmedic.networks.models.vqa.VQA import VQA
-from vilmedic.networks.models.vqa.VQA_tr import VQA_tr
+from vilmedic.networks.models.mvqa.MVQA import MVQA
 
 from vilmedic.networks.models.rrs.SumRNN import SumRNN
 from vilmedic.networks.models.rrs.SumHugMulti import SumHugMulti
 from vilmedic.networks.models.rrs.SumHugMono import SumHugMono
+from vilmedic.networks.models.rrs.SumHugMono_SCST import SumHugMono_SCST
 
 from vilmedic.networks.models.clip.VAE import VAE
 from vilmedic.networks.models.clip.DALLE import DALLE
@@ -14,8 +14,8 @@ from vilmedic.networks.models.rrg.RRG_PPO import RRG_PPO
 from vilmedic.networks.models.rrg.RRG_PPO_x import RRG_PPO_x
 from vilmedic.networks.models.rrg.RRG_SCST import RRG_SCST
 
-from vilmedic.networks.models.convirt.conVIRT import ConVIRT
-from vilmedic.networks.models.convirt.SimCLR import SimCLR
+from vilmedic.networks.models.selfsup.conVIRT import ConVIRT
+from vilmedic.networks.models.selfsup.SimCLR import SimCLR
 
 from vilmedic.networks.models.others.RCNN import RCNN
 

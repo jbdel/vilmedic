@@ -36,7 +36,8 @@ class Cider:
         """
 
         cider_scorer = CiderScorer(n=self._n, sigma=self._sigma)
-
+        res = {i: [v] for i, v in enumerate(res)}
+        gts = {i: [v] for i, v in enumerate(gts)}
         for id in sorted(gts.keys()):
             hypo = res[id]
             ref = gts[id]
@@ -51,7 +52,7 @@ class Cider:
 
         (score, scores) = cider_scorer.compute_score()
 
-        return score, scores
+        return score
 
     def method(self):
         return "CIDEr"

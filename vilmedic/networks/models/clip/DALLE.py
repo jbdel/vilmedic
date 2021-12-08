@@ -10,7 +10,7 @@ from vilmedic.networks.models.clip.VAE import VAE
 from vilmedic.networks.models.utils import get_n_params
 
 
-def evaluation(models, opts, dl):
+def evaluation(models, opts, dl, **kwargs):
     losses = []
     model = models[0]
 

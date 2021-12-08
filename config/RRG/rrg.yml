@@ -12,9 +12,9 @@ dataset:
     ext: .jpg
   seq:
     root: data/RRG/r2gen/mimic-cxr/
+    file: impression.tok
     tokenizer: data/RRG/huggingface/biomed_roberta_base
-    file: report.tok
-    tokenizer_max_len: 200
+    tokenizer_max_len: 120
     source: tgt
 
 model:

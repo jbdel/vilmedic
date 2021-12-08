@@ -27,9 +27,12 @@ class SumHugMono(nn.Module):
             st = create_state_dict(kwargs['ckpt']['enc'], diff='linguistic.encoder.', replace='')
             self.enc_dec.enc_dec.encoder.load_state_dict(st, strict=True)
             print("loaded")
-        if 'ckpt' in kwargs and 'dec' in kwargs['ckpt']:
+        elif 'ckpt' in kwargs and 'dec' in kwargs['ckpt']:
             st = create_state_dict(kwargs['ckpt']['dec'], diff='linguistic.encoder.', replace='roberta.')
             self.enc_dec.enc_dec.decoder.load_state_dict(st, strict=False)
+        elif 'ckpt' in kwargs:
+            self.load_state_dict(torch.load(kwargs["ckpt"])["model"])
+            print("ok")
 
         # Evaluation
         self.eval_func = evaluation

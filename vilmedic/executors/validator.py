@@ -8,9 +8,10 @@ from vilmedic.scorers.post_processing import post_processing
 
 
 class InitValidator(object):
-    def __init__(self, opts, models, seed):
+    def __init__(self, opts, models, seed, from_training):
         self.seed = seed
         self.opts = opts
+        self.from_training = from_training
 
         # Logger
         self.logger = logging.getLogger(str(seed))
@@ -43,7 +44,10 @@ class Validator(InitValidator):
 
             eval_func = get_eval_func(self.models)
             with torch.no_grad():
-                results = eval_func(self.models, self.opts, dl)
+                results = eval_func(models=self.models,
+                                    opts=self.opts,
+                                    dl=dl,
+                                    from_training=self.from_training)
 
             # model must return at least loss or (refs and hyps)
             # TODO check refs and hyps together

@@ -1,11 +1,6 @@
-import torch
-from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import *
-from .utils import Labels
 import os
-import pydicom
-import numpy as np
 from .utils import Labels, load_file
 import json
 
@@ -21,8 +16,7 @@ class LabelDataset(Dataset):
         self.split = split
 
         self.labels = make_labels(root, split, file)
-        label_file = os.path.join(ckpt_dir, 'labels')
-
+        label_file = os.path.join(ckpt_dir, 'labels.tok')
         if split == 'train' and not os.path.exists(label_file):
             Labels(self.labels).dump(label_file)
 
@@ -31,9 +25,15 @@ class LabelDataset(Dataset):
         labels = []
         for label in self.labels:
             try:
-                labels.append(torch.tensor(self.labels_map.label2idx[label]).long())
+                classes = [l for l in label.split(',')]
+                if not self.labels_map.multi_label:  # single label
+                    labels.append(torch.tensor(self.labels_map.label2idx[classes[0]]).long())
+                else:  # multi-label
+                    multi_hot = torch.zeros(len(self.labels_map.idx2label))
+                    multi_hot[[self.labels_map.label2idx[c] for c in classes]] = 1.
+                    labels.append(multi_hot)
             except KeyError:
-                # Label in this split is not present in train set, this can happen
+                # Label in a split is not present in train set, this can happen (OOD or so.)
                 labels.append(torch.tensor(-100).long())
         self.labels = labels
 

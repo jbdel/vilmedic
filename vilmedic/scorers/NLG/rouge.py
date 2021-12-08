@@ -21,4 +21,5 @@ class ROUGEScorer:
         # for score in scores:
         #     aggregator.add_scores(score)
         # print(aggregator.aggregate())
-        return np.mean([s[self.rouges[0]].fmeasure for s in scores])
+        f1_rouge = [s[self.rouges[0]].fmeasure for s in scores]
+        return np.mean(f1_rouge), f1_rouge

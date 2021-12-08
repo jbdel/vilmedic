@@ -25,7 +25,6 @@ class RRG(nn.Module):
 
         # Evaluation
         self.eval_func = evaluation
-        # self.eval_func = beam_search
 
     def forward(self, input_ids, attention_mask, images, encoder_outputs=None, **kwargs):
         images = images.cuda()

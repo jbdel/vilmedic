@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def evaluation(models, opts, dl):
+def evaluation(models, opts, dl, **kwargs):
     logits = []
     labels = []
     losses = []

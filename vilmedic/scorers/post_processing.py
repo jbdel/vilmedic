@@ -1,3 +1,4 @@
+import tqdm
 import os
 import logging
 from torchvision import transforms
@@ -7,10 +8,21 @@ import numpy as np
 import skimage.transform
 import matplotlib.cm as cm
 import math
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import umap
+import omegaconf
+
+logging.getLogger("numba").setLevel(logging.WARNING)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
-def plot_attention(attentions, pp_dir, seed, logger, split, epoch, dl, smooth=True):
+def plot_attention(results, pp_dir, seed, logger, split, epoch, dl, smooth=True, **kwargs):
+    if 'attentions' not in results:
+        logger.warn("No attention weights found in results, skipping")
+        return
     # Attention are of size num_models x bs x num_layers x num_heads x seq_len x seq_len
+    attentions = results["attentions"]
 
     # Some checks
     dataset = copy.deepcopy(dl.dataset)
@@ -21,7 +33,7 @@ def plot_attention(attentions, pp_dir, seed, logger, split, epoch, dl, smooth=Tr
         logger.error("Attention: Dataset does not have a transform attribute")
         return
 
-    out_dir = os.path.join(pp_dir, "attention_{}_{}_{}".format(seed, split, epoch))
+    out_dir = os.path.join(pp_dir, "plot_attention_{}_{}_{}".format(seed, split, epoch))
     os.makedirs(out_dir, exist_ok=True)
 
     # Getting rid of the normalization function if any
@@ -52,12 +64,77 @@ def plot_attention(attentions, pp_dir, seed, logger, split, epoch, dl, smooth=Tr
         # plt.clim(0, 1)
         plt.colorbar()
         plt.axis('off')
-        print(out_dir)
-        plt.savefig(os.path.join(out_dir, "ok"))
-        troll
+        plt.savefig(os.path.join(out_dir, "att"))
 
 
-def post_processing(post_processing, results, ckpt_dir, seed, **kwargs):
+
+def plot_representation(keys, results, pp_dir, seed, logger, split, dl, labels_keep=None, **kwargs):
+    # Getting labels
+    attr = [k for k, v in dl.dataset.__dict__.items() if 'LabelDataset' in str(v)]
+    label_dataset = getattr(dl.dataset, attr[0])
+    labels = label_dataset.labels
+    labels_map = label_dataset.labels_map.idx2label
+    multi_label = label_dataset.labels_map.multi_label
+
+    # computing repr
+    for key in keys:
+        embeddings, emb_labels = list(), list()
+        if key not in results:
+            logger.warn("Key {} is not found in results dictionary")
+            continue
+
+        for vector, label in zip(results[key], labels):
+            if multi_label:
+                c = np.where(label == 1.)[0]
+                if labels_keep is not None:
+                    c = [c_ for c_ in c if labels_map[c_] in labels_keep]
+                if len(c) != 1:
+                    continue  # cant plot a point that belongs to more than one class (or no class from labels_keep)
+                label = c[0]
+
+            else:
+                if labels_keep is not None:
+                    if not labels_map[label] in labels_keep:
+                        continue
+
+            emb_labels.append(labels_map[label])
+            embeddings.append(vector.numpy())
+
+        emb_labels = np.array(emb_labels)
+        embeddings = np.array(embeddings)
+
+        assert len(embeddings) != 0, logging.error("No embedding kept for visualization")
+
+        for visualization in [TSNE(n_components=2, n_jobs=4, verbose=0, n_iter=2000),
+                              umap.UMAP(n_neighbors=len(labels_map))
+                              ]:
+
+            visualization_name = type(visualization).__name__
+            logging.settings('Computing embeddings using {}'.format(visualization_name))
+            embeddings = visualization.fit_transform(embeddings)
+
+            # Plotting
+            fig = plt.figure()
+            for g in np.unique(emb_labels):
+                ix = np.where(emb_labels == g)
+                plt.scatter(embeddings[ix, 0], embeddings[ix, 1], s=0.1,
+                            cmap='Spectral', label=g)
+
+            plt.legend(markerscale=10, loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.tight_layout()
+            out_dir = os.path.join(pp_dir, "plot_representation_{}_{}".format(seed, split))
+            os.makedirs(out_dir, exist_ok=True)
+            fig.savefig(os.path.join(out_dir, split
+                                     + '_'
+                                     + str(key)
+                                     + '_'
+                                     + visualization_name
+                                     + '.png'))
+            plt.close()
+    return
+
+
+def post_processing(post_processing, results, ckpt_dir, seed, dl, **kwargs):
     if post_processing is None:
         return
 
@@ -65,13 +142,10 @@ def post_processing(post_processing, results, ckpt_dir, seed, **kwargs):
     pp_dir = os.path.join(ckpt_dir, 'post_processing')
     os.makedirs(pp_dir, exist_ok=True)
     for pp in post_processing:
-
-        # Plot attention weights
-        if "attentions" in pp:
-            if 'attentions' not in results:
-                logger.warn("No attention weights found in results, skipping")
-                continue
-            plot_attention(attentions=results['attentions'], pp_dir=pp_dir, seed=seed, logger=logger, **kwargs)
-
+        if "plot_attention" in pp:  # Plot attention weights
+            plot_attention(results=results, pp_dir=pp_dir, seed=seed, logger=logger, **kwargs)
+        if "plot_representation" in pp:
+            plot_representation(results=results, pp_dir=pp_dir, seed=seed, logger=logger, dl=dl,
+                                **pp["plot_representation"], **kwargs)
         else:
-            logger.warn("Post-processing: No function implemented for {}".format(pp))
+            logger.warn("Post-processing: No function implemented for '{}'".format(pp))

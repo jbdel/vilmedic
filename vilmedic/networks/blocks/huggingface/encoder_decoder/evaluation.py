@@ -3,7 +3,7 @@ import torch
 from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 
 
-def evaluation(models, opts, dl):
+def evaluation(models, opts, dl, **kwargs):
     hf_models = [model.enc_dec.enc_dec for model in models]
 
     ref_str = 'decoder_input_ids'

@@ -35,7 +35,8 @@ def main():
     # Evaluator
     evaluator = Validator(opts=val_opts,
                           models=[trainor.model],
-                          seed=seed)
+                          seed=seed,
+                          from_training=True)
 
     # Lets be gentle, give evaluator to trainor
     trainor.evaluator = evaluator

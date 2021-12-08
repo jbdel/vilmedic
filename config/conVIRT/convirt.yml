@@ -57,12 +57,16 @@ trainor:
 
 validator:
   batch_size: 16
-  beam_width: 8
   splits: [validate]
 
 
 ensemblor:
   batch_size: 16
-  beam_width: 8
-  splits: [validate, test]
+  splits: [train, validate]
+  post_processing:
+    - plot_representation:
+        keys:
+          - linguistic
+          - visual
+        labels_keep: [Pleural Effusion,Pneumonia,Pneumothorax,Cardiomegaly,Atelectasis]
   mode: all

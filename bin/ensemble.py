@@ -32,18 +32,19 @@ def get_ckpts(path, mode):
 
 
 def main():
-    opts = get_args()
+    opts, override = get_args()
     ensemble_opts = get(opts, 'ensemblor')
     seed = '{}_{}_{}'.format(ensemble_opts.mode, ensemble_opts.beam_width, get_seed())
     set_logger(opts.ckpt_dir, seed)
 
     # Nice printing the args
-    print_args(opts, ['ensemblor'], seed)
+    print_args(opts, ['ensemblor'], seed, override)
 
     # Create validator, dont give any models yet
     evaluator = Validator(opts=ensemble_opts,
                           models=None,
-                          seed=seed)
+                          seed=seed,
+                          from_training=False)
 
     # fetching all ckpt according to 'mode"
     ckpts = get_ckpts(os.path.join(evaluator.opts.ckpt_dir, '*.pth'), ensemble_opts.mode)

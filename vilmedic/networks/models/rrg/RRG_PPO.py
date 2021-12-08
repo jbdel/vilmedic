@@ -17,7 +17,7 @@ from .PPOTrainer import PPOTrainer, stack_dicts
 import random
 
 
-def evaluation(models, opts, dl):
+def evaluation(models, opts, dl, **kwargs):
     models = [m.model for m in models]  # Get trained RRG instance
     return evaluation_(models, opts, dl)
 

@@ -2,7 +2,7 @@ import tqdm
 import torch
 
 
-def evaluation(models, opts, dl):
+def evaluation(models, opts, dl, **kwargs):
     hf_models = [model.dec.decoder for model in models]
 
     # Get tokenizer and reference sentences from dataloader

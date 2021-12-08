@@ -22,12 +22,10 @@ class EncoderDecoderModel(nn.Module):
                                                                                  decoder.pop('proto'))
         else:
             # Encoder
-            encoder = vars(encoder)
             enc_config = BertGenerationConfig(**encoder)
             enc = BertGenerationEncoder(enc_config)
 
             # Decoder
-            decoder = vars(decoder)
             dec_config = copy.deepcopy(enc_config)
             dec_config.update(decoder)
             dec_config.is_decoder = True
@@ -36,6 +34,7 @@ class EncoderDecoderModel(nn.Module):
 
             # Encdec
             self.enc_dec = HFEncoderDecoderModel(encoder=enc, decoder=dec)
+        assert self.enc_dec.config.is_encoder_decoder == True
 
         # Evaluation
         self.enc_dec.beam_search = functools.partial(beam_search, self.enc_dec)

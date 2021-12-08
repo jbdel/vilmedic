@@ -6,6 +6,8 @@ from .utils import Vocab, load_file
 import json
 import sys
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
+
 
 def make_sentences(root, split, file):
     sentences = load_file(os.path.join(root, split + '.' + file))
@@ -37,7 +39,8 @@ class TextDataset(Dataset):
             if split == 'train':
                 vocab = Vocab(self.sentences)
                 if not os.path.exists(vocab_file): vocab.dump(vocab_file)
-            self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_basic_tokenize=False)
+            self.tokenizer = BertTokenizer(vocab_file=vocab_file,
+                                           do_basic_tokenize=False)
 
         # Create tokenizer forwards args
         self.tokenizer_args = {'return_tensors': 'pt', 'padding': True}
@@ -50,6 +53,7 @@ class TextDataset(Dataset):
 
         if show_length:
             self.show_length()
+            sys.exit()
 
     def __getitem__(self, index):
         return self.sentences[index]  # ['w1', 'w2', 'w3']
@@ -67,7 +71,11 @@ class TextDataset(Dataset):
                                "name_or_path": self.tokenizer.name_or_path,
                                "vocab_size": self.tokenizer.vocab_size,
                                "tokenizer_args": self.tokenizer_args,
-                               "special_tokens": self.tokenizer.special_tokens_map_extended}}, indent=4,
+                               "special_tokens": self.tokenizer.special_tokens_map_extended,
+                               "bos_token_id": self.tokenizer.bos_token,
+                               # "eos_token_id": self.tokenizer.vocab[self.tokenizer.eos_token],
+                               # "pad_token_id": self.tokenizer.vocab[self.tokenizer.pad_token],
+                           }}, indent=4,
                           sort_keys=False, default=str)
 
     def show_length(self):

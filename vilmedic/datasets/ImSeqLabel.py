@@ -11,7 +11,7 @@ class ImSeqLabel(Dataset):
         self.imgseq = ImSeq(seq, image, split=split, ckpt_dir=ckpt_dir)
         self.label = LabelDataset(**label, split=split, ckpt_dir=ckpt_dir)
 
-        assert len(self.imgseq) == len(self.label)
+        assert len(self.imgseq) == len(self.label), str(len(self.imgseq)) + 'vs ' + str(len(self.label))
 
         # For decoding, if needed
         self.tgt_tokenizer = self.imgseq.seq.tokenizer

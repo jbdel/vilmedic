@@ -7,7 +7,7 @@
 #
 # Authors: Ramakrishna Vedantam <vrama91@vt.edu> and Tsung-Yi Lin <tl483@cornell.edu>
 
-from ciderD_scorer import CiderScorer
+from .ciderD_scorer import CiderScorer
 import pdb
 
 class CiderD:
@@ -33,10 +33,11 @@ class CiderD:
 
         cider_scorer = CiderScorer(n=self._n)
 
-        for res_id in res:
-
-            hypo = res_id['caption']
-            ref = gts[res_id['image_id']]
+        res = {i: [v] for i, v in enumerate(res)}
+        gts = {i: [v] for i, v in enumerate(gts)}
+        for id in sorted(gts.keys()):
+            hypo = res[id]
+            ref = gts[id]
 
             # Sanity check.
             assert(type(hypo) is list)
@@ -47,7 +48,7 @@ class CiderD:
 
         (score, scores) = cider_scorer.compute_score(self._df)
 
-        return score, scores
+        return score
 
     def method(self):
         return "CIDEr-D"

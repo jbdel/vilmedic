@@ -7,9 +7,9 @@
     trainor.grad_accu=8     </pre></div>	
 </div>
 
-# Models
+# Solutions
 
-Here is the list of all available models in ViLMedic
+Here is the list of all available solutions in ViLMedic
 
 ## Radiology Report Generation
 

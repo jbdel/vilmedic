@@ -20,17 +20,17 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     :maxdepth: 1
 
     Installation                 <vilmedic/installation>
-    Models                 <vilmedic/models>
+    Solutions                 <vilmedic/solutions>
 
 
 .. toctree::
-    :caption: Advance Topics
+    :caption: Advanced Topics
     :name: advance
     :maxdepth: 1
 
-    concepts                 <advance/concepts>
-    configs                 <advance/configs>
-    models                 <advance/models>
+    Overview                 <advance/overview>
+    Models                 <advance/models>
+    Configs                 <advance/configs>
     blocks                 <advance/blocks>
 ------
 

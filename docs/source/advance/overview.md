@@ -1,6 +1,8 @@
 
 # Overview
-<img src="images/overview.jpg" />
+<p align="center">
+<img src="https://github.com/jbdel/vilmedic/blob/main/docs/source/advance/images/overview.jpg?raw=true" width="50%"/>
+</p>
 
 ViLMedic contains reference implementations of state-of-the-art vision and 
 language architectures (referred as "**blocks**" ) and full solutions for multimodal medical 

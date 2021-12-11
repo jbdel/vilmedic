@@ -115,8 +115,9 @@ Note that your evaluation function will receive by default a models, opts (from 
 and from_training argument.
 
 <div class="warning_box">
-The `model` argument is a list of models in evaluation mode (i.e. `eval()`). If `from_training` is `True`, then the list will contain only one model, the one 
-currently being trained. If `from_training` is `False` then it means that the Ensemblor 
+The <span class="pre">model</span> argument is a list of models in evaluation mode (i.e. <span class="pre">eval()</span>). 
+If <span class="pre">from_training</span> is <span class="pre">True</span>, then the list will contain only one model, the one 
+currently being trained. If <span class="pre">from_training</span> is <span class="pre">False</span> then it means that the Ensemblor 
 called your evaluation function with one or several trained models. 
 
 If your evaluation does not support model ensembling, then simply do:

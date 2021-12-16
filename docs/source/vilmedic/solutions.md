@@ -299,5 +299,5 @@ Here is the results on mimic-cxr (balanced):
 
 | train full (linguistic)  |     train sampled (linguistic) | train full (visual) | train sampled (visual) 
 | :-------------: |:-------------:|:-------------:|:-------------:|
-<img src="https://github.com/jbdel/vilmedic/tree/main/docs/source/images/convirt_train_full_linguistic.png?raw=true" width="23%"/> | <img src="https://github.com/jbdel/vilmedic/tree/main/docs/source/images/convirt_train_sampled_linguistic.png?raw=true" width="23%"/> |<img src="https://github.com/jbdel/vilmedic/tree/main/docs/source/images/convirt_train_full_visual.png?raw=true" width="23%"/> |<img src="https://github.com/jbdel/vilmedic/tree/main/docs/source/images/convirt_train_sampled_visual.png?raw=true" width="23%"/>
+<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_linguistic.png" /> | <img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_linguistic.png" /> |<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_visual.png" /> |<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_visual.png" />
 

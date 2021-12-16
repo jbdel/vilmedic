@@ -1,7 +1,7 @@
 
 # Overview
 <p align="center">
-<img src="https://github.com/jbdel/vilmedic/tree/main/docs/source/images/overview.jpg?raw=true" width="50%"/>
+<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/overview.jpg" width="50%"/>
 </p>
 
 ViLMedic contains reference implementations of state-of-the-art vision and 

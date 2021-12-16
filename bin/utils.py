@@ -1,3 +1,4 @@
+import collections
 import argparse
 import logging
 import copy
@@ -37,12 +38,31 @@ def get_args():
     parser.add_argument('config', type=str)
     args, others = parser.parse_known_args()
 
+    # Get configs
     config = OmegaConf.load(args.config)
-    override = OmegaConf.from_dotlist(others)
+    includes = config.get("includes", [])
 
+    if not isinstance(includes, collections.abc.Sequence):
+        raise AttributeError(
+            "Includes must be a list, {} provided".format(type(includes))
+        )
+
+    # Loop over includes
+    include_mapping = OmegaConf.create()
+    for include in includes:
+        if not os.path.exists(include):
+            include = os.path.join(os.path.dirname(args.config), include)
+
+        current_include_mapping = OmegaConf.load(include)
+        include_mapping = OmegaConf.merge(include_mapping, current_include_mapping)
+
+    # Override includes with current config
+    config = OmegaConf.merge(include_mapping, config)
+
+    # Override current config with additional args
+    override = OmegaConf.from_dotlist(others)
     opts = OmegaConf.merge(config, override)
-    opts.ckpt_dir = os.path.join(opts.ckpt_dir, opts.name)
-    os.makedirs(opts.ckpt_dir, exist_ok=True)
+
     return opts, override
 
 

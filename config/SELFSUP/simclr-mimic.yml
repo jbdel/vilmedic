@@ -3,7 +3,7 @@ ckpt_dir: ckpt
 
 dataset:
   proto: ImageDataset
-  root: data/ICLR21/mimic-cxr/
+  root: data/SELFSUP/mimic-cxr/
   file: image.tok
   image_path: data/images/
   custom_transform_train: >
@@ -105,4 +105,4 @@ ensemblor:
   batch_size: 16
   beam_width: 8
   splits: [validate, test]
-  mode: all
+  mode: best-1

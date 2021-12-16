@@ -4,7 +4,7 @@ ckpt_dir: ckpt
 dataset:
   proto: ImSeq
   image:
-    root: data/conVIRT/mimic-cxr/
+    root: data/SELFSUP/mimic-cxr-balanced/
     file: image.tok
     image_path: data/images/
     load_memory: False
@@ -12,15 +12,15 @@ dataset:
     crop: 224
     ext: .jpg
   seq:
-    root: data/conVIRT/mimic-cxr/
-    tokenizer: data/conVIRT/huggingface/biomed_roberta_base
+    root: data/SELFSUP/mimic-cxr-balanced/
+    tokenizer: data/SELFSUP/huggingface/biomed_roberta_base
     file: report.tok
     tokenizer_max_len: 512
 
 model:
   proto: ConVIRT
   encoder:
-    proto: data/conVIRT/huggingface/biomed_roberta_base
+    proto: data/SELFSUP/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: resnet50
@@ -69,4 +69,4 @@ ensemblor:
           - linguistic
           - visual
         labels_keep: [Pleural Effusion,Pneumonia,Pneumothorax,Cardiomegaly,Atelectasis]
-  mode: all
+  mode: best-1

@@ -23,6 +23,7 @@
     max-width: 100% !important;
     background: #fff !important;
     border: 1px solid #e1e4e5 !important;
-    padding: 0 5px !important;
+    padding: 2px 5px !important;
     font-size: 75% !important;
+    font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
 }

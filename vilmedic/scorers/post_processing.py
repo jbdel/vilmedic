@@ -12,7 +12,9 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import umap
 import omegaconf
+import seaborn as sns
 
+sns.set_theme(style="darkgrid")
 logging.getLogger("numba").setLevel(logging.WARNING)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
@@ -67,14 +69,16 @@ def plot_attention(results, pp_dir, seed, logger, split, epoch, dl, smooth=True,
         plt.savefig(os.path.join(out_dir, "att"))
 
 
-
-def plot_representation(keys, results, pp_dir, seed, logger, split, dl, labels_keep=None, **kwargs):
+def plot_representation(keys, results, pp_dir, seed, logger, split, dl, labels_keep=None, max_samples_per_class=None,
+                        **kwargs):
     # Getting labels
     attr = [k for k, v in dl.dataset.__dict__.items() if 'LabelDataset' in str(v)]
     label_dataset = getattr(dl.dataset, attr[0])
     labels = label_dataset.labels
     labels_map = label_dataset.labels_map.idx2label
     multi_label = label_dataset.labels_map.multi_label
+    out_dir = os.path.join(pp_dir, "plot_representation_{}_{}".format(seed, split))
+    os.makedirs(out_dir, exist_ok=True)
 
     # computing repr
     for key in keys:
@@ -103,34 +107,65 @@ def plot_representation(keys, results, pp_dir, seed, logger, split, dl, labels_k
         emb_labels = np.array(emb_labels)
         embeddings = np.array(embeddings)
 
+        np.save(os.path.join(out_dir, split
+                             + '_'
+                             + str(key)
+                             + '_'
+                             + "embeddings"), embeddings)
+
+        np.save(os.path.join(out_dir, split
+                             + '_'
+                             + str(key)
+                             + '_'
+                             + "labels"), emb_labels)
+
         assert len(embeddings) != 0, logging.error("No embedding kept for visualization")
 
+        # Filtering the number of samples per class
+        if max_samples_per_class is not None:
+            if not isinstance(max_samples_per_class, int):
+                logger.warn("Argument max_samples_per_class is not an integer, found {}. Using all points".format(
+                    type(max_samples_per_class)))
+            else:
+                new_labels = []
+                new_embeddings = []
+                for g in np.unique(emb_labels):
+                    ix = np.where(emb_labels == g)[0]
+                    np.random.shuffle(ix)
+                    new_labels.append(emb_labels[ix[:250]])
+                    new_embeddings.append(embeddings[ix[:250]])
+
+                embeddings = np.concatenate(new_embeddings)
+                emb_labels = np.concatenate(new_labels)
+
+        # Compute and save plots
         for visualization in [TSNE(n_components=2, n_jobs=4, verbose=0, n_iter=2000),
-                              umap.UMAP(n_neighbors=len(labels_map))
+                              umap.UMAP(n_neighbors=len(labels_map)),
                               ]:
 
             visualization_name = type(visualization).__name__
-            logging.settings('Computing embeddings using {}'.format(visualization_name))
-            embeddings = visualization.fit_transform(embeddings)
+            logger.settings('Computing embeddings using {}'.format(visualization_name))
+
+            embeddings_x = visualization.fit_transform(embeddings)
 
             # Plotting
             fig = plt.figure()
             for g in np.unique(emb_labels):
                 ix = np.where(emb_labels == g)
-                plt.scatter(embeddings[ix, 0], embeddings[ix, 1], s=0.1,
+                plt.scatter(embeddings_x[ix, 0], embeddings_x[ix, 1], s=0.1,
                             cmap='Spectral', label=g)
 
             plt.legend(markerscale=10, loc='center left', bbox_to_anchor=(1, 0.5))
             plt.tight_layout()
-            out_dir = os.path.join(pp_dir, "plot_representation_{}_{}".format(seed, split))
-            os.makedirs(out_dir, exist_ok=True)
-            fig.savefig(os.path.join(out_dir, split
-                                     + '_'
-                                     + str(key)
-                                     + '_'
-                                     + visualization_name
-                                     + '.png'))
+            filename = os.path.join(out_dir, split
+                                    + '_'
+                                    + str(key)
+                                    + '_'
+                                    + visualization_name
+                                    + '.png')
+            fig.savefig(filename)
             plt.close()
+            logger.settings('Saved as {}'.format(filename))
     return
 
 

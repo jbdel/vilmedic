@@ -111,8 +111,8 @@ class MyModel(nn.Module):
               },
     'from_training': true}
 ```
-Note that your evaluation function will receive by default a models, opts (from config file, cf config section), dl (evaluation dataloader)
-and from_training argument.
+Note that your evaluation function will receive by default a list models, opts (from config file, cf config section), dl (evaluation dataloader)
+and `from_training` argument.
 
 <div class="warning_box">
 The <span class="div_pre">model</span> argument is a list of models in evaluation mode (i.e. <span class="div_pre">eval()</span>). 

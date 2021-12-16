@@ -34,7 +34,7 @@ def get_ckpts(path, mode):
 def main():
     opts, override = get_args()
     ensemble_opts = get(opts, 'ensemblor')
-    seed = '{}_{}_{}'.format(ensemble_opts.mode, ensemble_opts.beam_width, get_seed())
+    seed = '{}_{}'.format(ensemble_opts.mode, get_seed())
     set_logger(opts.ckpt_dir, seed)
 
     # Nice printing the args

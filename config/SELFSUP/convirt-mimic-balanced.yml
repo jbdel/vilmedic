@@ -1,0 +1,10 @@
+includes:
+  - config/SELFSUP/convirt-mimic.yml
+name: convirt
+
+dataset:
+  proto: ImSeq
+  image:
+    root: data/SELFSUP/mimic-cxr-balanced/
+  seq:
+    root: data/SELFSUP/mimic-cxr-balanced/

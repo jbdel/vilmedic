@@ -223,3 +223,81 @@ python bin/ensemble.py config/CLIP/dalle.yml \
 
 This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/clip/DALLE.py#L17) 
 that generates a few images for one sample.
+
+## conVIRT
+
+<div class="data_box">
+	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
+	<div class="highlight">
+<pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
+</div>
+
+The model config is defined as such:
+```
+model:
+  proto: ConVIRT
+  encoder:
+    proto: data/SELFSUP/huggingface/biomed_roberta_base
+  cnn:
+    proto: CNN
+    backbone: resnet50
+    output_layer: avgpool
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+  projection:
+    visual_embedding_dim: 2048
+    textual_embedding_dim: 768
+    projection_dim: 768
+  loss:
+    proto: ConVIRTLoss
+    tau: 0.1
+    lambda_: 0.75
+ ```
+
+You can train a model using the following command:
+
+```
+python bin/train.py config/SELFSUP/convirt-mimic.yml \
+    trainor.batch_size=32 \
+    trainor.optim_params.lr=5e-5 \
+    trainor.optimizer=RAdam \
+    trainor.lr_decay_params.patience=5 \
+    trainor.early_stop=20 \
+    model.forward_batch_size=4 \
+    validator.batch_size=32
+```   
+
+Metrics and scores:
+
+| Dataset  |     Validation Loss | 
+| ------------- |:-------------:|
+| **mimic-cxr**   | 
+| [conVIRT](https://arxiv.org/pdf/2010.00747.pdf) (official splits)   | ~ 2.20
+| ours (official splits)   | 2.09
+| ours (balanced*)   | 1.65
+
+*\*balanced means redefining splits with an homogeneous distribution of the labels across the splits*
+
+You can use the `plot_representation` post-process to plot learned representations:
+
+```
+ensemblor:
+  batch_size: 32
+  splits: [train, validate, test]
+  post_processing:
+    - plot_representation:
+        keys:
+          - linguistic
+          - visual
+        labels_keep: [Pleural Effusion,Pneumonia,Pneumothorax,Cardiomegaly,Atelectasis]
+        max_samples_per_class: 250
+  mode: best-1
+```
+
+Here is the results on mimic-cxr (balanced):
+
+| train full (linguistic)  |     train sampled (linguistic) | train full (visual) | train sampled (visual) 
+| :-------------: |:-------------:|:-------------:|:-------------:|
+<img src="./images/convirt_train_full_linguistic.png?raw=true" width="50%"/> | <img src="./images/convirt_train_sampled_linguistic.png?raw=true" width="50%"/> |<img src="./images/convirt_train_full_visual.png?raw=true" width="50%"/> |<img src="./images/convirt_train_sampled_visual.png?raw=true" width="50%"/>
+

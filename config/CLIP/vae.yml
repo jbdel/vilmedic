@@ -41,7 +41,7 @@ trainor:
     patience: 5
     min_lr: 0.000001
     threshold_mode: abs
-  epochs: 99
+  epochs: 500
   early_stop: 10
   eval_start: 0
   early_stop_metric: loss

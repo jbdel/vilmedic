@@ -13,6 +13,10 @@ def main():
     opts, override = get_args()
     seed = get_seed()
 
+    # Create checkpoint dir
+    opts.ckpt_dir = os.path.join(opts.ckpt_dir, opts.name)
+    os.makedirs(opts.ckpt_dir, exist_ok=True)
+
     # If ckpt is specified, we continue training. Lets extract seed
     if opts.ckpt is not None:
         opts.ckpt = os.path.join(opts.ckpt_dir, opts.ckpt)

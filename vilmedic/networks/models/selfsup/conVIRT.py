@@ -26,7 +26,7 @@ def evaluation(models, opts, dl, from_training, **kwargs):
         if not from_training:
             linguistics.append(out['linguistic'].cpu().data)
             visuals.append(out['visual'].cpu().data)
-        break
+
     if from_training:
         return {'loss': np.ndarray.mean(np.array(losses))}
 

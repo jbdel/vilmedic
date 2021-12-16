@@ -20,3 +20,5 @@ from vilmedic.networks.models.selfsup.SimCLR import SimCLR
 from vilmedic.networks.models.others.RCNN import RCNN
 
 from vilmedic.networks.models.others.sim_mcan import SIM_MCAN
+
+from .MyModel import MyModel

@@ -1,10 +1,10 @@
-name: convirt
+name: convirt_mimic
 ckpt_dir: ckpt
 
 dataset:
   proto: ImSeq
   image:
-    root: data/ICLR21/mimic-cxr/
+    root: data/SELFSUP/mimic-cxr/
     file: image.tok
     image_path: data/images/
     load_memory: False
@@ -12,15 +12,15 @@ dataset:
     crop: 224
     ext: .jpg
   seq:
-    root: data/ICLR21/mimic-cxr/
-    tokenizer: data/conVIRT/huggingface/biomed_roberta_base
+    root: data/SELFSUP/mimic-cxr/
+    tokenizer: data/SELFSUP/huggingface/biomed_roberta_base
     file: report.tok
-    tokenizer_max_len: 512
+    tokenizer_max_len: 128
 
 model:
   proto: ConVIRT
   encoder:
-    proto: data/conVIRT/huggingface/biomed_roberta_base
+    proto: data/SELFSUP/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: resnet50
@@ -28,16 +28,15 @@ model:
     dropout_out: 0.0
     permute: batch_first
     freeze: False
-
   projection:
     visual_embedding_dim: 2048
     textual_embedding_dim: 768
     projection_dim: 768
-
   loss:
     proto: ConVIRTLoss
     tau: 0.1
     lambda_: 0.75
+
 trainor:
   optimizer: RAdam
   optim_params:
@@ -56,17 +55,17 @@ trainor:
   early_stop_metric: loss
 
 validator:
-  batch_size: 16
+  batch_size: 32
   splits: [validate]
 
-
 ensemblor:
-  batch_size: 16
-  splits: [train, validate]
+  batch_size: 32
+  splits: [train, validate, test]
   post_processing:
     - plot_representation:
         keys:
           - linguistic
           - visual
         labels_keep: [Pleural Effusion,Pneumonia,Pneumothorax,Cardiomegaly,Atelectasis]
-  mode: all
+        max_samples_per_class: 250
+  mode: best-1

@@ -18,8 +18,8 @@ def beam_search(models, opts, dl):
 
     hugg_models = [model.dec.decoder for model in models]
     ref_str = 'input_ids'
-    tokenizer = dl.dataset.tgt_tokenizer
-    max_len = dl.dataset.tgt_len
+    tokenizer = dl.dataset.tokenizer
+    max_len = dl.dataset.seq_max_len
 
 
     ref_list = []

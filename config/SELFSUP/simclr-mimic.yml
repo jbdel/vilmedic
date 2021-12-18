@@ -85,24 +85,22 @@ trainor:
   batch_size: 64
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
-    factor: 0.5
-    patience: 1
+    factor: 0.8
+    patience: 5
     min_lr: 0.000001
     threshold: 0.01
     threshold_mode: abs
-  epochs: 99
-  early_stop: 10
+  epochs: 999
+  early_stop: 20
   eval_start: 0
   early_stop_metric: loss
 
 validator:
   batch_size: 16
-  beam_width: 8
   splits: [validate]
 
 
 ensemblor:
   batch_size: 16
-  beam_width: 8
   splits: [validate, test]
   mode: best-1

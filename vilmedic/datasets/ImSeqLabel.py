@@ -14,8 +14,8 @@ class ImSeqLabel(Dataset):
         assert len(self.imgseq) == len(self.label), str(len(self.imgseq)) + 'vs ' + str(len(self.label))
 
         # For decoding, if needed
-        self.tgt_tokenizer = self.imgseq.seq.tokenizer
-        self.tgt_len = self.imgseq.seq.max_len
+        self.tokenizer = self.imgseq.seq.tokenizer
+        self.seq_max_len = self.imgseq.seq.max_len
 
         # For tokenizing
         self.tokenizer_args = self.imgseq.seq.tokenizer_args

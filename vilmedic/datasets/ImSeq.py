@@ -14,15 +14,15 @@ class ImSeq(Dataset):
         assert len(self.image) == len(self.seq)
 
         # For decoding, if needed
-        self.tgt_tokenizer = self.seq.tokenizer
-        self.tgt_len = self.seq.max_len
+        self.tokenizer = self.seq.tokenizer
+        self.seq_max_len = self.seq.max_len
 
         # For tokenizing
         self.tokenizer_args = self.seq.tokenizer_args
 
     def __getitem__(self, index):
         return {'image': self.image.__getitem__(index),
-                'seq': ' '.join(self.seq.__getitem__(index)[:self.tgt_len])
+                'seq': ' '.join(self.seq.__getitem__(index)[:self.seq_max_len])
                 if (self.split == 'train' and self.seq.source == "tgt")
                 else ' '.join(self.seq.__getitem__(index))  # No trunc at test time
                 }

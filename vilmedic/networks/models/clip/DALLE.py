@@ -18,7 +18,7 @@ def evaluation(models, opts, dl, **kwargs):
         pbar = tqdm(dl, total=len(dl))
         for batch in pbar:
             for input_id in batch["input_ids"]:
-                print("Inputed text:", dl.dataset.tgt_tokenizer.decode(input_id, skip_special_tokens=True))
+                print("Inputed text:", dl.dataset.tokenizer.decode(input_id, skip_special_tokens=True))
                 print("Generating {} images in dir {}".format(opts.num_images, opts.ckpt_dir))
                 # text_tokens = repeat(input_id.unsqueeze(0), '() n -> b n', b=opts.num_images)
                 for i in range(opts.num_images):

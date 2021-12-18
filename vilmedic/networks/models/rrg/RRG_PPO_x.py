@@ -73,7 +73,7 @@ class RRG_PPO_x(nn.Module):
 
         # Tokenizer
         self.dl = dl
-        self.tokenizer = dl.dataset.tgt_tokenizer
+        self.tokenizer = dl.dataset.tokenizer
 
         self.eval_func = evaluation
 

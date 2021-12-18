@@ -10,25 +10,29 @@ import numpy as np
 
 
 def evaluation(models, opts, dl, from_training, **kwargs):
-    losses = []
+    # No ensembling for this evaluation
     model = models[0]
+    losses = []
     visuals = []
 
     pbar = tqdm(dl, total=len(dl))
     for batch in pbar:
         out = model(batch, from_training=from_training)
         losses.append(out['loss'].mean().cpu().data.numpy())
-        visuals.append(out['visual'].cpu().data.numpy())
+        if not from_training:
+            visuals.append(out['visual'].cpu().data)
 
-    visuals = np.concatenate(visuals, axis=0)
-    split = dl.dataset.split
-    np.save("simclr_wik_{}_visual".format(split), visuals)
-    return {'loss': np.ndarray.mean(np.array(losses))}
+    if from_training:
+        return {'loss': np.ndarray.mean(np.array(losses))}
+
+    return {'loss': np.ndarray.mean(np.array(losses)),
+            'visual': torch.cat(visuals)
+            }
 
 
 class SimCLR(nn.Module):
 
-    def __init__(self, cnn, projection, loss, **kwargs):
+    def __init__(self, cnn, projection, loss, forward_batch_size=256, **kwargs):
         super().__init__()
 
         # Visual Encoder
@@ -42,26 +46,36 @@ class SimCLR(nn.Module):
         )
 
         self.loss_fn = NTXentLoss(temperature=loss.tau)
+        self.fbs = forward_batch_size
 
         # Evaluation
         self.eval_func = evaluation
 
-    def forward(self, images, from_training, **kwargs):
-        if not from_training:  # During test-time, we just return images embeddings
-            return {"loss": torch.tensor(0.), "visual": self.vis_proj(self.visual(images.cuda()))}
+    def forward(self, images, from_training=True, **kwargs):
+        if from_training:
+            images = torch.cat([images[0], images[1]], dim=0)
 
-        images = torch.cat([images[0], images[1]], dim=0)
+        # forward passes
+        visuals = []
         images = images.cuda()
-        visual = self.vis_proj(self.visual(images))
+        bs = images.shape[0]
+        for i in range(int(bs / min(self.fbs, bs))):
+            im = images[i * self.fbs:(i + 1) * self.fbs]
+            visual = self.vis_proj(self.visual(im))
+            visuals.append(visual)
+        visuals = torch.cat(visuals)
 
-        batch_size = visual.shape[0] // 2
-        positive_embeddings, anchor_embeddings = torch.split(visual, [batch_size, batch_size], dim=0)
-        embeddings = torch.cat((anchor_embeddings, positive_embeddings))
-        indices = torch.arange(0, anchor_embeddings.size(0), device=anchor_embeddings.device)
+        # if from ensemblor, return embeddings
+        if not from_training:
+            return {"loss": torch.tensor(0.), "visual": visuals}
+
+        # Computing loss
+        batch_size = visuals.shape[0] // 2
+        indices = torch.arange(0, batch_size, device=visuals.device)
         labels = torch.cat((indices, indices))
+        loss = self.loss_fn(visuals, labels)
 
-        loss = self.loss_fn(embeddings, labels)
-        return {"loss": loss, "visual": visual}
+        return {"loss": loss}
 
     def __repr__(self):
         s = "SimCLR\n"

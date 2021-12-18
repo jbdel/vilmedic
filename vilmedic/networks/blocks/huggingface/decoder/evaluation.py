@@ -7,8 +7,8 @@ def evaluation(models, opts, dl, **kwargs):
 
     # Get tokenizer and reference sentences from dataloader
     ref_str = 'input_ids'
-    tokenizer = dl.dataset.tgt_tokenizer
-    max_len = dl.dataset.tgt_len
+    tokenizer = dl.dataset.tokenizer
+    max_len = dl.dataset.seq_max_len
 
     ref_list = []
     hyp_list = []

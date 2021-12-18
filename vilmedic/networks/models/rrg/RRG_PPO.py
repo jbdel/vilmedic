@@ -77,7 +77,7 @@ class RRG_PPO(nn.Module):
         # Tokenizer
         assert 'dl' in kwargs
         dataset = kwargs["dl"].dataset
-        tokenizer = dataset.tgt_tokenizer
+        tokenizer = dataset.tokenizer
 
         with torch.no_grad():
             # 0. get encoder states

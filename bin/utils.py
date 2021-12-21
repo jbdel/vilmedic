@@ -19,13 +19,13 @@ def extract_seed_from_ckpt(ckpt):
     return re.match(".*_(.*?).pth", ckpt).group(1)
 
 
-def print_args(opts, splits, seed, override):
+def print_args(config, splits, seed, override):
     logger = logging.getLogger(str(seed))
     logger.settings("Override dict")
     logger.info(json.dumps(OmegaConf.to_container(override), indent=4, sort_keys=True))
 
     for split in splits:
-        d = OmegaConf.to_container(getattr(opts, split))
+        d = OmegaConf.to_container(getattr(config, split))
         logger.settings(split)
         logger.info(json.dumps(d, indent=4, sort_keys=True))
 
@@ -61,20 +61,20 @@ def get_args():
 
     # Override current config with additional args
     override = OmegaConf.from_dotlist(others)
-    opts = OmegaConf.merge(config, override)
+    config = OmegaConf.merge(config, override)
 
-    return opts, override
+    return config, override
 
 
-def get(opts, mode):
+def get(config, mode):
     """ Create a personal dict for each executor (trainor, validator or ensemblor)
-    For an executor, we give every args but the other executors args
+    For an executor, we give all args but the other executors args
     """
-    exec_opts = copy.deepcopy(getattr(opts, mode))
-    for att in list(opts.keys()):
+    exec_config = copy.deepcopy(getattr(config, mode))
+    for att in list(config.keys()):
         if att not in ['trainor', 'validator', 'ensemblor']:
-            exec_opts[att] = opts[att]
-    return exec_opts
+            exec_config[att] = config[att]
+    return exec_config
 
 
 def get_seed(seed=None):

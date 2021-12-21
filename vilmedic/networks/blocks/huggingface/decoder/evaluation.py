@@ -2,7 +2,7 @@ import tqdm
 import torch
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     hf_models = [model.dec.decoder for model in models]
 
     # Get tokenizer and reference sentences from dataloader
@@ -19,7 +19,7 @@ def evaluation(models, opts, dl, **kwargs):
 
             batch_size = batch['images'].shape[0]
             expanded_return_idx = (
-                torch.arange(batch_size).view(-1, 1).repeat(1, opts.beam_width).view(-1).cuda()
+                torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
 
             model_kwargs = {
@@ -33,8 +33,8 @@ def evaluation(models, opts, dl, **kwargs):
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * hf_models[0].config.bos_token_id,
                 num_return_sequences=1,
                 max_length=max_len,
-                num_beams=opts.beam_width,
-                length_penalty=opts.length_penalty,
+                num_beams=config.beam_width,
+                length_penalty=config.length_penalty,
                 bos_token_id=hf_models[0].config.bos_token_id,
                 eos_token_id=hf_models[0].config.eos_token_id,
                 pad_token_id=hf_models[0].config.pad_token_id,

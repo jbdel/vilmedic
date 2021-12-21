@@ -9,7 +9,7 @@ import numpy as np
 
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     losses = []
     pbar = tqdm(dl, total=len(dl))
     iou_types = ["bbox"]

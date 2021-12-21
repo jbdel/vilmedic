@@ -106,12 +106,12 @@ class MyModel(nn.Module):
     def forward(self, image, input_ids, attention_mask):
         return {"loss": 0.0}
 
->>> {'opts': {'beam_size': 16,
+>>> {'config': {'beam_size': 16,
               'metrics': ['BLEU', 'METEOR']
               },
     'from_training': true}
 ```
-Note that your evaluation function will receive by default a list models, opts (from config file, cf config section), dl (evaluation dataloader)
+Note that your evaluation function will receive by default a list models, config (from config file, cf config section), dl (evaluation dataloader)
 and `from_training` argument.
 
 <div class="warning_box">

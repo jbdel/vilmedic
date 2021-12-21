@@ -54,7 +54,7 @@ class Visual2SeqHug(nn.Module):
 
         # Evaluation
         self.eval_func = beam_search
-        self.generate_opts = {}
+        self.generate_config = {}
 
         # Embeddings
         if 'src_emb' in kwargs:

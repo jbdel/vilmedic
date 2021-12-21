@@ -10,6 +10,7 @@ from .RRG import RRG
 import numpy as np
 import copy
 import torch
+import logging
 import torch.nn.functional as F
 import inspect
 import random
@@ -17,9 +18,9 @@ from vilmedic.scorers.NLG import ROUGEScorer
 from vilmedic.scorers.scores import CheXbert
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     models = [m.model for m in models]  # Get trained RRG instance
-    return evaluation_(models, opts, dl)
+    return evaluation_(models, config, dl)
 
 
 def to_contiguous(tensor):
@@ -52,7 +53,7 @@ def scst_loss(input, seq, reward, pad_token_id):
 
 class RRG_SCST(nn.Module):
 
-    def __init__(self, decoder, cnn, ckpt, dl, logger, score="chexbert", top_k=None, **kwargs):
+    def __init__(self, decoder, cnn, ckpt, dl, logger=None, score="chexbert", top_k=None, **kwargs):
         super().__init__()
 
         # Models
@@ -76,7 +77,7 @@ class RRG_SCST(nn.Module):
         self.tokenizer = dl.dataset.tokenizer
 
         self.eval_func = evaluation
-        self.logger = logger
+        self.logger = logger or logging.get_logger(__name__)
 
     def forward(self, input_ids, attention_mask, images, encoder_outputs=None, **kwargs):
         batch_size = input_ids.shape[0]

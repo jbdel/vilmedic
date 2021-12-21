@@ -5,7 +5,7 @@ import tqdm
 import torch
 
 
-def beam_search(models, opts, dl):
+def beam_search(models, config, dl):
     model = models[0]  # get model attributes
     encdecs = [model.enc_dec for model in models]
     dummy = encdecs[0]
@@ -27,8 +27,8 @@ def beam_search(models, opts, dl):
                             input_ids=input_ids,
                             num_return_sequences=1,
                             max_length=dl.dataset.tgt_len,
-                            num_beams=opts.beam_width,
-                            repetition_penalty=opts.repetition_penalty,
+                            num_beams=config.beam_width,
+                            repetition_penalty=config.repetition_penalty,
                             # early_stopping=True,
                             bos_token_id=model.bos_token_id,
                             eos_token_id=model.eos_token_id,

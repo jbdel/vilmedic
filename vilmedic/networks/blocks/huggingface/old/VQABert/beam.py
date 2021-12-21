@@ -6,7 +6,7 @@ import torch
 import os
 import collections
 
-def beam_search(models, opts, dl):
+def beam_search(models, config, dl):
     ref_list = []
     hyp_list = collections.defaultdict(list)
 

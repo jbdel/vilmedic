@@ -9,17 +9,32 @@ import sys
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
 
 
-def make_sentences(root, split, file):
-    sentences = load_file(os.path.join(root, split + '.' + file))
+def split_sentences(sentences):
     return [s.strip().split() for s in sentences]
 
 
+def make_sentences(root, split, file):
+    sentences = load_file(os.path.join(root, split + '.' + file))
+    return split_sentences(sentences)
+
+
 class TextDataset(Dataset):
-    def __init__(self, root, file, split, ckpt_dir, source='src', max_len=250, tokenizer=None, tokenizer_max_len=None,
+    def __init__(self,
+                 root=None,
+                 file=None,
+                 split=None,
+                 ckpt_dir=None,
+                 tokenizer=None,
+                 tokenizer_max_len=None,
                  show_length=False,
+                 vocab_file=None,
+                 source='src',
+                 max_len=250,
                  **kwargs):
 
         assert source in ["src", "tgt"]
+        assert split is not None, "Argument split cant be None"
+        assert not (file is not None and vocab_file is not None), "You cant mention both a data file and a vocab file"
 
         self.root = root
         self.file = file
@@ -28,22 +43,27 @@ class TextDataset(Dataset):
         self.ckpt_dir = ckpt_dir
         self.max_len = max_len
         self.tokenizer_max_len = tokenizer_max_len
+        self.vocab_file = vocab_file
+        self.sentences = None
 
-        self.sentences = make_sentences(root, split, file)
+        if file is not None:
+            self.sentences = make_sentences(root, split, file)
 
         # Create tokenizer from pretrained or vocabulary file
         if tokenizer is not None:
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         else:
-            vocab_file = os.path.join(ckpt_dir, 'vocab.{}'.format(source))
-            if split == 'train':
-                vocab = Vocab(self.sentences)
-                if not os.path.exists(vocab_file): vocab.dump(vocab_file)
+            if vocab_file is None:
+                vocab_file = os.path.join(ckpt_dir, 'vocab.{}'.format(source))
+                if split == 'train':
+                    vocab = Vocab(self.sentences)
+                    if not os.path.exists(vocab_file):
+                        vocab.dump(vocab_file)
             self.tokenizer = BertTokenizer(vocab_file=vocab_file,
                                            do_basic_tokenize=False)
 
         # Create tokenizer forwards args
-        self.tokenizer_args = {'return_tensors': 'pt', 'padding': True}
+        self.tokenizer_args = {'return_tensors': 'pt', 'padding': True, 'add_special_tokens': True}
         if self.source == 'src':
             self.tokenizer_args.update({'add_special_tokens': False})
         if self.tokenizer_max_len is not None:
@@ -59,24 +79,12 @@ class TextDataset(Dataset):
         return self.sentences[index]  # ['w1', 'w2', 'w3']
 
     def __len__(self):
-        return len(self.sentences)
+        return len(self.sentences or [])
 
-    def __repr__(self):
-        return "TextDataset\n" + \
-               json.dumps({"source": self.source,
-                           "root": self.root,
-                           "file": self.file,
-                           "max_len": self.max_len,
-                           "Tokenizer": {
-                               "name_or_path": self.tokenizer.name_or_path,
-                               "vocab_size": self.tokenizer.vocab_size,
-                               "tokenizer_args": self.tokenizer_args,
-                               "special_tokens": self.tokenizer.special_tokens_map_extended,
-                               "bos_token_id": self.tokenizer.bos_token,
-                               # "eos_token_id": self.tokenizer.vocab[self.tokenizer.eos_token],
-                               # "pad_token_id": self.tokenizer.vocab[self.tokenizer.pad_token],
-                           }}, indent=4,
-                          sort_keys=False, default=str)
+    def inference(self, sentences):
+        if not isinstance(sentences, list):
+            sentences = [sentences]
+        return sentences
 
     def show_length(self):
         import tqdm
@@ -105,3 +113,20 @@ class TextDataset(Dataset):
         ax[0].set_title("tokenizer_len")
         ax[1].set_title("sentence_len")
         plt.show()
+
+    def __repr__(self):
+        return "TextDataset\n" + \
+               json.dumps({"source": self.source,
+                           "root": self.root,
+                           "file": self.file,
+                           "max_len": self.max_len,
+                           "Tokenizer": {
+                               "name_or_path": self.tokenizer.name_or_path,
+                               "vocab_size": self.tokenizer.vocab_size,
+                               "tokenizer_args": self.tokenizer_args,
+                               "special_tokens": self.tokenizer.special_tokens_map_extended,
+                               "bos_token_id": self.tokenizer.bos_token,
+                               # "eos_token_id": self.tokenizer.vocab[self.tokenizer.eos_token],
+                               # "pad_token_id": self.tokenizer.vocab[self.tokenizer.pad_token],
+                           }}, indent=4,
+                          sort_keys=False, default=str)

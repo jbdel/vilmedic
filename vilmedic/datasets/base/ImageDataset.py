@@ -1,21 +1,25 @@
-import torch
-from PIL import Image, ImageFile
-from torch.utils.data import Dataset
-from torchvision.transforms import *
 import os
 import pydicom
 import numpy as np
-from .utils import load_file
 import json
 import PIL
 import skimage
+
 import torchxrayvision as xrv
+from PIL import Image, ImageFile
+from torch.utils.data import Dataset
+from torchvision.transforms import *
+from .utils import load_file
+from .papers.open_image import *
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
 
 
 def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext):
+    if ext in [".npy", ".npz"]:
+        return lambda x: x
+
     # assert both or no custom transform mentioned (xnor)
     assert not ((custom_transform_train is None) ^ (
             custom_transform_val is None)), 'Use both or no custom transform'
@@ -70,6 +74,10 @@ def open_image(image, ext):
     if ext in ['.npy', '.npz']:
         return torch.from_numpy(np.load(image))
 
+    # Special cases
+    if ext in PAPER_EXT.keys():
+        return eval(PAPER_EXT[ext])(image)
+
     raise NotImplementedError("Image extension {} not implemented".format(ext))
 
 
@@ -79,13 +87,20 @@ def make_images(root, image_path, split, file):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, root, image_path, file, split, load_memory,
-                 resize=256,
-                 crop=224,
+    def __init__(self,
+                 root=None,
+                 file=None,
+                 split=None,
+                 image_path=None,
+                 load_memory=False,
                  custom_transform_train=None,
                  custom_transform_val=None,
+                 resize=256,
+                 crop=224,
                  ext='.jpg',
                  **kwargs):
+
+        assert split is not None, "Argument split cant be None"
 
         self.root = root
         self.file = file
@@ -95,45 +110,45 @@ class ImageDataset(Dataset):
         self.resize = eval(str(resize))
         self.crop = eval(str(crop))
         self.ext = ext
-        self.do_transform = self.ext not in [".npy", ".npz"]
+        self.images = None
 
-        self.images = make_images(root, image_path, split, file)
+        if file is not None:
+            self.images = make_images(root, image_path, split, file)
 
         self.transform = get_transforms(split,
                                         self.resize,
                                         self.crop,
                                         custom_transform_train,
                                         custom_transform_val,
-                                        ext)
-        if self.load_memory:
+                                        self.ext)
+
+        if self.load_memory and self.file is not None:
             self.images = [open_image(image, ext) for image in self.images]
 
     def __len__(self):
-        return len(self.images)
+        return len(self.images or [])
 
     def __getitem__(self, index):
         image = self.images[index]
         if not self.load_memory:
             image = open_image(image, self.ext)
+        return self.transform(image)
 
-        if self.do_transform:
-            return self.transform(image)
-        else:
-            return image
+    def inference(self, images):
+        if not isinstance(images, list):
+            images = [images]
+        return [self.transform(open_image(image, self.ext)) for image in images]
 
     def __repr__(self):
-        str_transforms = None
-        if self.do_transform:
-            str_transforms = self.transform
-            if hasattr(self.transform, "transform"):
-                str_transforms = self.transform.transforms
+        transform = self.transform
+        if hasattr(self.transform, "transforms"):
+            transform = self.transform.transforms
 
         return "ImageDataset\n" + \
                json.dumps({
                    "image_path": self.image_path,
                    "root": self.root,
                    "file": self.file,
-                   "transforms": str_transforms,
+                   "transforms": transform,
                    "ext": self.ext,
-                   "do_transform": self.do_transform,
                }, indent=4, sort_keys=False, default=str)

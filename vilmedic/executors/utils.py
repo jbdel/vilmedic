@@ -28,16 +28,16 @@ def get_eval_func(models):
     return dummy.eval_func
 
 
-def create_optimizer(opts, logger, params, state_dict=None):
-    assert 'lr' in opts.optim_params
-    if hasattr(torch.optim, opts.optimizer):
-        optim = getattr(torch.optim, opts.optimizer)
-    elif hasattr(torch_optimizer, opts.optimizer):
-        optim = getattr(torch_optimizer, opts.optimizer)
+def create_optimizer(config, logger, params, state_dict=None):
+    assert 'lr' in config.optim_params
+    if hasattr(torch.optim, config.optimizer):
+        optim = getattr(torch.optim, config.optimizer)
+    elif hasattr(torch_optimizer, config.optimizer):
+        optim = getattr(torch_optimizer, config.optimizer)
     else:
-        raise NotImplementedError(opts.optimizer)
+        raise NotImplementedError(config.optimizer)
 
-    optimizer = optim(params, **opts.optim_params)
+    optimizer = optim(params, **config.optim_params)
     logger.settings('Optimizer {} created'.format(type(optimizer).__name__))
 
     if state_dict is not None and "optimizer" in state_dict:
@@ -48,10 +48,10 @@ def create_optimizer(opts, logger, params, state_dict=None):
     return optimizer
 
 
-def create_model(opts, dl, logger, state_dict=None):
+def create_model(config, dl, logger, state_dict=None):
     # Create model, give him dataloader also
-    opts = copy.deepcopy(opts.model)
-    model = eval(opts.pop('proto'))(**opts, dl=dl, logger=logger)
+    config = copy.deepcopy(config.model)
+    model = eval(config.pop('proto'))(**config, dl=dl, logger=logger)
     logger.settings('Model {} created'.format(type(model).__name__))
 
     # eval_func is the method called by the Validator to evaluate the model
@@ -71,9 +71,9 @@ def create_model(opts, dl, logger, state_dict=None):
     return model.cuda()
 
 
-def create_data_loader(opts, split, logger, called_by_validator=False):
-    dataset_opts = copy.deepcopy(opts.dataset)
-    dataset = eval(dataset_opts.proto)(split=split, ckpt_dir=opts.ckpt_dir, **dataset_opts)
+def create_data_loader(config, split, logger, called_by_validator=False):
+    dataset_config = copy.deepcopy(config.dataset)
+    dataset = eval(dataset_config.proto)(split=split, ckpt_dir=config.ckpt_dir, **dataset_config)
 
     if hasattr(dataset, 'get_collate_fn'):
         collate_fn = dataset.get_collate_fn()
@@ -86,20 +86,36 @@ def create_data_loader(opts, split, logger, called_by_validator=False):
 
         sampler = BatchSampler(
             RandomSampler(dataset),
-            batch_size=opts.batch_size,
+            batch_size=config.batch_size,
             drop_last=False)
         logger.info('Using' + type(sampler.sampler).__name__)
 
     else:  # eval or test
         sampler = BatchSampler(
             SequentialSampler(dataset),
-            batch_size=opts.batch_size,
+            batch_size=config.batch_size,
             drop_last=False)
 
     return DataLoader(dataset,
                       num_workers=4,
                       collate_fn=collate_fn,
                       batch_sampler=sampler)
+
+
+def create_training_scheduler(config, optimizer, logger, state_dict=None):
+    config = copy.deepcopy(config)
+    training_scheduler = TrainingScheduler(lr_decay_func=config.lr_decay,
+                                           optimizer=optimizer,
+                                           early_stop_metric=config.early_stop_metric,
+                                           early_stop_limit=config.early_stop,
+                                           **config.lr_decay_params)
+    logger.settings('Training scheduler created')
+    if state_dict is not None and "training_scheduler" in state_dict:
+        training_scheduler.load_state_dict(state_dict["training_scheduler"])
+        logger.info('Training scheduler state loaded')
+    else:
+        logger.info(training_scheduler)
+    return training_scheduler
 
 
 class CheckpointSaver(object):
@@ -133,22 +149,6 @@ class CheckpointSaver(object):
     def extract_tag_and_step(self, ckpt):
         groups = re.match('.*/(.*?)_(.*?)_(.*?).pth', ckpt)
         return float(groups.group(1)), int(groups.group(2))
-
-
-def create_training_scheduler(opts, optimizer, logger, state_dict=None):
-    opts = copy.deepcopy(opts)
-    training_scheduler = TrainingScheduler(lr_decay_func=opts.lr_decay,
-                                           optimizer=optimizer,
-                                           early_stop_metric=opts.early_stop_metric,
-                                           early_stop_limit=opts.early_stop,
-                                           **opts.lr_decay_params)
-    logger.settings('Training scheduler created')
-    if state_dict is not None and "training_scheduler" in state_dict:
-        training_scheduler.load_state_dict(state_dict["training_scheduler"])
-        logger.info('Training scheduler state loaded')
-    else:
-        logger.info(training_scheduler)
-    return training_scheduler
 
 
 class TrainingScheduler(object):

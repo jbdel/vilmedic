@@ -10,34 +10,34 @@ from vilmedic.executors import Trainor, Validator
 
 def main():
     # Get args and create seed
-    opts, override = get_args()
+    config, override = get_args()
     seed = get_seed()
 
     # Create checkpoint dir
-    opts.ckpt_dir = os.path.join(opts.ckpt_dir, opts.name)
-    os.makedirs(opts.ckpt_dir, exist_ok=True)
+    config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
+    os.makedirs(config.ckpt_dir, exist_ok=True)
 
     # If ckpt is specified, we continue training. Lets extract seed
-    if opts.ckpt is not None:
-        opts.ckpt = os.path.join(opts.ckpt_dir, opts.ckpt)
-        seed = extract_seed_from_ckpt(opts.ckpt)
+    if config.ckpt is not None:
+        config.ckpt = os.path.join(config.ckpt_dir, config.ckpt)
+        seed = extract_seed_from_ckpt(config.ckpt)
 
     # Create logger according to seed
-    set_logger(opts.ckpt_dir, seed)
+    set_logger(config.ckpt_dir, seed)
 
     # Nice print args
-    print_args(opts, ['trainor', 'validator'], seed, override)
+    print_args(config, ['trainor', 'validator'], seed, override)
 
     # Fetch args for training and validation
-    train_opts = get(opts, 'trainor')
-    val_opts = get(opts, 'validator')
+    train_config = get(config, 'trainor')
+    val_config = get(config, 'validator')
 
     # Trainor
-    trainor = Trainor(opts=train_opts,
+    trainor = Trainor(config=train_config,  # train_config is all args but the other executors args
                       seed=seed)
 
     # Evaluator
-    evaluator = Validator(opts=val_opts,
+    evaluator = Validator(config=val_config,
                           models=[trainor.model],
                           seed=seed,
                           from_training=True)

@@ -7,6 +7,7 @@ from vilmedic.networks.blocks.huggingface.encoder.encoder_model import EncoderMo
 
 from tqdm import tqdm
 import numpy as np
+from sklearn import metrics
 
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-8):
@@ -136,7 +137,7 @@ def local_loss(
     return loss0, loss1, att_maps
 
 
-def evaluation(models, opts, dl, from_training, **kwargs):
+def evaluation(models, config, dl, from_training, **kwargs):
     # No ensembling for this evaluation
     model = models[0]
 
@@ -256,7 +257,6 @@ class GLoRIA(nn.Module):
 
             global_features.append(self.global_embedder(self.visual(self.up_sample(images_.cuda()))))
             local_features.append(self.local_embedder(self.activation["local_features"]))
-
             output = self.linguistic(input_ids_.cuda(),
                                      attention_mask_.cuda(),
                                      output_hidden_states=True)
@@ -278,7 +278,8 @@ class GLoRIA(nn.Module):
         # Losses
         loss, attention_maps = self.loss_fn(global_features, local_features, word_embeddings, sent_embeddings, sents)
 
-        return {"loss": loss}
+        return {"loss": loss, "global_features": global_features, "local_features": local_features,
+                "word_embeddings": word_embeddings, "sent_embeddings": sent_embeddings}
 
     def aggregate_tokens(self, embeddings, input_ids):
         num_layers, batch_size, num_words, dim = embeddings.shape
@@ -339,6 +340,92 @@ class GLoRIA(nn.Module):
         agg_embs_batch = torch.stack(agg_embs_batch)
         agg_embs_batch = agg_embs_batch.permute(0, 2, 1, 3)
         return agg_embs_batch, sentences
+
+    def zero_shot_classification(self, input_ids, attention_mask, images):
+
+        # get similarities for each class
+        similarities = self.get_similarities(
+            input_ids, attention_mask, images, similarity_type="both"
+        )
+        class_similarities = similarities.max(axis=1)  # average between class prompts
+        return class_similarities
+
+
+    def get_similarities(self, input_ids, attention_mask, images, similarity_type="both"):
+
+        # warnings
+        if similarity_type not in ["global", "local", "both"]:
+            raise RuntimeError(
+                f"similarity type should be one of ['global', 'local', 'both']"
+            )
+
+        cap_lens = [len([t for t in i if t != 0]) for i in input_ids]
+
+        # get global and local image features
+        with torch.no_grad():
+            out = self(input_ids, attention_mask, images)
+
+        img_emb_g, img_emb_l, text_emb_l, text_emb_g = out["global_features"], out["local_features"], out[
+            "word_embeddings"], out["sent_embeddings"]
+
+        # get similarities
+        global_similarities = self.get_global_similarities(img_emb_g, text_emb_g)
+        local_similarities = self.get_local_similarities(
+            img_emb_l, text_emb_l, cap_lens
+        )
+        similarities = (local_similarities + global_similarities) / 2
+
+        if similarity_type == "global":
+            return global_similarities.detach().cpu().numpy()
+        elif similarity_type == "local":
+            return local_similarities.detach().cpu().numpy()
+        else:
+            return similarities.detach().cpu().numpy()
+
+    def get_global_similarities(self, img_emb_g, text_emb_g):
+        img_emb_g = img_emb_g.detach().cpu().numpy()
+        text_emb_g = text_emb_g.detach().cpu().numpy()
+        global_similarities = metrics.pairwise.cosine_similarity(img_emb_g, text_emb_g)
+        global_similarities = torch.tensor(global_similarities)
+        return global_similarities
+
+    def get_local_similarities(self, img_emb_l, text_emb_l, cap_lens):
+
+        batch_size = img_emb_l.shape[0]
+        similarities = []
+
+        for i in range(len(text_emb_l)):
+            words_num = cap_lens[i]
+            word = (
+                text_emb_l[i, :, 1: words_num + 1].unsqueeze(0).contiguous()
+            )  # [1, 768, 25]
+
+            word = word.repeat(batch_size, 1, 1)  # [48, 768, 25]
+            context = img_emb_l  # [48, 768, 19, 19]
+
+            weiContext, attn = attention_fn(
+                word, context, 4.0
+            )  # [48, 768, 25], [48, 25, 19, 19]
+
+            word = word.transpose(1, 2).contiguous()  # [48, 25, 768]
+            weiContext = weiContext.transpose(1, 2).contiguous()  # [48, 25, 768]
+
+            word = word.view(batch_size * words_num, -1)  # [1200, 768]
+            weiContext = weiContext.view(batch_size * words_num, -1)  # [1200, 768]
+            #
+            row_sim = cosine_similarity(word, weiContext)
+            row_sim = row_sim.view(batch_size, words_num)  # [48, 25]
+
+            row_sim.mul_(5.0).exp_()
+            row_sim, max_row_idx = torch.max(row_sim, dim=1, keepdim=True)  # [48, 1]
+
+            row_sim = torch.log(row_sim)
+
+            similarities.append(row_sim)
+
+        local_similarities = torch.cat(similarities, 1).detach().cpu()
+
+        return local_similarities
 
     def __repr__(self):
         s = super().__repr__() + '\n'

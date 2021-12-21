@@ -1,9 +1,8 @@
-from gdown import download
-import os
-import zipfile
-from pathlib import Path
-from tqdm import tqdm
 import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from utils import download
 
 all_files = {
     "mimic-cxr-images-512": ["1ubY8ZNqWshpFKbJQYp1-mqp4md7RKYrW", "8.99 GB", "data/images/"],
@@ -51,13 +50,5 @@ if __name__ == '__main__':
 
     for r in res:
         key = list_files[r - 1]
-        outfile = os.path.join("data", key) + ".zip"
-        if not os.path.exists(outfile):
-            download("https://drive.google.com/uc?id=" + all_files[key][0], outfile,
-                     quiet=False)
-
-        print("Unzipping...")
-        with zipfile.ZipFile(outfile, 'r') as zf:
-            for member in tqdm(zf.infolist(), desc='Extracting '):
-                zf.extract(member, all_files[key][2])
+        download(key, all_files[key][0], all_files[key][2])
     print("done")

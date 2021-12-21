@@ -10,22 +10,22 @@ from vilmedic.networks.models.clip.VAE import VAE
 from vilmedic.networks.models.utils import get_n_params
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     losses = []
     model = models[0]
 
-    if opts.generate_images is not None and opts.generate_images:
+    if config.generate_images is not None and config.generate_images:
         pbar = tqdm(dl, total=len(dl))
         for batch in pbar:
             for input_id in batch["input_ids"]:
                 print("Inputed text:", dl.dataset.tokenizer.decode(input_id, skip_special_tokens=True))
-                print("Generating {} images in dir {}".format(opts.num_images, opts.ckpt_dir))
-                # text_tokens = repeat(input_id.unsqueeze(0), '() n -> b n', b=opts.num_images)
-                for i in range(opts.num_images):
+                print("Generating {} images in dir {}".format(config.num_images, config.ckpt_dir))
+                # text_tokens = repeat(input_id.unsqueeze(0), '() n -> b n', b=config.num_images)
+                for i in range(config.num_images):
                     print("doing", i)
                     output = model.dalle.generate_images(input_id.unsqueeze(0).cuda(), filter_thres=0.9)
                     print("done output")
-                    save_image(output, os.path.join(opts.ckpt_dir, '{}.jpg'.format(i)), normalize=True)
+                    save_image(output, os.path.join(config.ckpt_dir, '{}.jpg'.format(i)), normalize=True)
                 import sys
                 sys.exit()
 

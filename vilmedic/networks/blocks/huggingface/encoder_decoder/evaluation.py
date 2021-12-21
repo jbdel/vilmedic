@@ -3,7 +3,7 @@ import torch
 from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     hf_models = [model.enc_dec.enc_dec for model in models]
 
     ref_str = 'decoder_input_ids'
@@ -19,7 +19,7 @@ def evaluation(models, opts, dl, **kwargs):
             encoder_batch = {k: v.cuda() for k, v in batch.items() if not k.startswith("decoder_")}
 
             expanded_return_idx = (
-                torch.arange(batch['input_ids'].shape[0]).view(-1, 1).repeat(1, opts.beam_width).view(-1).cuda()
+                torch.arange(batch['input_ids'].shape[0]).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
 
             # Run encoder ourselves
@@ -44,8 +44,8 @@ def evaluation(models, opts, dl, **kwargs):
             hyps = hf_models[0].generate(input_ids=batch["input_ids"],
                                          num_return_sequences=1,
                                          max_length=max_len,
-                                         num_beams=opts.beam_width,
-                                         length_penalty=opts.length_penalty,
+                                         num_beams=config.beam_width,
+                                         length_penalty=config.length_penalty,
                                          bos_token_id=hf_models[0].decoder.config.bos_token_id,
                                          eos_token_id=hf_models[0].decoder.config.eos_token_id,
                                          pad_token_id=hf_models[0].decoder.config.pad_token_id,

@@ -46,7 +46,7 @@ class Seq2SeqHug(nn.Module):
 
         # Evaluation
         self.eval_func = beam_search
-        self.generate_opts = {}
+        self.generate_config = {}
 
     def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask):
         input_ids = input_ids.cuda()

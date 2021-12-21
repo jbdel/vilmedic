@@ -21,7 +21,7 @@ class VQA2SeqHug(nn.Module):
         self.backbone = CNN(**cnn).eval()
         # self.visual_projection = nn.Linear(encoder.pop("visual_embedding_dim"), self.enc.config.hidden_size)
         self.eval_func = beam_search
-        self.generate_opts = {}
+        self.generate_config = {}
 
     def forward(self, input_ids, images, attention_mask, labels, **kwargs):
         features, _ = self.backbone(images.cuda())

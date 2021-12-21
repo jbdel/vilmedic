@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 
 
-def beam_search(models, opts, dl, lp_alpha=0.0):
+def beam_search(models, config, dl, lp_alpha=0.0):
     def tile_ctx_dict(ctx_dict, idxs):
         """Returns dict of 3D tensors repeatedly indexed along the sample axis."""
         # 1st: tensor, 2nd optional mask
@@ -23,8 +23,8 @@ def beam_search(models, opts, dl, lp_alpha=0.0):
 
     # This is the batch-size requested by the user but with sorted
     # batches, efficient batch-size will be <= max_batch_size
-    max_batch_size = opts.batch_size
-    k = opts.beam_width
+    max_batch_size = config.batch_size
+    k = config.beam_width
     inf = -1000
     max_len = dl.dataset.tgt_len
 

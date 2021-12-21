@@ -43,3 +43,12 @@ class ImSeq(Dataset):
 
     def __repr__(self):
         return "ImSeq\n" + str(self.seq) + '\n' + str(self.image)
+
+    def inference(self, seq, image):
+        sentences = self.seq.inference(seq)
+        images = self.image.inference(image)
+
+        assert len(sentences) == len(images), "sizes don't match"
+
+        batch = [{'seq': sentence, 'image': image} for sentence, image in zip(sentences, images)]
+        return self.get_collate_fn()(batch)

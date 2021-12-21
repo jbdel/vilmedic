@@ -7321,7 +7321,7 @@ function createTween( value, prop, animation ) {
 	}
 }
 
-function defaultPrefilter( elem, props, opts ) {
+function defaultPrefilter( elem, props, config ) {
 	var prop, value, toggle, hooks, oldfire, propTween, restoreDisplay, display,
 		isBox = "width" in props || "height" in props,
 		anim = this,
@@ -7331,7 +7331,7 @@ function defaultPrefilter( elem, props, opts ) {
 		dataShow = dataPriv.get( elem, "fxshow" );
 
 	// Queue-skipping animations hijack the fx hooks
-	if ( !opts.queue ) {
+	if ( !config.queue ) {
 		hooks = jQuery._queueHooks( elem, "fx" );
 		if ( hooks.unqueued == null ) {
 			hooks.unqueued = 0;
@@ -7391,7 +7391,7 @@ function defaultPrefilter( elem, props, opts ) {
 		// Record all 3 overflow attributes because IE does not infer the shorthand
 		// from identically-valued overflowX and overflowY and Edge just mirrors
 		// the overflowX value there.
-		opts.overflow = [ style.overflow, style.overflowX, style.overflowY ];
+		config.overflow = [ style.overflow, style.overflowX, style.overflowY ];
 
 		// Identify a display type, preferring old show/hide data over the CSS cascade
 		restoreDisplay = dataShow && dataShow.display;
@@ -7431,12 +7431,12 @@ function defaultPrefilter( elem, props, opts ) {
 		}
 	}
 
-	if ( opts.overflow ) {
+	if ( config.overflow ) {
 		style.overflow = "hidden";
 		anim.always( function() {
-			style.overflow = opts.overflow[ 0 ];
-			style.overflowX = opts.overflow[ 1 ];
-			style.overflowY = opts.overflow[ 2 ];
+			style.overflow = config.overflow[ 0 ];
+			style.overflowX = config.overflow[ 1 ];
+			style.overflowY = config.overflow[ 2 ];
 		} );
 	}
 
@@ -7577,7 +7577,7 @@ function Animation( elem, properties, options ) {
 		animation = deferred.promise( {
 			elem: elem,
 			props: jQuery.extend( {}, properties ),
-			opts: jQuery.extend( true, {
+			config: jQuery.extend( true, {
 				specialEasing: {},
 				easing: jQuery.easing._default
 			}, options ),
@@ -7587,8 +7587,8 @@ function Animation( elem, properties, options ) {
 			duration: options.duration,
 			tweens: [],
 			createTween: function( prop, end ) {
-				var tween = jQuery.Tween( elem, animation.opts, prop, end,
-						animation.opts.specialEasing[ prop ] || animation.opts.easing );
+				var tween = jQuery.Tween( elem, animation.config, prop, end,
+						animation.config.specialEasing[ prop ] || animation.config.easing );
 				animation.tweens.push( tween );
 				return tween;
 			},
@@ -7618,13 +7618,13 @@ function Animation( elem, properties, options ) {
 		} ),
 		props = animation.props;
 
-	propFilter( props, animation.opts.specialEasing );
+	propFilter( props, animation.config.specialEasing );
 
 	for ( ; index < length; index++ ) {
-		result = Animation.prefilters[ index ].call( animation, elem, props, animation.opts );
+		result = Animation.prefilters[ index ].call( animation, elem, props, animation.config );
 		if ( result ) {
 			if ( isFunction( result.stop ) ) {
-				jQuery._queueHooks( animation.elem, animation.opts.queue ).stop =
+				jQuery._queueHooks( animation.elem, animation.config.queue ).stop =
 					result.stop.bind( result );
 			}
 			return result;
@@ -7633,22 +7633,22 @@ function Animation( elem, properties, options ) {
 
 	jQuery.map( props, createTween, animation );
 
-	if ( isFunction( animation.opts.start ) ) {
-		animation.opts.start.call( elem, animation );
+	if ( isFunction( animation.config.start ) ) {
+		animation.config.start.call( elem, animation );
 	}
 
 	// Attach callbacks from options
 	animation
-		.progress( animation.opts.progress )
-		.done( animation.opts.done, animation.opts.complete )
-		.fail( animation.opts.fail )
-		.always( animation.opts.always );
+		.progress( animation.config.progress )
+		.done( animation.config.done, animation.config.complete )
+		.fail( animation.config.fail )
+		.always( animation.config.always );
 
 	jQuery.fx.timer(
 		jQuery.extend( tick, {
 			elem: elem,
 			anim: animation,
-			queue: animation.opts.queue
+			queue: animation.config.queue
 		} )
 	);
 
@@ -7964,7 +7964,7 @@ jQuery.fn.delay = function( time, type ) {
 
 	// Support: IE <=11 only
 	// Must access selectedIndex to make default options select
-	support.optSelected = opt.selected;
+	support.configelected = opt.selected;
 
 	// Support: IE <=11 only
 	// An input loses its value after becoming a radio
@@ -8197,7 +8197,7 @@ jQuery.extend( {
 // when in an optgroup
 // eslint rule "no-unused-expressions" is disabled for this code
 // since it considers such accessions noop
-if ( !support.optSelected ) {
+if ( !support.configelected ) {
 	jQuery.propHooks.selected = {
 		get: function( elem ) {
 

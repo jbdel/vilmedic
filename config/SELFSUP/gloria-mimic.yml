@@ -7,10 +7,22 @@ dataset:
     root: data/SELFSUP/mimic-cxr/
     file: image.tok
     image_path: data/images/
-    load_memory: False
-    resize: 256
-    crop: 224
+    custom_transform_train: >
+      transforms.Compose([
+                      transforms.Resize(256),
+                      transforms.RandomCrop(224),
+                      transforms.ToTensor(),
+                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+    custom_transform_val: >
+      transforms.Compose([
+                      transforms.CenterCrop(224),
+                      transforms.ToTensor(),
+                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
     ext: .jpg
+    load_memory: False
+
   seq:
     root: data/SELFSUP/mimic-cxr/
     tokenizer: data/SELFSUP/huggingface/Bio_ClinicalBERT
@@ -23,11 +35,6 @@ model:
   encoder:
     proto: data/SELFSUP/huggingface/Bio_ClinicalBERT
     last_n_layers: 4
-#    agg_tokens: True
-#    aggregate_method: sum
-#    norm: False
-#    embedding_dim: 768
-#    freeze_bert: False
 
   cnn:
     proto: CNN

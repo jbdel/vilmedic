@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from vilmedic.networks.models.utils import get_n_params
 
 
-def evaluation(models, opts, dl, **kwargs):
+def evaluation(models, config, dl, **kwargs):
     activation = {}
 
     def get_activation(name):

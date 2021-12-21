@@ -12,7 +12,7 @@ Or you are using only a decoder, in which case your dec attribute should be call
 """
 
 
-def beam_search(models, opts, dl):
+def beam_search(models, config, dl):
     # Get huggingface object responsible of generation (encoder_decoder model or decoder model)
     model = models[0]
     hugg_models = [model.dec for model in models]
@@ -31,7 +31,7 @@ def beam_search(models, opts, dl):
 
             batch_size = batch['images'].shape[0]
             expanded_return_idx = (
-                torch.arange(batch_size).view(-1, 1).repeat(1, opts.beam_width).view(-1).cuda()
+                torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
             model_kwargs = {
                 "encoder_hidden_states": model.encoder(**batch).index_select(0, expanded_return_idx)
@@ -41,8 +41,8 @@ def beam_search(models, opts, dl):
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * model.bos_token_id,
                 num_return_sequences=1,
                 max_length=max_len,
-                num_beams=opts.beam_width,
-                length_penalty=opts.length_penalty,
+                num_beams=config.beam_width,
+                length_penalty=config.length_penalty,
                 bos_token_id=model.bos_token_id,
                 eos_token_id=model.eos_token_id,
                 pad_token_id=model.pad_token_id,

@@ -18,7 +18,6 @@ def readable_size(n):
 def get_n_params(module):
     n_param_learnable = 0
     n_param_frozen = 0
-
     for param in module.parameters():
         if not param.data.size():
             continue
@@ -26,7 +25,6 @@ def get_n_params(module):
             n_param_learnable += np.cumprod(param.data.size())[-1]
         else:
             n_param_frozen += np.cumprod(param.data.size())[-1]
-
     n_param_all = n_param_learnable + n_param_frozen
     return "# parameters: {} ({} learnable)".format(
         readable_size(n_param_all), readable_size(n_param_learnable))

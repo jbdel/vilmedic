@@ -8,22 +8,22 @@ from vilmedic.scorers.post_processing import post_processing
 
 
 class InitValidator(object):
-    def __init__(self, opts, models, seed, from_training):
+    def __init__(self, config, models, seed, from_training):
         self.seed = seed
-        self.opts = opts
+        self.config = config
         self.from_training = from_training
 
         # Logger
         self.logger = logging.getLogger(str(seed))
 
         self.models = models
-        self.metrics = opts.metrics
-        self.post_processing = opts.post_processing
+        self.metrics = config.metrics
+        self.post_processing = config.post_processing
         self.epoch = 0
 
         # Evaluation splits
-        self.splits = [(split, create_data_loader(self.opts, split, self.opts.logger, called_by_validator=True))
-                       for split in self.opts.splits]
+        self.splits = [(split, create_data_loader(self.config, split, self.config.logger, called_by_validator=True))
+                       for split in self.config.splits]
 
 
 class Validator(InitValidator):
@@ -45,7 +45,7 @@ class Validator(InitValidator):
             eval_func = get_eval_func(self.models)
             with torch.no_grad():
                 results = eval_func(models=self.models,
-                                    opts=self.opts,
+                                    config=self.config,
                                     dl=dl,
                                     from_training=self.from_training)
 
@@ -66,7 +66,7 @@ class Validator(InitValidator):
                                      hyps=results.pop('hyps', None),
                                      split=split,
                                      seed=self.seed,
-                                     ckpt_dir=self.opts.ckpt_dir,
+                                     ckpt_dir=self.config.ckpt_dir,
                                      epoch=self.epoch
                                      )
             scores.update(metrics)
@@ -76,7 +76,7 @@ class Validator(InitValidator):
                             results=results,
                             split=split,
                             seed=self.seed,
-                            ckpt_dir=self.opts.ckpt_dir,
+                            ckpt_dir=self.config.ckpt_dir,
                             epoch=self.epoch,
                             dl=dl
                             )

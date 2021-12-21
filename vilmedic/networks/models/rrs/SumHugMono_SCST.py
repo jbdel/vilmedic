@@ -1,3 +1,4 @@
+import logging
 import functools
 import torch.nn.functional as F
 import inspect
@@ -67,7 +68,7 @@ def scst_loss(input, seq, reward, pad_token_id):
 
 class SumHugMono_SCST(nn.Module):
 
-    def __init__(self, encoder, decoder, dl, logger, score="chexbert", top_k=None, **kwargs):
+    def __init__(self, encoder, decoder, dl, logger=None, score="chexbert", top_k=None, **kwargs):
         super().__init__()
         self.enc_dec = EncoderDecoderModel(encoder, decoder)
 
@@ -99,7 +100,7 @@ class SumHugMono_SCST(nn.Module):
         # Tokenizer
         self.dl = dl
         self.tokenizer = dl.dataset.tgt_tokenizer
-        self.logger = logger
+        self.logger = logger or logging.getLogger(__name__)
 
         # Evaluation
         self.eval_func = evaluation

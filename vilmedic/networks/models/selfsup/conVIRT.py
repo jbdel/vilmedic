@@ -9,7 +9,7 @@ from tqdm import tqdm
 import numpy as np
 
 
-def evaluation(models, opts, dl, from_training, **kwargs):
+def evaluation(models, config, dl, from_training, **kwargs):
     # No ensembling for this evaluation
     model = models[0]
 

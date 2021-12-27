@@ -2,9 +2,29 @@
 
 The following is a list of pretrained model available in ViLMedic
 
-## GLoRIA
+## Self-supversion
+### SimCLR
 
-### Usage: 
+from vilmedic import AutoModel
+
+#### Usage 
+```
+model, processor = AutoModel.from_pretrained("selfsup/simclr-mimic-64")
+batch = processor.inference(image=[files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg'])
+out = model(**batch, from_training=False)
+print(out.keys())
+# dict_keys(['loss', 'visual'])
+```
+#### Models
+| Name  |   dataset | Model Card | 
+| ------------- |:-------------:|:-------------:|
+| selfsup/simclr-mimic-16 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/simclr-mimic-32 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/simclr-mimic-64 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+
+### GLoRIA
+
+#### Usage 
 ```
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/gloria-chexpert")
@@ -15,7 +35,14 @@ print(out.keys())
 # dict_keys(['loss', 'global_features', 'local_features', 'word_embeddings', 'sent_embeddings'])
 ```
 
-### Zero-shot classification:
+#### Models
+| Name  |   dataset | Model Card | 
+| ------------- |:-------------:|:-------------:|
+| [simclr-mimic-16](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
+
+
+
+#### Zero-shot classification
 
 ``` 
 reports = {
@@ -56,14 +83,14 @@ print(pd.DataFrame(class_similarities, columns=reports.keys()))
 # 3     0.413202      0.818415
 ```
 
-### Models
+#### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | [gloria-chexpert](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
 
-## ConVIRT
+### ConVIRT
 
-### Usage: 
+#### Usage 
 ```
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/convirt-mimic")
@@ -75,16 +102,14 @@ print(out.keys())
 # dict_keys(['loss', 'loss_l', 'loss_v', 'linguistic', 'visual'])
 ```
 
-### Models
-| Name  |   dataset | batch size | val loss | Model Card | 
-| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|
-| [selfsup/convirt-mimic](https://openreview.net/forum?id=T4gXBOXoIUr)  | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   | 32 | 2.09 | [Link](https://vilmedic.readthedocs.io/en/latest/vilmedic/solutions.html#convirt)
-| [selfsup/convirt-mimic-balanced](https://openreview.net/forum?id=T4gXBOXoIUr)  | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/) | 32 | 1.65 |  |  [Link](https://vilmedic.readthedocs.io/en/latest/vilmedic/solutions.html#convirt)
-
+#### Models
+| Name  |   dataset | Model Card | 
+| ------------- |:-------------:|:-------------:|
+| rrg/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 
 ## Radiology Report Generation
 
-### Usage: 
+### Usage 
 ```
 from vilmedic import AutoModel
 import torch
@@ -99,13 +124,13 @@ print(out.keys())
 # dict_keys(['loss', 'logits', 'past_key_values', 'hidden_states', 'attentions', 'cross_attentions'])
 ```
 
-### Generate report: 
+### Generate report
 
 ``` 
 from vilmedic import AutoModel
 import torch
 
-model, processor = AutoModel.from_pretrained(rrg/biomed-roberta-baseline-mimic")
+model, processor = AutoModel.from_pretrained("rrg/biomed-roberta-baseline-mimic")
 
 batch = processor.inference(image=[
     "files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg",

@@ -40,7 +40,8 @@ class AutoModel:
         if not os.path.exists(checkpoint_dir):
             download(tmp_zip_file=tempfile.mkdtemp(),
                      file_id=file_id,
-                     unzip_dir=checkpoint_dir)
+                     unzip_dir=checkpoint_dir,
+                     is_folder=True)
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))
         assert len(checkpoint) == 1, "More than one or no checkpoint found"

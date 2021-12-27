@@ -157,7 +157,9 @@ python bin/ensemble.py config/VQA/vqa_tr.yml \
 |   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
 
 
-## DALLE
+## Self-supervision
+
+### DALLE
 
 <div class="data_box">
 	<b>Data requirements: </b> mimic-cxr-images and CLIP
@@ -227,7 +229,7 @@ python bin/ensemble.py config/CLIP/dalle.yml \
 This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/clip/DALLE.py#L17) 
 that generates a few images for one sample.
 
-## conVIRT
+### conVIRT
 
 <div class="data_box">
 	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
@@ -298,9 +300,84 @@ ensemblor:
   mode: best-1
 ```
 
+Make sure to use a dataset that return labels:
+
+``` 
+python bin/ensemble.py config/SELFSUP/convirt-mimic.yml \
+    dataset.proto=ImSeqLabel \
+    dataset.label.root=data/SELFSUP/mimic-cxr/ \
+    dataset.label.file=label.tok \
+    ...
+```
+
 Here is the results on mimic-cxr (balanced):
 
 | train full (linguistic)  |     train sampled (linguistic) | train full (visual) | train sampled (visual) 
 | :-------------: |:-------------:|:-------------:|:-------------:|
 [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_linguistic.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_linguistic.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_linguistic.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_linguistic.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_visual.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_visual.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_visual.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_visual.png)
 *Click image to access full-size*
+
+
+### simCLR
+
+<div class="data_box">
+	<b>Data requirements: </b> mimic-cxr-images
+	<div class="highlight">
+<pre>python data/download.py mimic-cxr-images-512 </pre></div>	
+</div>
+
+The model config is defined as such:
+
+``` 
+model:
+  proto: SimCLR
+  cnn:
+    proto: CNN
+    backbone: resnet50
+    output_layer: avgpool
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+
+  projection:
+    visual_embedding_dim: 2048
+    projection_dim: 768
+
+  loss:
+    tau: 0.5
+```
+
+
+You can train a model using the following command:
+
+```
+python bin/train.py config/SELFSUP/simclr-mimic.yml \
+        python bin/train.py config/SELFSUP/simclr-mimic.yml \
+            trainor.batch_size=16 \
+            model.forward_batch_size=16 \
+            validator.batch_size=16 \
+            ckpt_dir=ckpt 
+```   
+
+<div class="warning_box">
+	<b>Warning: </b> When using <span class="div_pre">rainor.batch_size=16</span>, the barch size 
+	is actually of size 32 (16 images from the dataset + 16 corresponding enhanced images). See 
+	the tranforms in <span class="div_pre">simclr-mimic.yml</span>.
+</div>
+
+You can use the `plot_representation` post-process to plot learned representations:
+
+``` 
+python bin/ensemble.py config/SELFSUP/simclr-mimic-eval.yml \
+    ckpt_dir=ckpt \
+    ensemblor.splits=[train,validate,test] \
+    name="simclr_32"
+```
+
+
+| Dataset  |  batch-size |    Validation Loss | 
+| ------------- |:-------------:|:-------------:|
+| **mimic-cxr**   | 
+| ours (official splits)  | 32  | 1.96
+| ours (official splits)  | 64  | 2.48
+| ours (official splits)  | 128  | 3.06

@@ -23,14 +23,16 @@ class LabelDataset(Dataset):
         self.root = root
         self.split = split
         self.labels_map = None
-
+        self.labels = None
         if file is not None:
             self.labels = make_labels(root, split, file)
             label_file = os.path.join(ckpt_dir, 'labels.tok')
             if split == 'train' and not os.path.exists(label_file):
                 Labels(self.labels).dump(label_file)
-
-            self.labels_map = Labels().load(label_file)
+            try:
+                self.labels_map = Labels().load(label_file)
+            except FileNotFoundError:
+                raise FileNotFoundError("Labels have not been created yet. Please use train split first.")
 
             labels = []
             for label in self.labels:
@@ -51,7 +53,14 @@ class LabelDataset(Dataset):
         return len(self.labels or [])
 
     def __getitem__(self, index):
-        return self.labels[index]
+        return {'label': self.labels[index]}
+
+    def get_collate_fn(self):
+        def collate_fn(batch):
+            collated = {'labels': torch.stack([s['label'] for s in batch])}
+            return collated
+
+        return collate_fn
 
     def __repr__(self):
         return "LabelDataset\n" + \

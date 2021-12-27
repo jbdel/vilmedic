@@ -103,7 +103,8 @@ class TextDataset(Dataset):
     def inference(self, sentences):
         if not isinstance(sentences, list):
             sentences = [sentences]
-        return [{'seq': s} for s in sentences]
+        batch = [{'seq': s} for s in sentences]
+        return self.get_collate_fn()(batch)
 
     def show_length(self):
         print("Plotting sequences length...")

@@ -21,12 +21,12 @@ class ImSeqLabel(Dataset):
         self.tokenizer_args = self.imgseq.seq.tokenizer_args
 
     def __getitem__(self, index):
-        return {**self.imgseq.__getitem__(index), 'label': self.label.__getitem__(index)}
+        return {**self.imgseq.__getitem__(index), **self.label.__getitem__(index)}
 
     def get_collate_fn(self):
         def collate_fn(batch):
             collated = {**self.imgseq.get_collate_fn()(batch),
-                        'labels': torch.stack([s['label'] for s in batch])}
+                        **self.label.get_collate_fn()(batch)}
             return collated
 
         return collate_fn

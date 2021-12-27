@@ -1,4 +1,4 @@
-name: convirt_mimic
+name: gloria_mimic
 ckpt_dir: ckpt
 
 dataset:

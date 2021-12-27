@@ -14,13 +14,12 @@ class ImLabel(Dataset):
         assert len(self.image) == len(self.label)
 
     def __getitem__(self, index):
-        return {'image': self.image.__getitem__(index),
-                'label': self.label.__getitem__(index)}
+        return {**self.image.__getitem__(index), **self.label.__getitem__(index)}
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            collated = {'images': torch.stack([s['image'] for s in batch]),
-                        'labels': torch.stack([s['label'] for s in batch])}
+            collated = {**self.image.get_collate_fn()(batch),
+                        **self.label.get_collate_fn()(batch)}
             return collated
 
         return collate_fn

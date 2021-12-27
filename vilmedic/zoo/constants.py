@@ -1,8 +1,11 @@
 MODEL_ZOO = {
-    'selfsup/gloria-chexpert': ["1WYE3dx95ef8RuCTiIkv2r2Jf8TgzE3ao", "512 MB", "models/"],
-    'selfsup/convirt-mimic-balanced': ["1pH6RvAsrCIekzWGNKXchVX_duuUQ0vVf", "1.4 GB", "models/"],
-    'selfsup/convirt-mimic': ["1_tCn_hLRNVxNcSMHHdklmuIHs_wz35db", "1.4 GB", "models/"],
-    'rrg/biomed-roberta-baseline-mimic': ["17gD1Leph7tEX9Q83MnDpR2HkfvaDAwUh", "1.8 GB", "models/"],
+    'selfsup/gloria-chexpert': ["1ibtEQH8XXNPy1Y0fE1ooSF7Jh7bdG58C", "512 MB", "models/"],
+    'selfsup/convirt-mimic-balanced': ["1bTf16uRygWwTor3X0rYBhD7MuHSUjWxM", "1.4 GB", "models/"],
+    'selfsup/convirt-mimic': ["1py2k6kFO1tbSlHroAKmHjOnayIakOtMm", "1.4 GB", "models/"],
+    'selfsup/simclr-mimic-32': ["1ibtEQH8XXNPy1Y0fE1ooSF7Jh7bdG58C", "300 MB", "models/"],
+    'selfsup/simclr-mimic-64': ["1RYhQkaR9F0LbozVs7hHv0c52Js1LDh6J", "300 MB", "models/"],
+    'selfsup/simclr-mimic-128': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "300 MB", "models/"],
+    'rrg/biomed-roberta-baseline-mimic': ["1aXxHkzbLdYQpLYvlQLw7NENE7LXgkc1y", "1.8 GB", "models/"],
 }
 
 DATA_ZOO = {

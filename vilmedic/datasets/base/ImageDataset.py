@@ -22,10 +22,6 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
     if ext in [".npy", ".npz"]:
         return lambda x: x
 
-    # assert both or no custom transform mentioned (xnor)
-    assert not ((custom_transform_train is None) ^ (
-            custom_transform_val is None)), 'Use both or no custom transform'
-
     assert not (custom_transform_train is not None and (ext in ['.xrv'])), \
         'Cant specify custom transform when using xrv'
 
@@ -136,10 +132,11 @@ class ImageDataset(Dataset):
             image = open_image(image, self.ext)
         return {'image': self.transform(image)}
 
-    def inference(self, images):
-        if not isinstance(images, list):
-            images = [images]
-        return [{'image': self.transform(open_image(image, self.ext))} for image in images]
+    def inference(self, image):
+        if not isinstance(image, list):
+            image = [image]
+        batch = [{'image': self.transform(open_image(i, self.ext))} for i in image]
+        return self.get_collate_fn()(batch)
 
     def get_collate_fn(self):
         def collate_fn(batch):

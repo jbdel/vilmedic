@@ -17,7 +17,7 @@ def evaluation(models, config, dl, from_training, **kwargs):
 
     pbar = tqdm(dl, total=len(dl))
     for batch in pbar:
-        out = model(batch, from_training=from_training)
+        out = model(**batch, from_training=from_training)
         losses.append(out['loss'].mean().cpu().data.numpy())
         if not from_training:
             visuals.append(out['visual'].cpu().data)
@@ -53,7 +53,7 @@ class SimCLR(nn.Module):
 
     def forward(self, images, from_training=True, **kwargs):
         if from_training:
-            images = torch.cat([images[0], images[1]], dim=0)
+            images = torch.cat(torch.split(images, [3, 3], dim=1), dim=0)
 
         # forward passes
         visuals = []

@@ -53,6 +53,22 @@ and full solutions for multimodal medical tasks using one or several blocks.
     1. Self-critical Sequence Training (HuggingFace compliant) [[paper]](https://arxiv.org/abs/1612.00563)
     1. PPO optimization (HuggingFace compliant) [[paper]](https://arxiv.org/abs/1612.00563)
 
+## Model Zoo
+
+ViLMedic hosts a [zoo of pretrained models](https://vilmedic.readthedocs.io/en/latest/vilmedic/model_zoo.html#).
+
+``` 
+from vilmedic import AutoModel
+model, processor = AutoModel.from_pretrained("selfsup/convirt-mimic")
+batch = processor.inference(seq=["no acute cardiopulmonary process"],
+                            image=["files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg"])
+
+out = model(**batch)
+print(out.keys())
+# dict_keys(['loss', 'loss_l', 'loss_v', 'linguistic', 'visual'])
+```
+
+
 ## Installation
 ```
 git clone  https://github.com/jbdel/vilmedic

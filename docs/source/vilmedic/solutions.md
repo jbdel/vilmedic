@@ -9,14 +9,15 @@
 
 # Solutions
 
-Here is the list of all available solutions in ViLMedic
+The following is a list of replicated solutions available in ViLMedic.
 
 ## Radiology Report Generation
 
+### BioMed-RoBERTa baseline 
 ```bash
 for i in {1..6}
 do
-    python bin/train.py config/RRG/rrg.yml \
+    python bin/train.py config/RRG/biomed-roberta-baseline.yml \
         trainor.batch_size=64 \
         validator.batch_size=4 \
         name=rrg 
@@ -42,16 +43,18 @@ model:
 ### Results
 
 ```
-python bin/ensemble.py config/RRG/rrg.yml \
+python bin/ensemble.py config/RRG/biomed-roberta-baseline.yml \
     ensemblor.batch_size=4 \
     ensemblor.beam_width=8 \
     ensemblor.mode=best-1 \
     name=rrg 
 ```
-| Split  |     BLEU | ROUGE2 | METEOR | CiDER | 
-| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|
-| Mimic-val   | 43.61   |  43.90  | 45.36  | 6      
-| Mimic-test    |  82.30  |  81.53  | 82.26  |  8        
+| Dataset |     ROUGE-L | F1-cheXbert (micro) |  
+| ------------- |:-------------:|:-------------:|
+| **Mimic-test**
+| [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  44.70 |
+| BioMed-RoBERTa   | 22.46  |  45.04  |     
+
 
 ## Radiology Report Summarization
 ### Monomodal

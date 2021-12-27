@@ -62,7 +62,7 @@ class RRG_PPO(nn.Module):
         # PPO
         if ppo is None:
             ppo = {}
-        self.ppo = PPOTrainer(self.model.encoder, self.model.dec, self.model_ref.dec, self.v_head, **ppo)
+        self.ppo = PPOTrainer(self.model.encode, self.model.dec, self.model_ref.dec, self.v_head, **ppo)
 
         # Scoring
         self.chexbert = CheXbert()
@@ -81,7 +81,7 @@ class RRG_PPO(nn.Module):
 
         with torch.no_grad():
             # 0. get encoder states
-            encoder_hidden_states = self.model.encoder(images.cuda())
+            encoder_hidden_states = self.model.encode(images.cuda())
 
             # 1. Rollout
             batch_size = input_ids.shape[0]

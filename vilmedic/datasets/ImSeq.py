@@ -21,19 +21,11 @@ class ImSeq(Dataset):
         self.tokenizer_args = self.seq.tokenizer_args
 
     def __getitem__(self, index):
-        return {'image': self.image.__getitem__(index),
-                'seq': ' '.join(self.seq.__getitem__(index)[:self.seq_max_len])
-                if (self.split == 'train' and self.seq.source == "tgt")
-                else ' '.join(self.seq.__getitem__(index))  # No trunc at test time
-                }
+        return {**self.image.__getitem__(index), **self.seq.__getitem__(index)}
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            seq = self.seq.tokenizer([s['seq'] for s in batch], **self.tokenizer_args)
-            collated = {'images': torch.stack([s['image'] for s in batch]),
-                        'input_ids': seq.input_ids,
-                        'attention_mask': seq.attention_mask
-                        }
+            collated = {**self.seq.get_collate_fn()(batch), **self.image.get_collate_fn()(batch)}
             return collated
 
         return collate_fn
@@ -44,11 +36,16 @@ class ImSeq(Dataset):
     def __repr__(self):
         return "ImSeq\n" + str(self.seq) + '\n' + str(self.image)
 
-    def inference(self, seq, image):
-        sentences = self.seq.inference(seq)
-        images = self.image.inference(image)
+    def inference(self, seq=None, image=None):
+        if seq is None and image is None:
+            return dict()
 
-        assert len(sentences) == len(images), "sizes don't match"
+        batch = {}
+        if image is not None:
+            batch.update(self.image.get_collate_fn()(self.image.inference(image)))
 
-        batch = [{'seq': sentence, 'image': image} for sentence, image in zip(sentences, images)]
-        return self.get_collate_fn()(batch)
+        if seq is not None:
+            batch.update(self.seq.get_collate_fn()(self.seq.inference(seq)))
+
+        assert len(set([len(v) for k, v in batch.items()])) == 1, 'element in batch dont have the same size'
+        return batch

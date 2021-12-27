@@ -5,9 +5,9 @@ import tqdm
 import sys
 import os
 
-from torch.nn.utils import clip_grad_norm_
 from .validator import Validator
-from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer, create_training_scheduler
+from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer, create_training_scheduler, \
+    create_scaler
 
 
 class InitTrainor(object):
@@ -41,11 +41,13 @@ class InitTrainor(object):
         self.training_scheduler = create_training_scheduler(config=self.config, optimizer=self.optimizer,
                                                             logger=self.logger, state_dict=self.state)
 
+        # Scaler
+        self.scaler = create_scaler(config=self.config, logger=self.logger, state_dict=self.state)
+
         # Training
         self.eval_start = self.config.eval_start
         self.grad_accu = self.config.grad_accu or 1
-        self.clip_grad_norm = lambda x: clip_grad_norm_(x, self.config.clip_grad_norm) if (
-                self.config.clip_grad_norm is not None) else lambda x: None
+        self.clip_grad_norm = self.config.clip_grad_norm
 
         # Validator is None at init
         self.evaluator: Validator = None
@@ -67,10 +69,11 @@ class Trainor(InitTrainor):
 
             # Training
             for iteration, batch in enumerate(pbar, start=1):
-                if type(batch) is dict:
-                    out = self.model(**batch)
-                else:
-                    out = self.model(batch)
+                with torch.cuda.amp.autocast(enabled=self.scaler.is_enabled()):
+                    if type(batch) is dict:
+                        out = self.model(**batch)
+                    else:
+                        out = self.model(batch)
 
                 # If the model is taking care of it own training
                 if 'loss' not in out:
@@ -80,13 +83,19 @@ class Trainor(InitTrainor):
                 loss = out['loss']
                 if isinstance(self.model, torch.nn.DataParallel):
                     loss = loss.mean()
-                loss.backward()
+                self.scaler.scale(loss).backward()
+
+                if self.clip_grad_norm is not None:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.config.clip_grad_norm)
+
                 losses.append(loss.item())
 
                 if iteration % self.grad_accu == 0:
-                    self.clip_grad_norm(self.model.parameters())
-                    self.optimizer.step()
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
                     self.optimizer.zero_grad()
+
                     log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
                         epoch + 1,
                         [param_group['lr'] for param_group in self.optimizer.param_groups],
@@ -100,8 +109,11 @@ class Trainor(InitTrainor):
 
             # Perform last update if needed
             if (iteration % self.grad_accu != 0) and ('loss' in out):
-                self.clip_grad_norm(self.model.parameters())
-                self.optimizer.step()
+                if self.clip_grad_norm is not None:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.config.clip_grad_norm)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
                 self.optimizer.zero_grad()
 
             self.logger.info(log)
@@ -123,7 +135,7 @@ class Trainor(InitTrainor):
                                             "training_scheduler": self.training_scheduler.state_dict(),
                                             "optimizer": self.optimizer.state_dict(),
                                             "config": self.config,
-                                            "dataset": self.evaluator.splits[0][1].dataset
+                                            "scaler": self.scaler.state_dict()
                                             },
                                 tag=mean_eval_metric,
                                 current_epoch=epoch,

@@ -20,7 +20,7 @@ dataset:
 model:
   proto: RRG
   decoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: data/RRG/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169
@@ -57,7 +57,7 @@ validator:
 ensemblor:
   batch_size: 16
   beam_width: 8
-  metrics: [ROUGEL, BLEU, METEOR]
+  metrics: [ROUGEL, BLEU, METEOR, chexbert]
   #  splits: [indiana_dev]
   splits: [validate, test]
   mode: all # best,all

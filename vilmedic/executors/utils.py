@@ -99,7 +99,17 @@ def create_data_loader(config, split, logger, called_by_validator=False):
     return DataLoader(dataset,
                       num_workers=4,
                       collate_fn=collate_fn,
-                      batch_sampler=sampler)
+                      batch_sampler=sampler,
+                      pin_memory=True)
+
+
+def create_scaler(config, logger, state_dict=None):
+    scaler = torch.cuda.amp.GradScaler(enabled=(config.use_amp or False))
+    logger.settings('Using scaler : {}'.format(scaler.is_enabled()))
+    if state_dict is not None and "scaler" in state_dict:
+        scaler.load_state_dict(state_dict["scaler"])
+        logger.info('Scaler state loaded')
+    return scaler
 
 
 def create_training_scheduler(config, optimizer, logger, state_dict=None):

@@ -1,0 +1,19 @@
+includes:
+  - config/SELFSUP/convirt-mimic.yml
+name: convirt_padchest
+
+dataset:
+  image:
+    root: data/SELFSUP/padchest/all
+    file: image.tok
+    image_path: data/images/padchest-images-224/
+    ext: .png
+  seq:
+    root: data/SELFSUP/padchest/all/
+    tokenizer: data/SELFSUP/huggingface/roberta-base-biomedical-es
+    file: report.tok
+    tokenizer_max_len: 75
+
+model:
+  encoder:
+    proto: data/SELFSUP/huggingface/roberta-base-biomedical-es

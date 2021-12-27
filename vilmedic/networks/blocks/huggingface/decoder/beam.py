@@ -32,7 +32,7 @@ def beam_search(models, config, dl):
             # If huggingface is only the decoder, run the encoder before generate function.
             if hugg_models[0].config.is_decoder:
                 encoder_outputs = [{'encoder_outputs': BaseModelOutputWithPoolingAndCrossAttentions(
-                    last_hidden_state=model.encoder(**batch))} for model in models]
+                    last_hidden_state=model.encode(**batch))} for model in models]
                 # also change batch["attention_mask"] (that is supposed to decoder) to the mask of encoder (which are just ones)
                 encoder_batch_size, encoder_sequence_length, _ = encoder_outputs[0][
                     "encoder_outputs"].last_hidden_state.size()

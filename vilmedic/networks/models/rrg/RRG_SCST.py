@@ -86,7 +86,7 @@ class RRG_SCST(nn.Module):
         # 1 Greedy
         with torch.no_grad():
             self.model.eval()
-            encoder_hidden_states = self.model.encoder(images.cuda())
+            encoder_hidden_states = self.model.encode(images.cuda())
             out = self.model.dec.decoder.generate(
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
                 max_length=seq_len,

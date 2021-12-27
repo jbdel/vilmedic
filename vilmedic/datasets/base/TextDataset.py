@@ -1,11 +1,17 @@
 import os
+import tqdm
+import json
+import sys
+
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from transformers import BertTokenizer
 from .utils import Vocab, load_file
-import json
-import sys
 
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+sns.set_theme(style="darkgrid")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
 
 
@@ -76,7 +82,20 @@ class TextDataset(Dataset):
             sys.exit()
 
     def __getitem__(self, index):
-        return self.sentences[index]  # ['w1', 'w2', 'w3']
+        # No trunc at test time
+        return {'seq': ' '.join(self.sentences[index][:self.max_len]) if (
+                self.split == 'train' and self.source == "tgt") else ' '.join(self.sentences[index])}
+
+    def get_collate_fn(self):
+        def collate_fn(batch):
+            seq = self.tokenizer([s['seq'] for s in batch], **self.tokenizer_args)
+            collated = {
+                'input_ids': seq.input_ids,
+                'attention_mask': seq.attention_mask
+            }
+            return collated
+
+        return collate_fn
 
     def __len__(self):
         return len(self.sentences or [])
@@ -84,20 +103,15 @@ class TextDataset(Dataset):
     def inference(self, sentences):
         if not isinstance(sentences, list):
             sentences = [sentences]
-        return sentences
+        return [{'seq': s} for s in sentences]
 
     def show_length(self):
-        import tqdm
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        sns.set_theme(style="darkgrid")
-
-        sentence_len = []
-        tokenizer_len = []
-
+        print("Plotting sequences length...")
+        sentence_len, tokenizer_len = [], []
+        self.tokenizer_args.update({'max_length': 512})
         for index in tqdm.tqdm(range(len(self))):
-            sentence = self.__getitem__(index)
-            x = self.tokenizer(' '.join(sentence), **self.tokenizer_args).input_ids[0]
+            sentence = self.__getitem__(index)['seq']
+            x = self.tokenizer(sentence, **self.tokenizer_args).input_ids[0]
             if self.tokenizer.sep_token_id in x:
                 length = ((x == self.tokenizer.sep_token_id).nonzero(as_tuple=True)[0]).item()
             elif self.tokenizer.pad_token_id in x:
@@ -105,7 +119,7 @@ class TextDataset(Dataset):
             else:
                 length = len(x)
             tokenizer_len.append(length)
-            sentence_len.append(len(sentence))
+            sentence_len.append(len(sentence.split()))
 
         _, ax = plt.subplots(1, 2)
         sns.histplot(tokenizer_len, ax=ax[0], binwidth=2)

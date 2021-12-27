@@ -4,9 +4,9 @@ import functools
 
 # v4.3.2
 from transformers.models.auto import AutoModelForCausalLM, AutoConfig
-from transformers.models.bert_generation import  BertGenerationConfig, BertGenerationDecoder
-from vilmedic.networks.blocks.huggingface.decoder.beam_search import beam_search, prepare_inputs_for_generation
-
+from transformers.models.bert_generation import BertGenerationConfig, BertGenerationDecoder
+from vilmedic.networks.blocks.huggingface.decoder.beam_search import prepare_inputs_for_generation
+from transformers.models.roberta import modeling_roberta
 
 class DecoderModel(nn.Module):
     """
@@ -29,8 +29,11 @@ class DecoderModel(nn.Module):
             self.decoder = BertGenerationDecoder(dec_config)
 
         # Evaluation
-        self.decoder.beam_search = functools.partial(beam_search, self.decoder)
         self.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation, self.decoder)
+
+        # Inference
+        self.generate = self.decoder.generate
+        self.config = self.decoder.config
 
     def forward(self, input_ids, attention_mask, encoder_outputs=None, encoder_attention_mask=None, **kwargs):
         input_ids = input_ids.cuda()

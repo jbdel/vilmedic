@@ -7,19 +7,8 @@ dataset:
     root: data/SELFSUP/mimic-cxr/
     file: image.tok
     image_path: data/images/
-    custom_transform_train: >
-      transforms.Compose([
-                      transforms.Resize(256),
-                      transforms.RandomCrop(224),
-                      transforms.ToTensor(),
-                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    custom_transform_val: >
-      transforms.Compose([
-                      transforms.CenterCrop(224),
-                      transforms.ToTensor(),
-                      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
+    resize: 256
+    crop: 224
     ext: .jpg
     load_memory: False
 
@@ -73,11 +62,11 @@ trainor:
   early_stop_metric: loss
 
 validator:
-  batch_size: 32
+  batch_size: 48
   splits: [validate]
 
 ensemblor:
-  batch_size: 32
+  batch_size: 48
   splits: [train, validate, test]
   post_processing:
     - plot_representation:

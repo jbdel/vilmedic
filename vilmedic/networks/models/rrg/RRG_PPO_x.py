@@ -61,7 +61,7 @@ class RRG_PPO_x(nn.Module):
         # PPO
         if ppo is None:
             ppo = {}
-        self.ppo = PPOTrainer(self.model.encoder, self.model.dec, self.model_ref.dec, self.v_head, **ppo)
+        self.ppo = PPOTrainer(self.model.encode, self.model.dec, self.model_ref.dec, self.v_head, **ppo)
 
         # Scoring
         self.chexbert = CheXbert()
@@ -82,7 +82,7 @@ class RRG_PPO_x(nn.Module):
         # 1 Sampling
         with torch.no_grad():
             self.model.eval()
-            encoder_hidden_states = self.model.encoder(images.cuda())
+            encoder_hidden_states = self.model.encode(images.cuda())
             batch_size = input_ids.shape[0]
             seq_len = input_ids.shape[1]
 

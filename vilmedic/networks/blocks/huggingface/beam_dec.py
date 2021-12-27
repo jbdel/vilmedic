@@ -34,7 +34,7 @@ def beam_search(models, config, dl):
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
             model_kwargs = {
-                "encoder_hidden_states": model.encoder(**batch).index_select(0, expanded_return_idx)
+                "encoder_hidden_states": model.encode(**batch).index_select(0, expanded_return_idx)
             }
 
             hyps = hugg_models[0].generate(

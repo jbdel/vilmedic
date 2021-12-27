@@ -75,7 +75,7 @@ def global_loss(cnn_code, rnn_code, eps=1e-8, temp3=10.0):
     scores0 = scores0 / norm0.clamp(min=eps) * temp3
 
     # --> batch_size x batch_size
-    scores0 = scores0.squeeze()
+    scores0 = scores0.squeeze(0)
 
     scores1 = scores0.transpose(0, 1)
     loss0 = nn.CrossEntropyLoss()(scores0, labels)

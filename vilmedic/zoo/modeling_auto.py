@@ -32,9 +32,8 @@ class AutoModel:
         try:
             file_id, _, unzip_dir = MODEL_ZOO[pretrained_model_name]
         except KeyError:
-            print("Unrecognized pretrained_model_name {}. "
-                  "Model name should be one of {}.".format(pretrained_model_name, MODEL_ZOO.keys()))
-            return None
+            raise KeyError("Unrecognized pretrained_model_name {}. "
+                           "Model name should be one of {}.".format(pretrained_model_name, MODEL_ZOO.keys()))
 
         checkpoint_dir = os.path.join(DATA_PATH, unzip_dir, pretrained_model_name)
 
@@ -50,33 +49,33 @@ class AutoModel:
         try:
             config = OmegaConf.load(os.path.join(checkpoint_dir, 'config.yml'))
         except FileNotFoundError:
-            print("The file config.yml is missing")
-            return None
+            raise FileNotFoundError("The file config.yml is missing")
 
         try:
             model_config = config["model"]
             dataset_config = config["dataset"]
         except KeyError:
-            print("This config doesnt have a model and/or dataset key. Deprecated checkpoint of vilmedic version?")
-            return None
+            raise KeyError(
+                "This config doesnt have a model and/or dataset key. Deprecated checkpoint of vilmedic version?")
 
         try:
             classname = dataset_config.pop("proto")
             dataset = eval(classname)(split='test', ckpt_dir=None, **dataset_config)
         except NameError:
-            print("Dataset {} does not exist anymore. Deprecated checkpoint of vilmedic version?".format(classname))
-            return None
+            raise NameError(
+                "Dataset {} does not exist anymore. Deprecated checkpoint of vilmedic version?".format(classname))
 
         try:
             classname = model_config.pop("proto")
             model: nn.Module = eval(classname)(**model_config, dl=DataLoader(dataset), logger=None)
         except NameError:
-            print("Model {} does not exists anymore. Deprecated checkpoint of vilmedic version?".format(classname))
-            return None
+            raise NameError(
+                "Model {} does not exists anymore. Deprecated checkpoint of vilmedic version?".format(classname))
 
         model.load_state_dict(state_dict["model"], strict=True)
+        model.eval()
         model.cuda()
 
         assert hasattr(dataset, "inference"), "Dataset has not implement an inference function"
 
-        return model, dataset.inference
+        return model, dataset

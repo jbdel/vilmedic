@@ -1,9 +1,14 @@
 import tqdm
 import torch
+import functools
+from .beam_search import beam_search
 
 
 def evaluation(models, config, dl, **kwargs):
     hf_models = [model.dec.decoder for model in models]
+
+    # We are in an ensembling scenario, we override huggingface beam-search function
+    hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
 
     # Get tokenizer and reference sentences from dataloader
     ref_str = 'input_ids'
@@ -24,7 +29,7 @@ def evaluation(models, config, dl, **kwargs):
 
             model_kwargs = {
                 "encoders_hidden_states":
-                    [{"encoder_hidden_states": hf.encoder(**batch).index_select(0, expanded_return_idx)} for hf in
+                    [{"encoder_hidden_states": hf.encode(**batch).index_select(0, expanded_return_idx)} for hf in
                      models],
                 "hf_models": hf_models
             }
@@ -38,6 +43,7 @@ def evaluation(models, config, dl, **kwargs):
                 bos_token_id=hf_models[0].config.bos_token_id,
                 eos_token_id=hf_models[0].config.eos_token_id,
                 pad_token_id=hf_models[0].config.pad_token_id,
+                use_cache=True,
                 **model_kwargs
             )
 

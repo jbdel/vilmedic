@@ -43,7 +43,6 @@ def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=Non
     # cut decoder_input_ids if past is used
     if past is not None:
         input_ids = input_ids[:, -1:]
-
     return {"input_ids": input_ids, "attention_mask": attention_mask, "past_key_values": past, **model_kwargs}
 
 

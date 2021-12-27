@@ -33,8 +33,11 @@ def get_ckpts(path, mode):
 
 def main():
     config, override = get_args()
+    config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
+
     ensemble_config = get(config, 'ensemblor')
     seed = '{}_{}'.format(ensemble_config.mode, get_seed())
+
     set_logger(config.ckpt_dir, seed)
 
     # Nice printing the args
@@ -48,6 +51,7 @@ def main():
 
     # fetching all ckpt according to 'mode"
     ckpts = get_ckpts(os.path.join(evaluator.config.ckpt_dir, '*.pth'), ensemble_config.mode)
+
     # if specific checkpoint is specified
     if ensemble_config.ckpt is not None:
         ckpts = [os.path.join(evaluator.config.ckpt_dir, ensemble_config.ckpt)]

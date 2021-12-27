@@ -84,4 +84,5 @@ def get_seed(seed=None):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.benchmark = True
     return seed

@@ -51,7 +51,6 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
             scores["ROUGE2"] = round(ROUGEScorer(rouges=['rouge2']).compute(refs, hyps)[0] * 100, 2)
         elif metric == 'ROUGEL':
             scores["ROUGEL"] = round(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0] * 100, 2)
-            print(scores["ROUGEL"])
         elif metric == 'METEOR':
             scores["METEOR"] = round(METEORScorer().compute(refs_file, hyps_file) * 100, 2)
         # elif metric == 'CIDER':
@@ -59,7 +58,6 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
             # scores["CIDER"] = nlgeval.compute_metrics(hyps_file, [refs_file])
         elif metric == 'CIDER2':
             scores["CIDER2"] = Cider().compute_score(refs, hyps)
-            print(scores["CIDER2"])
         elif metric == 'accuracy':
             scores["accuracy"] = round(np.mean(np.array(refs) == np.argmax(hyps, axis=-1)) * 100, 2)
         elif metric == 'f1-score':

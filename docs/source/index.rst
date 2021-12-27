@@ -21,6 +21,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
 
     Installation                 <vilmedic/installation>
     Solutions                 <vilmedic/solutions>
+    Model Zoo                 <vilmedic/model_zoo>
 
 
 .. toctree::

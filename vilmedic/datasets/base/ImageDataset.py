@@ -4,6 +4,7 @@ import numpy as np
 import json
 import PIL
 import skimage
+import logging
 
 import torchxrayvision as xrv
 from PIL import Image, ImageFile
@@ -14,6 +15,7 @@ from .papers.open_image import *
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
+logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
 def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext):
@@ -132,12 +134,19 @@ class ImageDataset(Dataset):
         image = self.images[index]
         if not self.load_memory:
             image = open_image(image, self.ext)
-        return self.transform(image)
+        return {'image': self.transform(image)}
 
     def inference(self, images):
         if not isinstance(images, list):
             images = [images]
-        return [self.transform(open_image(image, self.ext)) for image in images]
+        return [{'image': self.transform(open_image(image, self.ext))} for image in images]
+
+    def get_collate_fn(self):
+        def collate_fn(batch):
+            collated = {'images': torch.stack([s['image'] for s in batch])}
+            return collated
+
+        return collate_fn
 
     def __repr__(self):
         transform = self.transform

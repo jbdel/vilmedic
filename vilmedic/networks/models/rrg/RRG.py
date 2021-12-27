@@ -1,12 +1,10 @@
 import torch.nn as nn
 from vilmedic.networks.models.utils import get_n_params
-import functools
 # v4.3.2
 
 from vilmedic.networks.blocks.vision import *
 from vilmedic.networks.blocks.huggingface.decoder.decoder_model import DecoderModel
 from vilmedic.networks.blocks.huggingface.decoder.evaluation import evaluation
-from vilmedic.networks.blocks.huggingface.decoder.beam import beam_search
 
 
 class RRG(nn.Module):
@@ -32,7 +30,7 @@ class RRG(nn.Module):
         attention_mask = attention_mask.cuda()
 
         if encoder_outputs is None:
-            encoder_outputs = self.encoder(images)
+            encoder_outputs = self.encode(images)
 
         out = self.dec(input_ids=input_ids,
                        attention_mask=attention_mask,
@@ -42,7 +40,8 @@ class RRG(nn.Module):
         return out
 
     # Necessary for generation
-    def encoder(self, images, **kwargs):
+    def encode(self, images, **kwargs):
+        images = images.cuda()
         return self.enc(images)
 
     def __repr__(self):

@@ -16,3 +16,4 @@ pytorch-metric-learning==0.9.99
 pycocotools==2.0.2
 torch-optimizer==0.1.0
 umap-learn==0.5.2
+opencv-python==4.5.4.60

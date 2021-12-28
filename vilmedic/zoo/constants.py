@@ -15,4 +15,6 @@ DATA_ZOO = {
     "CLIP": ["189oN3RSTUMMRE-toLSohtK5tdqL1VmPa", "40 Mb", "data/"],
     "padchest-images-512": ["1Kt8qclk01Jz-iSgmq-Oi7I70uDnSi8fO", "11.83 GB", "data/images/"],
     "SELFSUP": ["1KvmkBerGaD334sNoN4IDsO3Hp7Kw_SWY", "676.7 MB", "data/"],
+    "imageclef-vqa-images-512": ["1ByPQ2TdXGz17pYDJKhrV05hka_XYH_pw", "327 MB", "data/images/"],
+    "MVQA": ["1hwr1yh4TNfUdTJlbAAY-p0PHkHZFJDuJ", "1 MB", "data/"],
 }

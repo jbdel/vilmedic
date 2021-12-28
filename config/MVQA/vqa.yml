@@ -4,15 +4,15 @@ ckpt_dir: ckpt
 dataset:
   proto: ImLabel
   label:
-    root: data/2021-VQA
-    file: a.txt
+    root: data/MVQA
+    file: label.tok
 
   image:
-    root: data/2021-VQA
-    image_path: data/2021-VQA/images
-    file: ids.txt
-    load_memory: False
-    resize: (232, 232)
+    root: data/MVQA
+    file: image.tok
+    image_path: data/images/imageclef-vqa-images-512/
+    resize: 256
+    crop: 232
     ext: .jpg
 
 model:
@@ -47,21 +47,20 @@ model:
     dropout: 0.
 
   loss:
-      proto: LabelSmoothingCrossEntropy
-#      proto: MixUpLoss
-#      criterion: LabelSmoothingCrossEntropy
-#      classes: 332
-
+    proto: LabelSmoothingCrossEntropy
 
 trainor:
-  optimizer: Adam
-  optim_params: {lr: 1e-4, weight_decay: 5e-4}
+  optimizer: RAdam
+  optim_params:
+    lr: 0.00005
+    weight_decay: 5e-4
   batch_size: 32
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
     factor: 0.5
     patience: 1
     min_lr: 0.000001
+    threshold: 0.01
     threshold_mode: abs
   epochs: 99
   early_stop: 10
@@ -71,12 +70,12 @@ trainor:
 validator:
   batch_size: 16
   metrics: [accuracy]
-#  post_processing: [attentions]
-  splits: [val]
+  #  post_processing: [attentions]
+  splits: [validate]
 
 ensemblor:
   batch_size: 16
   metrics: [accuracy]
-#  post_processing: [attentions]
-  splits: [val, test]
+  #  post_processing: [attentions]
+  splits: [validate, test]
   mode: all

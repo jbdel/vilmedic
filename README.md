@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="docs/logo.png" width="150">
+  <img src="docs/logo.png" width="190px">
   <br />
   <br />
   <a href="https://vilmedic.readthedocs.io/en/latest/">

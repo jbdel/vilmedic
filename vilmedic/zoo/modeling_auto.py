@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 
 from .constants import MODEL_ZOO
-from .utils import download
+from .utils import download_model
 
 from ..networks import *
 from ..datasets import *
@@ -38,10 +38,7 @@ class AutoModel:
         checkpoint_dir = os.path.join(DATA_PATH, unzip_dir, pretrained_model_name)
 
         if not os.path.exists(checkpoint_dir):
-            download(tmp_zip_file=tempfile.mkdtemp(),
-                     file_id=file_id,
-                     unzip_dir=checkpoint_dir,
-                     is_folder=True)
+            download_model(file_id=file_id, unzip_dir=checkpoint_dir)
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))
         assert len(checkpoint) == 1, "More than one or no checkpoint found"

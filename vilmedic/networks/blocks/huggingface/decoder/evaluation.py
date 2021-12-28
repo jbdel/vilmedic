@@ -13,15 +13,13 @@ def evaluation(models, config, dl, **kwargs):
     # Get tokenizer and reference sentences from dataloader
     ref_str = 'input_ids'
     tokenizer = dl.dataset.tokenizer
-    max_len = dl.dataset.seq_max_len
-
+    max_len = dl.dataset.tokenizer_max_len
     ref_list = []
     hyp_list = []
 
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() for k, v in batch.items()}
-
             batch_size = batch['images'].shape[0]
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()

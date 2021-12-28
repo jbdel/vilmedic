@@ -19,7 +19,7 @@ def beam_search(models, config, dl):
     hugg_models = [model.dec.decoder for model in models]
     ref_str = 'input_ids'
     tokenizer = dl.dataset.tokenizer
-    max_len = dl.dataset.seq_max_len
+    max_len = dl.dataset.tokenizer_max_len
 
 
     ref_list = []

@@ -356,11 +356,12 @@ python bin/train.py config/SELFSUP/simclr-mimic.yml \
             trainor.batch_size=16 \
             model.forward_batch_size=16 \
             validator.batch_size=16 \
-            ckpt_dir=ckpt 
+            ckpt_dir=ckpt  \
+            name="simclr_32"
 ```   
 
 <div class="warning_box">
-	<b>Warning: </b> When using <span class="div_pre">rainor.batch_size=16</span>, the barch size 
+	<b>Warning: </b> When using <span class="div_pre">trainor.batch_size=16</span>, the batch-size 
 	is actually of size 32 (16 images from the dataset + 16 corresponding enhanced images). See 
 	the tranforms in <span class="div_pre">simclr-mimic.yml</span>.
 </div>

@@ -12,17 +12,16 @@ class ImSeq2Seq(Dataset):
 
         # For decoding
         self.tgt_tokenizer = self.seq2seq.tgt.tokenizer
-        self.tgt_len = self.seq2seq.tgt.max_len
+        self.tgt_tokenizer_max_len = self.seq2seq.tgt.tokenizer_max_len
 
         assert len(self.image) == len(self.seq2seq)
 
     def __getitem__(self, index):
-        return {'image': self.image.__getitem__(index), **self.seq2seq.__getitem__(index)}
+        return {**self.image.__getitem__(index), **self.seq2seq.__getitem__(index)}
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            collated = {'images': torch.stack([s['image'] for s in batch]),
-                        **self.seq2seq.get_collate_fn()(batch)}
+            collated = {**self.seq2seq.get_collate_fn()(batch), **self.image.get_collate_fn()(batch)}
             return collated
 
         return collate_fn
@@ -32,4 +31,3 @@ class ImSeq2Seq(Dataset):
 
     def __repr__(self):
         return "ImSeq2Seq\n" + str(self.seq2seq) + '\n' + str(self.image)
-

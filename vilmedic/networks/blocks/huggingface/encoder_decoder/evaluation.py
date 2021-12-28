@@ -1,14 +1,18 @@
 import tqdm
 import torch
 from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
+import functools
+from .beam_search import beam_search
 
 
 def evaluation(models, config, dl, **kwargs):
     hf_models = [model.enc_dec.enc_dec for model in models]
 
+    hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
+
     ref_str = 'decoder_input_ids'
     tokenizer = dl.dataset.tgt_tokenizer
-    max_len = dl.dataset.tgt_len
+    max_len = dl.dataset.tgt_tokenizer_max_len
 
     ref_list = []
     hyp_list = []

@@ -14,6 +14,14 @@ dataset:
     resize: 256
     crop: 232
     ext: .jpg
+    custom_transform_train: >
+      transforms.Compose([
+                      transforms.Resize((232, 232)),
+                      transforms.ToTensor()])
+    custom_transform_val: >
+      transforms.Compose([
+                      transforms.Resize((232, 232)),
+                      transforms.ToTensor()])
 
 model:
   proto: MVQA
@@ -50,7 +58,7 @@ model:
     proto: LabelSmoothingCrossEntropy
 
 trainor:
-  optimizer: RAdam
+  optimizer: Adam
   optim_params:
     lr: 0.00005
     weight_decay: 5e-4

@@ -109,13 +109,14 @@ class RRG_SCST(nn.Module):
             max_length=seq_len,
             num_beams=1,
             num_return_sequences=1,
-            output_scores=True,
-            return_dict_in_generate=True,
-            do_sample=True,
             encoder_hidden_states=encoder_hidden_states.data,
             bad_words_ids=[[self.pad_token_id], [self.bos_token_id]],
             top_k=self.top_k,
-            forced_eos_token_id=True
+            forced_eos_token_id=True,
+            output_scores=True,
+            do_sample=True,
+            use_cache=True,
+            return_dict_in_generate=True,
         )
         samples_ids = out.sequences[:, 1:]
         logits = torch.stack(out.scores, dim=1)

@@ -5,10 +5,10 @@ The following is a list of pretrained model available in ViLMedic
 ## Self-supversion
 ### SimCLR
 
-from vilmedic import AutoModel
 
 #### Usage 
 ```
+from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/simclr-mimic-64")
 batch = processor.inference(image=[files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg'])
 out = model(**batch, from_training=False)
@@ -34,14 +34,6 @@ out = model(**batch)
 print(out.keys())
 # dict_keys(['loss', 'global_features', 'local_features', 'word_embeddings', 'sent_embeddings'])
 ```
-
-#### Models
-| Name  |   dataset | Model Card | 
-| ------------- |:-------------:|:-------------:|
-| [simclr-mimic-16](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
-
-
-
 #### Zero-shot classification
 
 ``` 
@@ -86,7 +78,7 @@ print(pd.DataFrame(class_similarities, columns=reports.keys()))
 #### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
-| [gloria-chexpert](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
+| [selfsup/gloria-chexpert](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
 
 ### ConVIRT
 
@@ -112,7 +104,6 @@ print(out.keys())
 ### Usage 
 ```
 from vilmedic import AutoModel
-import torch
 
 model, processor = AutoModel.from_pretrained("rrg/biomed-roberta-baseline-mimic")
 
@@ -148,19 +139,14 @@ hyps = model.dec.generate(
     max_length=120,
     num_beams=8,
 )
-print([processor.tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False) for h in hyps])
-
+hyps = [processor.tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False) for h in hyps]
+print(hyps)
 # ['no acute cardiopulmonary process .', 'in comparison with study of there is little change and no evidence of acute cardiopulmonary disease . no pneumonia vascular congestion or pleural effusion .']
 
 ```
 ### Output scoring
 
 ``` 
-from vilmedic.scorers.NLG import ROUGEScorer
-
-...
-
-hyps = [processor.tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False) for h in hyps]
 refs = ['no acute cardiopulmonary process .', 'no evidence of acute cardiopulmonary process  .']
 print(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0])
 # 0.6724137931034483
@@ -170,3 +156,42 @@ print(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0])
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | rrg/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+
+
+## Medical VQA
+
+
+### Usage 
+```
+from vilmedic import AutoModel
+
+model, processor = AutoModel.from_pretrained("mvqa/mvqa-imageclef")
+batch = processor.inference(image=["data/images/imageclef-vqa-images-512/synpic253.jpg"])
+out = model(**batch, from_training=False)
+answer = out["answer"][0]
+
+print(out.keys())
+print(processor.labels_map.idx2label[answer.item()])
+
+# dict_keys(['loss', 'output', 'answer', 'attentions'])
+# horseshoe kidney
+```
+
+### Compute accuracy on custom data
+
+``` 
+from vilmedic import AutoModel
+
+model, processor = AutoModel.from_pretrained("mvqa/mvqa-imageclef")
+batch = processor.inference(image="data/images/imageclef-vqa-images-512/synpic253.jpg", label="horseshoe kidney")
+out = model(**batch, from_training=False)
+
+print(out["answer"].item() == batch["labels"].item())
+# True
+```
+
+### Models
+| Name  |   dataset | Model Card | 
+| ------------- |:-------------:|:-------------:|
+| mvqa/mvqa-imageclef| [ImageCLEF-VQAMed](https://www.imageclef.org/2021/medical/vqa)   
+

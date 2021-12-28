@@ -1,12 +1,10 @@
 import torch.nn as nn
 import copy
-import functools
 
 # v4.3.2
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
 from transformers import EncoderDecoderModel as HFEncoderDecoderModel
 from vilmedic.networks.models.utils import get_n_params
-from vilmedic.networks.blocks.huggingface.encoder_decoder.beam_search import beam_search
 
 
 class EncoderDecoderModel(nn.Module):
@@ -34,10 +32,8 @@ class EncoderDecoderModel(nn.Module):
 
             # Encdec
             self.enc_dec = HFEncoderDecoderModel(encoder=enc, decoder=dec)
-        assert self.enc_dec.config.is_encoder_decoder == True
 
-        # Evaluation
-        self.enc_dec.beam_search = functools.partial(beam_search, self.enc_dec)
+        assert self.enc_dec.config.is_encoder_decoder == True
 
     def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask):
         input_ids = input_ids.cuda()

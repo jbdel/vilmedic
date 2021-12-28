@@ -15,7 +15,7 @@ class ImSeq(Dataset):
 
         # For decoding, if needed
         self.tokenizer = self.seq.tokenizer
-        self.seq_max_len = self.seq.max_len
+        self.tokenizer_max_len = self.seq.tokenizer_max_len
 
         # For tokenizing
         self.tokenizer_args = self.seq.tokenizer_args
@@ -42,10 +42,10 @@ class ImSeq(Dataset):
 
         batch = {}
         if image is not None:
-            batch.update(self.image.get_collate_fn()(self.image.inference(image)))
+            batch.update(self.image.inference(image))
 
         if seq is not None:
-            batch.update(self.seq.get_collate_fn()(self.seq.inference(seq)))
+            batch.update(self.seq.inference(seq))
 
-        assert len(set([len(v) for k, v in batch.items()])) == 1, 'element in batch dont have the same size'
+        assert len(set([len(v) for k, v in batch.items()])) == 1, 'elements in batch do not have the same size'
         return batch

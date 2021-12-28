@@ -13,6 +13,8 @@ class ImLabel(Dataset):
 
         assert len(self.image) == len(self.label)
 
+        self.labels_map = self.label.labels_map
+
     def __getitem__(self, index):
         return {**self.image.__getitem__(index), **self.label.__getitem__(index)}
 
@@ -23,6 +25,20 @@ class ImLabel(Dataset):
             return collated
 
         return collate_fn
+
+    def inference(self, image=None, label=None):
+        if label is None and image is None:
+            return dict()
+
+        batch = {}
+        if image is not None:
+            batch.update(self.image.inference(image))
+
+        if label is not None:
+            batch.update(self.label.inference(label))
+
+        assert len(set([len(v) for k, v in batch.items()])) == 1, 'element in batch dont have the same size'
+        return batch
 
     def __len__(self):
         return len(self.image)

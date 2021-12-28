@@ -32,22 +32,21 @@ class TextDataset(Dataset):
                  ckpt_dir=None,
                  tokenizer=None,
                  tokenizer_max_len=None,
-                 show_length=False,
                  vocab_file=None,
                  source='src',
-                 max_len=250,
+                 show_length=False,
                  **kwargs):
 
         assert source in ["src", "tgt"]
-        assert split is not None, "Argument split cant be None"
-        assert not (file is not None and vocab_file is not None), "You cant mention both a data file and a vocab file"
+        assert split is not None, "Argument split cannot be None"
+        assert not (file is not None and vocab_file is not None), "You cannot mention both a data file and a vocab file"
+        assert not (source == "tgt" and tokenizer_max_len is None), "You must specify tokenizer_max_len for source tgt"
 
         self.root = root
         self.file = file
         self.split = split
         self.source = source
         self.ckpt_dir = ckpt_dir
-        self.max_len = max_len
         self.tokenizer_max_len = tokenizer_max_len
         self.vocab_file = vocab_file
         self.sentences = None
@@ -82,9 +81,7 @@ class TextDataset(Dataset):
             sys.exit()
 
     def __getitem__(self, index):
-        # No trunc at test time
-        return {'seq': ' '.join(self.sentences[index][:self.max_len]) if (
-                self.split == 'train' and self.source == "tgt") else ' '.join(self.sentences[index])}
+        return {'seq': ' '.join(self.sentences[index])}
 
     def get_collate_fn(self):
         def collate_fn(batch):
@@ -134,14 +131,10 @@ class TextDataset(Dataset):
                json.dumps({"source": self.source,
                            "root": self.root,
                            "file": self.file,
-                           "max_len": self.max_len,
                            "Tokenizer": {
                                "name_or_path": self.tokenizer.name_or_path,
                                "vocab_size": self.tokenizer.vocab_size,
                                "tokenizer_args": self.tokenizer_args,
                                "special_tokens": self.tokenizer.special_tokens_map_extended,
-                               "bos_token_id": self.tokenizer.bos_token,
-                               # "eos_token_id": self.tokenizer.vocab[self.tokenizer.eos_token],
-                               # "pad_token_id": self.tokenizer.vocab[self.tokenizer.pad_token],
                            }}, indent=4,
                           sort_keys=False, default=str)

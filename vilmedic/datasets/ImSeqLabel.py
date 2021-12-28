@@ -15,7 +15,7 @@ class ImSeqLabel(Dataset):
 
         # For decoding, if needed
         self.tokenizer = self.imgseq.seq.tokenizer
-        self.seq_max_len = self.imgseq.seq.max_len
+        self.tokenizer_max_len = self.imgseq.seq.tokenizer_max_len
 
         # For tokenizing
         self.tokenizer_args = self.imgseq.seq.tokenizer_args

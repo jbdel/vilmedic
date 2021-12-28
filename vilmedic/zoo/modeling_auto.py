@@ -74,6 +74,6 @@ class AutoModel:
         model.eval()
         model.cuda()
 
-        assert hasattr(dataset, "inference"), "Dataset has not implement an inference function"
+        assert hasattr(dataset, "inference"), "Dataset has not implemented an inference function"
 
         return model, dataset

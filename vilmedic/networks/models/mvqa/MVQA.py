@@ -4,7 +4,6 @@ from vilmedic.networks.blocks.vision import *
 from vilmedic.networks.blocks.classifier import *
 from vilmedic.networks.blocks.classifier.evaluation import evaluation
 from vilmedic.networks.blocks.classifier.losses import get_loss
-from vilmedic.networks.blocks.huggingface.encoder.encoder_model import EncoderModel
 from vilmedic.networks.models.utils import get_n_params
 
 from transformers.models.bert.modeling_bert import BertEncoder, BertPooler
@@ -36,7 +35,7 @@ class MVQA(nn.Module):
         # Evaluation
         self.eval_func = evaluation
 
-    def forward(self, images, labels, **kwargs):
+    def forward(self, images, labels=None, from_training=True, **kwargs):
         out = self.cnn(images.cuda())
         out = self.adapter(out)
         out = self.transformer(out, output_attentions=True)
@@ -45,8 +44,12 @@ class MVQA(nn.Module):
 
         out = self.pooler(out.last_hidden_state)
         out = self.classifier(out)
-        loss = self.loss_func(out, labels.cuda(), **kwargs)
-        return {'loss': loss, 'output': out, 'attentions': attentions}
+
+        loss = torch.tensor(0.)
+        if from_training:
+            loss = self.loss_func(out, labels.cuda(), **kwargs)
+
+        return {'loss': loss, 'output': out, 'answer': torch.argmax(out, dim=-1), 'attentions': attentions}
 
     def __repr__(self):
         s = super().__repr__() + '\n'

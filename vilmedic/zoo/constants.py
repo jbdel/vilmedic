@@ -6,6 +6,7 @@ MODEL_ZOO = {
     'selfsup/simclr-mimic-64': ["1RYhQkaR9F0LbozVs7hHv0c52Js1LDh6J", "300 MB", "models/"],
     'selfsup/simclr-mimic-128': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "300 MB", "models/"],
     'rrg/biomed-roberta-baseline-mimic': ["1aXxHkzbLdYQpLYvlQLw7NENE7LXgkc1y", "1.8 GB", "models/"],
+    'mvqa/mvqa-imageclef': ["1VmiJEGs-jYNGlbVXGi6uGmdhc06Ps4GF", "970 MB", "models/"],
 }
 
 DATA_ZOO = {

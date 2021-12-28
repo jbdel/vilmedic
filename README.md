@@ -50,7 +50,7 @@ and full solutions for multimodal medical tasks using one or several blocks.
     1. InfoNCE loss
     1. SuperLoss [[paper]](https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf)
 1. Reinforcement Learning
-    1. Self-critical Sequence Training (HuggingFace compliant) [[paper]](https://arxiv.org/abs/1612.00563)
+    1. Self-critical Sequence Training (HuggingFace compliant) :fire: [[paper]](https://arxiv.org/abs/1612.00563)
     1. PPO optimization (HuggingFace compliant) [[paper]](https://arxiv.org/abs/1612.00563)
 
 ## Model Zoo

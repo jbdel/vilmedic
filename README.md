@@ -86,7 +86,8 @@ If you use ViLMedic in your work or use any models published in ViLMedic, please
 
 ```bibtex
 @misc{Delbrouck2021ViLmedic,
-  author =       {Delbrouck, Jean-Benoit},
+  author =       {Jean-Benoit Delbrouck and Khaled Saab and Juan Manuel Zambrano Chaves and Pierre Joseph Marcel Chambon and Sabri Eyuboglu
+ and Maya Varma and Jared Alexander Dunnmon and Curtis Langlotz and Akshay Chaudhari and Daniel Rubin},
   title =        {ViLMedic: A multimodal framework for vision and language medical research},
   howpublished = {\url{https://github.com/jbdel/vilmedic}},
   year =         {2021}

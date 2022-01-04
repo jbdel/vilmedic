@@ -22,7 +22,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     Installation                 <vilmedic/installation>
 
 
-.. Solutions::
+.. toctree::
     :caption: Solutions
     :name: solutions
     :maxdepth: 1
@@ -32,7 +32,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     Medical VQA                 <vilmedic/solutions/mvqa>
     Self-supervision          <vilmedic/solutions/selfsup>
 
-.. Solutions::
+.. toctree::
     :caption:  Model Zoo
     :name: model-zoo
     :maxdepth: 1

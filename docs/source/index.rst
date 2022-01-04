@@ -20,9 +20,27 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     :maxdepth: 1
 
     Installation                 <vilmedic/installation>
-    Solutions                 <vilmedic/solutions>
-    Model Zoo                 <vilmedic/model_zoo>
 
+
+.. Solutions::
+    :caption: Solutions
+    :name: solutions
+    :maxdepth: 1
+
+    Radiology Report Generation                 <vilmedic/solutions/rrg>
+    Radiology Report Summarization                 <vilmedic/solutions/rrs>
+    Medical VQA                 <vilmedic/solutions/mvqa>
+    Self-supervision          <vilmedic/solutions/selfsup>
+
+.. Solutions::
+    :caption:  Model Zoo
+    :name: model-zoo
+    :maxdepth: 1
+
+    Radiology Report Generation                 <vilmedic/model_zoo/rrg>
+    Radiology Report Summarization                 <vilmedic/model_zoo/rrs>
+    Medical VQA                 <vilmedic/model_zoo/mvqa>
+    Self-supervision          <vilmedic/model_zoo/selfsup>
 
 .. toctree::
     :caption: Advanced Topics

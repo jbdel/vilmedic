@@ -1,155 +1,19 @@
-<div class="warning_box">
-	<b>Warning: </b> The models are resource-hungry. If you can't run a configuration because the training batch-size 
-	is too big, you can use gradient accumulation as such:
-	<div class="highlight">
-<pre>python bin/train.py config/task/conf.yml \
-    trainor.batch_size=8 \
-    trainor.grad_accu=8     </pre></div>	
-</div>
-
-# Solutions
-
-The following is a list of replicated solutions available in ViLMedic.
-
-## Radiology Report Generation
-
-### BioMed-RoBERTa baseline 
-
-#### Models
-The model is defined as such in the config file:
-```
-model:
-  proto: RRG
-  decoder:
-    proto: data/RRG/huggingface/biomed_roberta_base
-  cnn:
-    proto: CNN
-    backbone: densenet169
-    output_layer: features
-    dropout_out: 0.0
-    permute: batch_first
-    visual_embedding_dim: 1664
-    freeze: False
-```
-
-#### Metrics and scores
-
-| Dataset |     ROUGE-L | F1-cheXbert (micro) | Config
-| ------------- |:-------------:|:-------------:|:-------------:|
-| **Mimic-test**
-| [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  44.70 |
-| BioMed-RoBERTa   | 22.46  |  45.04  | [RRG/biomed-roberta-baseline.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline.yml)
-
-
-## Radiology Report Summarization
-
-### Monomodal
-```
-for i in {1..6}
-do
-    python bin/train.py config/summarization/biorobert_mono.yml \
-        trainor.batch_size=64 \
-        validator.batch_size=4 \
-        name=sum_mono
-done
-```
-The model is defined as such in the config file:
-```
-model:
-  proto: SumHugMono
-  encoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
-  decoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
-```
-### Metrics and scores
-One model: 
-
-```
-python bin/ensemble.py config/RRG/biorobert_mono.yml \
-    ensemblor.batch_size=4 \
-    ensemblor.beam_width=8 \
-    ensemblor.mode=best-1 \
-    name=sum_mono 
-```
-
-| Split  |     BLEU | ROUGE2 | METEOR | ROUGEL
-| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|
-| Mimic-val   | 27.55   |  48.10  | 25.27    | 57.16 
-| Mimic-test    |  19.58  |  33.63  | 21.02 | 45.16
-
-## Medical VQA
-
-### Model
-The model is defined as such in the config file:
-```
-model:
-  proto: MVQA
-  cnn:
-    proto: CNN
-    backbone: densenet169
-    output_layer: features
-    dropout_out: 0.0
-    permute: batch_first
-    freeze: False
-
-  adapter:
-    input_size: 1664
-    output_size: 768
-
-  transformer:
-    hidden_size: 768
-    intermediate_size: 2048
-    num_hidden_layers: 12
-    num_attention_heads: 8
-    attention_probs_dropout_prob: 0.1
-    hidden_dropout_prob: 0.1
-    hidden_act: gelu
-    initializer_range: 0.02
-    layer_norm_eps: 1.e-12
-
-  classifier:
-    proto: Classifier
-    input_size: 768
-    num_classes: 330
-    dropout: 0.
-
-  loss:
-    proto: LabelSmoothingCrossEntropy
-```
-### Metrics and scores
-
-Dataset |   Accuracy | Config
-| ------------- |:-------------:|-------------:|
-|**VQA-Med-2021 val-1 (in-domain)** |
- | ours (single model) | 69.0 | [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
-   | ours (ens-7) | 72.0| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
-   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 69.2
-| **VQA-Med-2021 val-2 (out-domain)**
-| ours (ens-7)  | 36.1| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
-   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
-
-### Extras
-To ensemble, train 7 models and then do:
-
-```
-python bin/ensemble.py config/VQA/vqa_tr.yml \
-    ensemblor.batch_size=4 \
-    ensemblor.mode=best-7
-```
-
-## Self-supervision
-
-### DALLE
+# Self-supervision
+Self-supervised learning (SSL) is a method of machine learning. It learns from unlabeled sample data. It can be regarded as an intermediate form between supervised and unsupervised learning.
 
 <div class="data_box">
-	<b>Data requirements: </b> mimic-cxr-images and CLIP
+	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
 	<div class="highlight">
-<pre>python data/download.py mimic-cxr-images-512,CLIP </pre></div>	
+<pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
 </div>
 
 
-#### Model
+## DALLE
+
+[Zero-Shot Text-to-Image Generation](http://proceedings.mlr.press/v139/ramesh21a.html)
+
+
+### Model
 It is advised to use gradient accumulation. First, we need to train a VAE.
 
 ``` 
@@ -182,7 +46,7 @@ python bin/train.py config/CLIP/dalle.yml \
     name="dalle" 
 ```     
 
-#### Metrics and scores
+### Metrics and scores
 
 | Dataset  | Validation Loss | 
 | ------------- |:-------------:|
@@ -190,7 +54,7 @@ python bin/train.py config/CLIP/dalle.yml \
 | VAE   | 0.00345
 | DALLE  | 1.6828  
 
-#### Extras
+### Extras
 (need rework)
 
 **Pretrained DALLE checkpoint**
@@ -214,16 +78,11 @@ python bin/ensemble.py config/CLIP/dalle.yml \
 This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/clip/DALLE.py#L17) 
 that generates a few images for one sample.
 
-### conVIRT
+## conVIRT
 
+[Contrastive Learning of Medical Visual Representations from Paired Images and Text](https://openreview.net/forum?id=T4gXBOXoIUr)
 
-<div class="data_box">
-	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
-	<div class="highlight">
-<pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
-</div>
-
-#### Model
+### Model
 The model config is defined as such:
 ```
 model:
@@ -248,7 +107,7 @@ model:
  ```
  
 
-#### Metrics and scores
+### Metrics and scores
 
 | Dataset  |  batch-size |   Validation Loss  |  Config
 | ------------- |:-------------:|:-------------:| :-------------:|
@@ -263,7 +122,7 @@ model:
 *\*balanced means redefining splits with an homogeneous distribution of the labels across the splits*<br/>
 *\*\*No official splits exist*
 
-#### Extra
+### Extra
 
 You can use the `plot_representation` post-process to plot learned representations:
 
@@ -299,15 +158,11 @@ Here is the results on mimic-cxr (balanced):
 *Click image to access full-size*
 
 
-### simCLR
+## simCLR
 
-<div class="data_box">
-	<b>Data requirements: </b> mimic-cxr-images
-	<div class="highlight">
-<pre>python data/download.py mimic-cxr-images-512 </pre></div>	
-</div>
+[A Simple Framework for Contrastive Learning of Visual Representations](http://proceedings.mlr.press/v119/chen20j/chen20j.pdf)
 
-#### Model
+### Model
 The model config is defined as such:
 
 ``` 
@@ -330,7 +185,7 @@ model:
 ```
 
 
-#### Metrics and scores
+### Metrics and scores
 
 <div class="warning_box">
 	<b>Warning: </b> When using <span class="div_pre">trainor.batch_size=16</span>, the batch-size 
@@ -345,7 +200,7 @@ model:
 | ours (official splits)  | 64  | 2.48 | [SELFSUP/simclr-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/simclr-mimic.yml)
 | ours (official splits)  | 128  | 3.06 | [SELFSUP/simclr-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/simclr-mimic.yml)
 
-#### Extra
+### Extra
 
 You can use the `plot_representation` post-process to plot learned representations:
 
@@ -359,12 +214,9 @@ python bin/ensemble.py config/SELFSUP/simclr-mimic-eval.yml \
 
 ### GLoRIA
 
-.. note::
-	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
-	<div class="highlight">
-    <pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
+[GLoRIA: A Multimodal Global-Local Representation Learning Framework for Label-Efficient Medical Image Recognition](https://openaccess.thecvf.com/content/ICCV2021/html/Huang_GLoRIA_A_Multimodal_Global-Local_Representation_Learning_Framework_for_Label-Efficient_Medical_ICCV_2021_paper.html)
 
-#### Model
+### Model
 
 ``` 
 model:
@@ -394,7 +246,7 @@ model:
     temp3: 10.0
 ```
 
-#### Metrics and scores
+### Metrics and scores
 | Dataset  |  batch-size |    Validation Loss | Config | 
 | ------------- |:-------------:|:-------------:|:-------------:|
 | **chexpert**   | 

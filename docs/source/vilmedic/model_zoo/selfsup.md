@@ -1,12 +1,8 @@
-# Model Zoo
+# Self-supversion
 
-The following is a list of pretrained model available in ViLMedic
+## SimCLR
 
-## Self-supversion
-### SimCLR
-
-
-#### Usage 
+### Usage 
 ```
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/simclr-mimic-64")
@@ -15,16 +11,16 @@ out = model(**batch, from_training=False)
 print(out.keys())
 # dict_keys(['loss', 'visual'])
 ```
-#### Models
+### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | selfsup/simclr-mimic-16 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 | selfsup/simclr-mimic-32 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 | selfsup/simclr-mimic-64 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 
-### GLoRIA
+## GLoRIA
 
-#### Usage 
+### Usage 
 ```
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/gloria-chexpert")
@@ -34,7 +30,7 @@ out = model(**batch)
 print(out.keys())
 # dict_keys(['loss', 'global_features', 'local_features', 'word_embeddings', 'sent_embeddings'])
 ```
-#### Zero-shot classification
+### Zero-shot classification
 
 ``` 
 reports = {
@@ -75,14 +71,14 @@ print(pd.DataFrame(class_similarities, columns=reports.keys()))
 # 3     0.413202      0.818415
 ```
 
-#### Models
+### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | [selfsup/gloria-chexpert](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
 
-### ConVIRT
+## ConVIRT
 
-#### Usage 
+### Usage 
 ```
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/convirt-mimic")
@@ -94,105 +90,9 @@ print(out.keys())
 # dict_keys(['loss', 'loss_l', 'loss_v', 'linguistic', 'visual'])
 ```
 
-#### Models
-| Name  |   dataset | Model Card | 
-| ------------- |:-------------:|:-------------:|
-| rrg/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
-
-## Radiology Report Generation
-
-### Usage 
-```
-from vilmedic import AutoModel
-
-model, processor = AutoModel.from_pretrained("rrg/biomed-roberta-baseline-mimic")
-
-batch = processor.inference(seq='no acute cardiopulmonary process .',
-                            image='files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg')
-
-out = model(**batch)
-print(out.keys())
-# dict_keys(['loss', 'logits', 'past_key_values', 'hidden_states', 'attentions', 'cross_attentions'])
-```
-
-### Generate report
-
-``` 
-from vilmedic import AutoModel
-import torch
-
-model, processor = AutoModel.from_pretrained("rrg/biomed-roberta-baseline-mimic")
-
-batch = processor.inference(image=[
-    "files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg",
-    "files/p10/p10000032/s50414267/174413ec-4ec4c1f7-34ea26b7-c5f994f8-79ef1962.jpg",
-])
-
-batch_size = len(batch["images"])
-beam_size = 8
-expanded_idx = torch.arange(batch_size).view(-1, 1).repeat(1, beam_size).view(-1).cuda()
-
-hyps = model.dec.generate(
-    input_ids=torch.ones((len(batch["images"]), 1), dtype=torch.long).cuda() * model.dec.config.bos_token_id,
-    encoder_hidden_states=model.encode(**batch).index_select(0, expanded_idx),
-    num_return_sequences=1,
-    max_length=120,
-    num_beams=8,
-)
-hyps = [processor.tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False) for h in hyps]
-print(hyps)
-# ['no acute cardiopulmonary process .', 'in comparison with study of there is little change and no evidence of acute cardiopulmonary disease . no pneumonia vascular congestion or pleural effusion .']
-
-```
-### Output scoring
-
-``` 
-from vilmedic.scorers.NLG import ROUGEScorer
-refs = ['no acute cardiopulmonary process .', 'no evidence of acute cardiopulmonary process  .']
-print(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0])
-# 0.6724137931034483
-```
-
 ### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
-| rrg/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
-
-
-## Medical VQA
-
-
-### Usage 
-```
-from vilmedic import AutoModel
-
-model, processor = AutoModel.from_pretrained("mvqa/mvqa-imageclef")
-batch = processor.inference(image=["data/images/imageclef-vqa-images-512/synpic253.jpg"])
-out = model(**batch, from_training=False)
-answer = out["answer"][0]
-
-print(out.keys())
-print(processor.labels_map.idx2label[answer.item()])
-
-# dict_keys(['loss', 'output', 'answer', 'attentions'])
-# horseshoe kidney
-```
-
-### Compute accuracy on custom data
-
-``` 
-from vilmedic import AutoModel
-
-model, processor = AutoModel.from_pretrained("mvqa/mvqa-imageclef")
-batch = processor.inference(image="data/images/imageclef-vqa-images-512/synpic253.jpg", label="horseshoe kidney")
-out = model(**batch, from_training=False)
-
-print(out["answer"].item() == batch["labels"].item())
-# True
-```
-
-### Models
-| Name  |   dataset | Model Card | 
-| ------------- |:-------------:|:-------------:|
-| mvqa/mvqa-imageclef| [ImageCLEF-VQAMed](https://www.imageclef.org/2021/medical/vqa)   
-
+| selfsup/convirt-mimic | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/convirt-mimic-balanced | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/convirt-padchest | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   

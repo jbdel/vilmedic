@@ -360,7 +360,6 @@ python bin/ensemble.py config/SELFSUP/simclr-mimic-eval.yml \
 ### GLoRIA
 
 .. note::
-
 	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
 	<div class="highlight">
     <pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	

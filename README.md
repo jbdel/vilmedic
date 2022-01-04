@@ -61,7 +61,7 @@ ViLMedic hosts a [zoo of pretrained models](https://vilmedic.readthedocs.io/en/l
 from vilmedic import AutoModel
 model, processor = AutoModel.from_pretrained("selfsup/convirt-mimic")
 batch = processor.inference(seq=["no acute cardiopulmonary process"],
-                            image=["files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg"])
+                            image=["my_chest_xray.jpg"])
 
 out = model(**batch)
 print(out.keys())

@@ -1,0 +1,14 @@
+includes:
+  - config/SELFSUP/convirt-mimic.yml
+
+name: convirt_indiana
+dataset:
+  image:
+    root: data/SELFSUP/indiana
+    file: image.tok
+    image_path: data/images/indiana-images-512/
+    ext: .png
+  seq:
+    root: data/SELFSUP/indiana
+    file: report.tok
+    tokenizer_max_len: 60

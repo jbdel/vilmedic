@@ -19,6 +19,7 @@ dataset:
 
 model:
   proto: ConVIRT
+  forward_batch_size: 4
   encoder:
     proto: data/SELFSUP/huggingface/biomed_roberta_base
   cnn:
@@ -40,18 +41,18 @@ model:
 trainor:
   optimizer: RAdam
   optim_params:
-    lr: 0.00005
-  batch_size: 64
+    lr: 5e-5
+  batch_size: 32
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
     factor: 0.5
-    patience: 1
+    patience: 5
     min_lr: 0.000001
     threshold: 0.01
     threshold_mode: abs
   epochs: 99
-  early_stop: 10
   eval_start: 0
+  early_stop: 20
   early_stop_metric: loss
 
 validator:

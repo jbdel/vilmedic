@@ -37,7 +37,7 @@ trainor:
   optimizer: RAdam
   optim_params:
     lr: 0.001
-  batch_size: 64
+  batch_size: 16
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
     factor: 0.8

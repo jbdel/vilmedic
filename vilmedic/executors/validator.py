@@ -66,7 +66,7 @@ class Validator(InitValidator):
                                      hyps=results.pop('hyps', None),
                                      split=split,
                                      seed=self.seed,
-                                     ckpt_dir=self.config.ckpt_dir,
+                                     config=self.config,
                                      epoch=self.epoch
                                      )
             scores.update(metrics)

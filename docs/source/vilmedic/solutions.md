@@ -14,22 +14,14 @@ The following is a list of replicated solutions available in ViLMedic.
 ## Radiology Report Generation
 
 ### BioMed-RoBERTa baseline 
-```bash
-for i in {1..6}
-do
-    python bin/train.py config/RRG/biomed-roberta-baseline.yml \
-        trainor.batch_size=64 \
-        validator.batch_size=4 \
-        name=rrg 
-done
-```
 
+#### Models
 The model is defined as such in the config file:
 ```
 model:
   proto: RRG
   decoder:
-    proto: data/report_sum/huggingface/biomed_roberta_base
+    proto: data/RRG/huggingface/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169
@@ -40,23 +32,17 @@ model:
     freeze: False
 ```
 
-### Results
+#### Metrics and scores
 
-```
-python bin/ensemble.py config/RRG/biomed-roberta-baseline.yml \
-    ensemblor.batch_size=4 \
-    ensemblor.beam_width=8 \
-    ensemblor.mode=best-1 \
-    name=rrg 
-```
-| Dataset |     ROUGE-L | F1-cheXbert (micro) |  
-| ------------- |:-------------:|:-------------:|
+| Dataset |     ROUGE-L | F1-cheXbert (micro) | Config
+| ------------- |:-------------:|:-------------:|:-------------:|
 | **Mimic-test**
 | [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  44.70 |
-| BioMed-RoBERTa   | 22.46  |  45.04  |     
+| BioMed-RoBERTa   | 22.46  |  45.04  | [RRG/biomed-roberta-baseline.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline.yml)
 
 
 ## Radiology Report Summarization
+
 ### Monomodal
 ```
 for i in {1..6}
@@ -76,7 +62,7 @@ model:
   decoder:
     proto: data/report_sum/huggingface/biomed_roberta_base
 ```
-#### Results
+### Metrics and scores
 One model: 
 
 ```
@@ -94,19 +80,11 @@ python bin/ensemble.py config/RRG/biorobert_mono.yml \
 
 ## Medical VQA
 
-```
-for i in {1..10}
-do
-    python bin/train.py config/VQA/vqa.yml \
-        trainor.batch_size=32 \
-        validator.batch_size=4 \
-        name=vqa
-done
-```
+### Model
 The model is defined as such in the config file:
 ```
 model:
-  proto: VQA_tr
+  proto: MVQA
   cnn:
     proto: CNN
     backbone: densenet169
@@ -137,25 +115,28 @@ model:
     dropout: 0.
 
   loss:
-      proto: LabelSmoothingCrossEntropy
+    proto: LabelSmoothingCrossEntropy
 ```
-### Results
+### Metrics and scores
+
+Dataset |   Accuracy | Config
+| ------------- |:-------------:|-------------:|
+|**VQA-Med-2021 val-1 (in-domain)** |
+ | ours (single model) | 69.0 | [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
+   | ours (ens-7) | 72.0| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
+   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 69.2
+| **VQA-Med-2021 val-2 (out-domain)**
+| ours (ens-7)  | 36.1| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
+   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
+
+### Extras
+To ensemble, train 7 models and then do:
 
 ```
 python bin/ensemble.py config/VQA/vqa_tr.yml \
     ensemblor.batch_size=4 \
-    ensemblor.mode=best-7 \
-    name=vqa
+    ensemblor.mode=best-7
 ```
-
-| Split  |  Model |   Accuracy | 
-| ------------- |:-------------:|:-------------:|
-| VQA-Med-2021 val-1 (in-domain)  | ours (single model) | 69.0
-|   | ours (ens-7) | 72.0
-|   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 69.2
-| VQA-Med-2021 val-2 (out-domain)  | ours (ens-7)  | 36.1
-|   | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
-
 
 ## Self-supervision
 
@@ -168,6 +149,7 @@ python bin/ensemble.py config/VQA/vqa_tr.yml \
 </div>
 
 
+#### Model
 It is advised to use gradient accumulation. First, we need to train a VAE.
 
 ``` 
@@ -182,11 +164,7 @@ python bin/train.py config/CLIP/vae.yml \
     name=vae
 ```
 
-For details on the training parameters, please refer to the config files.
 
-| Split  |     Loss | 
-| ------------- |:-------------:|
-| Mimic-CXR val   | 0.00345
 
 Secondly, we need to train a DALLE model using the trained VAE:
 ```
@@ -204,9 +182,16 @@ python bin/train.py config/CLIP/dalle.yml \
     name="dalle" 
 ```     
 
-| Split  |     Loss | 
+#### Metrics and scores
+
+| Dataset  | Validation Loss | 
 | ------------- |:-------------:|
-| Mimic-CXR val   | 1.6828  
+| **mimic-cxr**   | 
+| VAE   | 0.00345
+| DALLE  | 1.6828  
+
+#### Extras
+(need rework)
 
 **Pretrained DALLE checkpoint**
 
@@ -231,12 +216,14 @@ that generates a few images for one sample.
 
 ### conVIRT
 
+
 <div class="data_box">
 	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
 	<div class="highlight">
 <pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
 </div>
 
+#### Model
 The model config is defined as such:
 ```
 model:
@@ -259,30 +246,24 @@ model:
     tau: 0.1
     lambda_: 0.75
  ```
+ 
 
-You can train a model using the following command:
+#### Metrics and scores
 
-```
-python bin/train.py config/SELFSUP/convirt-mimic.yml \
-    trainor.batch_size=32 \
-    trainor.optim_params.lr=5e-5 \
-    trainor.optimizer=RAdam \
-    trainor.lr_decay_params.patience=5 \
-    trainor.early_stop=20 \
-    model.forward_batch_size=4 \
-    validator.batch_size=32
-```   
-
-Metrics and scores:
-
-| Dataset  |     Validation Loss | 
-| ------------- |:-------------:|
+| Dataset  |  batch-size |   Validation Loss  |  Config
+| ------------- |:-------------:|:-------------:| :-------------:|
 | **mimic-cxr**   | 
 | [conVIRT](https://arxiv.org/pdf/2010.00747.pdf) (official splits)   | ~ 2.20
-| ours (official splits)   | 2.09
-| ours (balanced*)   | 1.65
+| ours (official splits) | 32  | 2.09 | [SELFSUP/convirt-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-mimic.yml)
+| ours (balanced*)  | 32  | 1.65 | [SELFSUP/convirt-mimic-balanced.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-mimic-balanced.yml)
+| **padchest**   | 
+| ours (random splits**) | 16 | 2.26 | [SELFSUP/convirt-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-padchest.yml)
+| ours (random splits**) | 32 | 2.91 | [SELFSUP/convirt-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-padchest.yml)
 
-*\*balanced means redefining splits with an homogeneous distribution of the labels across the splits*
+*\*balanced means redefining splits with an homogeneous distribution of the labels across the splits*<br/>
+*\*\*No official splits exist*
+
+#### Extra
 
 You can use the `plot_representation` post-process to plot learned representations:
 
@@ -326,6 +307,7 @@ Here is the results on mimic-cxr (balanced):
 <pre>python data/download.py mimic-cxr-images-512 </pre></div>	
 </div>
 
+#### Model
 The model config is defined as such:
 
 ``` 
@@ -348,23 +330,22 @@ model:
 ```
 
 
-You can train a model using the following command:
-
-```
-python bin/train.py config/SELFSUP/simclr-mimic.yml \
-        python bin/train.py config/SELFSUP/simclr-mimic.yml \
-            trainor.batch_size=16 \
-            model.forward_batch_size=16 \
-            validator.batch_size=16 \
-            ckpt_dir=ckpt  \
-            name="simclr_32"
-```   
+#### Metrics and scores
 
 <div class="warning_box">
 	<b>Warning: </b> When using <span class="div_pre">trainor.batch_size=16</span>, the batch-size 
 	is actually of size 32 (16 images from the dataset + 16 corresponding enhanced images). See 
 	the tranforms in <span class="div_pre">simclr-mimic.yml</span>.
 </div>
+
+| Dataset  |  batch-size |    Validation Loss | Config | 
+| ------------- |:-------------:|:-------------:|:-------------:|
+| **mimic-cxr**   | 
+| ours (official splits)  | 32  | 1.96 | [SELFSUP/simclr-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/simclr-mimic.yml)
+| ours (official splits)  | 64  | 2.48 | [SELFSUP/simclr-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/simclr-mimic.yml)
+| ours (official splits)  | 128  | 3.06 | [SELFSUP/simclr-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/simclr-mimic.yml)
+
+#### Extra
 
 You can use the `plot_representation` post-process to plot learned representations:
 
@@ -376,9 +357,47 @@ python bin/ensemble.py config/SELFSUP/simclr-mimic-eval.yml \
 ```
 
 
-| Dataset  |  batch-size |    Validation Loss | 
-| ------------- |:-------------:|:-------------:|
+### GLoRIA
+
+.. note::
+
+	<b>Data requirements: </b> mimic-cxr-images and SELFSUP data
+	<div class="highlight">
+    <pre>python data/download.py mimic-cxr-images-512,SELFSUP </pre></div>	
+
+#### Model
+
+``` 
+model:
+  proto: GLoRIA
+
+  encoder:
+    proto: data/SELFSUP/huggingface/Bio_ClinicalBERT
+    last_n_layers: 4
+
+  cnn:
+    proto: CNN
+    backbone: resnet50
+    output_layer: avgpool
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+
+  visual_embedder:
+    interm_feature_dim: 1024
+    feature_dim: 2048
+
+  loss:
+    local_loss_weight: 1.0
+    global_loss_weight: 1.0
+    temp1: 4.0
+    temp2: 5.0
+    temp3: 10.0
+```
+
+#### Metrics and scores
+| Dataset  |  batch-size |    Validation Loss | Config | 
+| ------------- |:-------------:|:-------------:|:-------------:|
+| **chexpert**   | 
+| GLoRIA  | 48  | - | [official](https://github.com/marshuang80/gloria)
 | **mimic-cxr**   | 
-| ours (official splits)  | 32  | 1.96
-| ours (official splits)  | 64  | 2.48
-| ours (official splits)  | 128  | 3.06

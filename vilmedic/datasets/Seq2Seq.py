@@ -19,7 +19,7 @@ class Seq2Seq(Dataset):
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            tgt = self.src.get_collate_fn()(batch)
+            tgt = self.tgt.get_collate_fn()(batch)
             tgt['decoder_input_ids'] = tgt.pop('input_ids')
             tgt['decoder_attention_mask'] = tgt.pop('attention_mask')
             collated = {**self.src.get_collate_fn()(batch), **tgt}

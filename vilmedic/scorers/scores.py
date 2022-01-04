@@ -9,6 +9,7 @@ from .NLG import ROUGEScorer
 from .NLG import METEORScorer
 from .NLG import BLEUScorer
 from .NLG import Cider
+import mauve
 from .NLG import CiderD
 # from nlgeval import NLGEval
 
@@ -17,7 +18,7 @@ from .CheXbert.chexbert import CheXbert
 from sklearn.metrics import classification_report, roc_auc_score
 
 
-def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
+def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
     scores = dict()
     # If metric is None or empty list
     if metrics is None or not metrics:
@@ -29,6 +30,7 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
     assert len(refs) == len(hyps), 'refs and hyps must have same length : {} vs {}'.format(len(refs), len(hyps))
 
     # Dump
+    ckpt_dir = config.ckpt_dir
     base = os.path.join(ckpt_dir, '{}_{}_{}'.format(split, seed, '{}'))
     refs_file = base.format('refs.txt')
     hyps_file = base.format('hyps.txt')
@@ -53,11 +55,11 @@ def compute_scores(metrics, refs, hyps, split, seed, ckpt_dir, epoch):
             scores["ROUGEL"] = round(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0] * 100, 2)
         elif metric == 'METEOR':
             scores["METEOR"] = round(METEORScorer().compute(refs_file, hyps_file) * 100, 2)
-        # elif metric == 'CIDER':
-            # n = NLGEval()
-            # scores["CIDER"] = nlgeval.compute_metrics(hyps_file, [refs_file])
-        elif metric == 'CIDER2':
-            scores["CIDER2"] = Cider().compute_score(refs, hyps)
+        elif metric == 'CIDER':
+            scores["CIDER"] = Cider().compute_score(refs, hyps)
+        elif metric == 'MAUVE':
+            scores["MAUVE"] = mauve.compute_mauve(p_text=refs, q_text=hyps, device_id=0, max_text_length=256,
+                                                  featurize_model_name=config.mauve_featurize_model_name or "gpt2-large")
         elif metric == 'accuracy':
             scores["accuracy"] = round(np.mean(np.array(refs) == np.argmax(hyps, axis=-1)) * 100, 2)
         elif metric == 'f1-score':

@@ -11,8 +11,6 @@ dataset:
     root: data/MVQA
     file: image.tok
     image_path: data/images/imageclef-vqa-images-512/
-    resize: 256
-    crop: 232
     ext: .jpg
     custom_transform_train: >
       transforms.Compose([
@@ -78,12 +76,10 @@ trainor:
 validator:
   batch_size: 16
   metrics: [accuracy]
-  #  post_processing: [attentions]
   splits: [validate]
 
 ensemblor:
   batch_size: 16
   metrics: [accuracy]
-  #  post_processing: [attentions]
   splits: [validate, test]
   mode: all

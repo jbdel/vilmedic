@@ -19,39 +19,45 @@ This framework contains reference implementations of state-of-the-art vision and
 and full solutions for multimodal medical tasks using one or several blocks.
 
 #### Implemented solutions
-1. Medical Visual Question Answering
-    1. SYSU-HCP at VQA-Med 2021 [[paper]](http://ceur-ws.org/Vol-2936/paper-99.pdf)
-1. Radiology report generation
-    1. Generating Radiology Reports via Memory-driven Transformer [[paper]](https://arxiv.org/pdf/2010.16056.pdf)
-    1. Optimizing the Factual Correctness of a Summary: A Study of Summarizing Radiology Reports [[paper]](https://arxiv.org/abs/1911.02541)
-    1. Improving Factual Completeness and Consistency of Image-to-text Radiology Report Generation [[paper]](https://arxiv.org/abs/2010.10042)
-1. Radiology report summarization
-    1. Multimodal Radiology Report Summarization [[paper]](https://aclanthology.org/2021.bionlp-1.33/)
-1. Multimodal self-supervised Learning
-    1. Contrastive Learning of Medical Visual Representations from Paired Images and Text [[paper]](https://openreview.net/pdf?id=T4gXBOXoIUr)
-    1. DALLE: Zero-Shot Text-to-Image Generation [[paper]](https://arxiv.org/abs/2102.12092)
-    1. CLIP: Learning Transferable Visual Models From Natural Language Supervision [[paper]](https://arxiv.org/abs/2103.00020)
-    1. SimCLR: A Simple Framework for Contrastive Learning of Visual Representations [[paper]](https://arxiv.org/abs/2002.05709)
-
+| Solution  | 
+| ----------- | 
+| **Medical Visual Question Answering**
+| [SYSU-HCP at VQA-Med 2021](http://ceur-ws.org/Vol-2936/paper-99.pdf)
+| **Radiology report generation**
+| [Generating Radiology Reports via Memory-driven Transformer](https://arxiv.org/pdf/2010.16056.pdf)
+| [Optimizing the Factual Correctness of a Summary: A Study of Summarizing Radiology Reports](https://arxiv.org/abs/1911.02541)
+| [Improving Factual Completeness and Consistency of Image-to-text Radiology Report Generation](https://arxiv.org/abs/2010.10042)
+| **Radiology report summarization**
+| [Multimodal Radiology Report Summarization](https://aclanthology.org/2021.bionlp-1.33/)
+| **Multimodal self-supervised Learning**
+| [Contrastive Learning of Medical Visual Representations from Paired Images and Text](https://openreview.net/pdf?id=T4gXBOXoIUr)
+| [DALLE: Zero-Shot Text-to-Image Generation](https://arxiv.org/abs/2102.12092)
+| [CLIP: Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)
+| [SimCLR: A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
+| [GLoRIA: A Multimodal Global-Local Representation Learning Framework for Label-efficient Medical Image Recognition](https://openaccess.thecvf.com/content/ICCV2021/papers/Huang_GLoRIA_A_Multimodal_Global-Local_Representation_Learning_Framework_for_Label-Efficient_Medical_ICCV_2021_paper.pdf)
     
 #### Blocks
-1. Natural Language Processing
-    1. HuggingFace transformer encoder and decoder
-    1. HuggingFace transformer beam-search and model ensembling :fire:	
-    1. NLG metrics (BLEU, ROUGE, METEOR, MAUVE) and Radiology Reports Generation metrics ([F1-ChexBert](https://github.com/stanfordmlgroup/CheXbert),
-     [RadGraph](https://openreview.net/pdf?id=pMWtc5NKd7V))
-1. Vision
-    1. All PyTorch CNN architectures 
-    1. Vision Transformer [[paper]](https://arxiv.org/abs/2010.11929)
-    1. [TorchXRayVision](https://github.com/mlmed/torchxrayvision)
-1. Losses
-    1. All PyTorch losses
-    1. ConVirt loss
-    1. InfoNCE loss
-    1. SuperLoss [[paper]](https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf)
-1. Reinforcement Learning
-    1. Self-critical Sequence Training (HuggingFace compliant) :fire: [[paper]](https://arxiv.org/abs/1612.00563)
-    1. PPO optimization (HuggingFace compliant) [[paper]](https://arxiv.org/abs/1612.00563)
+
+| Blocks  | 
+| ----------- | 
+| **Natural Language Processing**
+| HuggingFace transformer encoder and decoder
+| HuggingFace transformer beam-search and model ensembling :fire:	
+| NLG metrics (BLEU, ROUGE, METEOR, MAUVE) and Radiology Reports Generation metrics ([F1-CheXbert](https://github.com/stanfordmlgroup/CheXbert))
+| [RadGraph](https://openreview.net/pdf?id=pMWtc5NKd7V)
+| **Vision**
+| All PyTorch CNN architectures 
+| [Vision Transformer](https://arxiv.org/abs/2010.11929)
+| [TorchXRayVision](https://github.com/mlmed/torchxrayvision)
+| **Losses**
+| All PyTorch losses
+| ConVirt loss
+| GLoRIA loss
+| InfoNCE loss
+| [SuperLoss](https://proceedings.neurips.cc/paper/2020/file/2cfa8f9e50e0f510ede9d12338a5f564-Paper.pdf)
+| **Reinforcement Learning**
+| [Self-critical Sequence Training](https://arxiv.org/abs/1612.00563) (HuggingFace compliant) :fire:
+| [PPO optimization](https://arxiv.org/abs/1612.00563)  (HuggingFace compliant)
 
 ## Model Zoo
 

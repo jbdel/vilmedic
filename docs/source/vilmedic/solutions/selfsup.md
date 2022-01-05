@@ -112,12 +112,16 @@ model:
 | Dataset  |  batch-size |   Validation Loss  |  Config
 | ------------- |:-------------:|:-------------:| :-------------:|
 | **mimic-cxr**   | 
-| [conVIRT](https://arxiv.org/pdf/2010.00747.pdf) (official splits)   | ~ 2.20
+| [conVIRT](https://arxiv.org/pdf/2010.00747.pdf) (official splits)  | 32 | ~ 2.20
 | ours (official splits) | 32  | 2.09 | [SELFSUP/convirt-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-mimic.yml)
 | ours (balanced*)  | 32  | 1.65 | [SELFSUP/convirt-mimic-balanced.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-mimic-balanced.yml)
 | **padchest**   | 
 | ours (random splits**) | 16 | 2.26 | [SELFSUP/convirt-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-padchest.yml)
 | ours (random splits**) | 32 | 2.91 | [SELFSUP/convirt-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-padchest.yml)
+| **indiana**   | 
+| ours (random splits**) | 16 | 1.61 | [SELFSUP/convirt-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-indiana.yml)
+| ours (random splits**) | 32 | 1.97 | [SELFSUP/convirt-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-indiana.yml)
+| ours (random splits**) | 64 | 2.59 | [SELFSUP/convirt-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/convirt-indiana.yml)
 
 *\*balanced means redefining splits with an homogeneous distribution of the labels across the splits*<br/>
 *\*\*No official splits exist*
@@ -212,7 +216,7 @@ python bin/ensemble.py config/SELFSUP/simclr-mimic-eval.yml \
 ```
 
 
-### GLoRIA
+## GLoRIA
 
 [GLoRIA: A Multimodal Global-Local Representation Learning Framework for Label-Efficient Medical Image Recognition](https://openaccess.thecvf.com/content/ICCV2021/html/Huang_GLoRIA_A_Multimodal_Global-Local_Representation_Learning_Framework_for_Label-Efficient_Medical_ICCV_2021_paper.html)
 

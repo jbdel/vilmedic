@@ -6,7 +6,7 @@ from tqdm import tqdm
 import sys
 
 
-def download_data(data_name, file_id, unzip_dir):
+def download_images(data_name, file_id, unzip_dir):
     zip_name = os.path.join("data", data_name) + ".zip"
     target_dir = os.path.join(unzip_dir, data_name)
 
@@ -25,6 +25,14 @@ def download_data(data_name, file_id, unzip_dir):
 
 
 def download_model(file_id, unzip_dir):
+    if not os.path.exists(unzip_dir):
+        os.makedirs(unzip_dir, exist_ok=True)
+        gdown.download_folder("https://drive.google.com/drive/folders/" + file_id,
+                              os.path.split(unzip_dir)[0],
+                              quiet=False)
+
+
+def download_data(file_id, unzip_dir):
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir, exist_ok=True)
         gdown.download_folder("https://drive.google.com/drive/folders/" + file_id,

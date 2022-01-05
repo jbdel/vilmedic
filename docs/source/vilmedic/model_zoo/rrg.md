@@ -31,6 +31,7 @@ batch_size = len(batch["images"])
 beam_size = 8
 expanded_idx = torch.arange(batch_size).view(-1, 1).repeat(1, beam_size).view(-1).cuda()
 
+# Using huggingface generate method
 hyps = model.dec.generate(
     input_ids=torch.ones((len(batch["images"]), 1), dtype=torch.long).cuda() * model.dec.config.bos_token_id,
     encoder_hidden_states=model.encode(**batch).index_select(0, expanded_idx),

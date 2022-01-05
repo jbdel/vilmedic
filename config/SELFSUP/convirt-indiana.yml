@@ -6,9 +6,20 @@ dataset:
   image:
     root: data/SELFSUP/indiana
     file: image.tok
-    image_path: data/images/indiana-images-512/
+    image_path: data/images/
     ext: .png
   seq:
     root: data/SELFSUP/indiana
     file: report.tok
-    tokenizer_max_len: 60
+    tokenizer_max_len: 150
+
+trainor:
+  clip_grad_norm: 0.75
+  lr_decay_params:
+    factor: 0.8
+    patience: 5
+  optim_params:
+    lr: 5e-05
+
+ensemblor:
+  post_processing: null

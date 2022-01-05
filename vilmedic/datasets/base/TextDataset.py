@@ -40,7 +40,8 @@ class TextDataset(Dataset):
         assert source in ["src", "tgt"]
         assert split is not None, "Argument split cannot be None"
         assert not (file is not None and vocab_file is not None), "You cannot mention both a data file and a vocab file"
-        assert not (file is not None and tokenizer is not None), "You cannot mention both a pretrained tokenizer and a vocab file"
+        assert not (
+                vocab_file is not None and tokenizer is not None), "You cannot mention both a pretrained tokenizer and a vocab file"
         assert not (source == "tgt" and tokenizer_max_len is None), "You must specify tokenizer_max_len for source tgt"
 
         self.root = root
@@ -83,11 +84,11 @@ class TextDataset(Dataset):
             sys.exit()
 
     def __getitem__(self, index):
-        return {'seq': ' '.join(self.sentences[index])}
+        return {'{}_seq'.format(self.source): ' '.join(self.sentences[index])}
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            seq = self.tokenizer([s['seq'] for s in batch], **self.tokenizer_args)
+            seq = self.tokenizer([s['{}_seq'.format(self.source)] for s in batch], **self.tokenizer_args)
             collated = {
                 'input_ids': seq.input_ids,
                 'attention_mask': seq.attention_mask
@@ -102,7 +103,7 @@ class TextDataset(Dataset):
     def inference(self, sentences):
         if not isinstance(sentences, list):
             sentences = [sentences]
-        batch = [{'seq': s} for s in sentences]
+        batch = [{'{}_seq'.format(self.source): s} for s in sentences]
         return self.get_collate_fn()(batch)
 
     def __repr__(self):
@@ -123,7 +124,7 @@ class TextDataset(Dataset):
         sentence_len, tokenizer_len = [], []
         self.tokenizer_args.update({'max_length': 512})
         for index in tqdm.tqdm(range(len(self))):
-            sentence = self.__getitem__(index)['seq']
+            sentence = self.__getitem__(index)['{}_seq'.format(self.source)]
             x = self.tokenizer(sentence, **self.tokenizer_args).input_ids[0]
             if self.tokenizer.sep_token_id in x:
                 length = ((x == self.tokenizer.sep_token_id).nonzero(as_tuple=True)[0]).item()

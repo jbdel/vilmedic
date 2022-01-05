@@ -1,4 +1,4 @@
-name: RRG
+name: rrg_mimic
 ckpt_dir: ckpt
 dataset:
   proto: ImSeq
@@ -31,10 +31,10 @@ model:
     freeze: False
 
 trainor:
-  batch_size: 64
+  batch_size: 128
   optimizer: RAdam
   optim_params:
-    lr: 0.00005
+    lr: 5e-5
     weight_decay: 0.
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
@@ -45,12 +45,12 @@ trainor:
   epochs: 99
   early_stop: 10
   eval_start: 0
-  early_stop_metric: ROUGEL
+  early_stop_metric: chexbert-5_micro avg_f1-score
 
 validator:
   batch_size: 4
   beam_width: 8
-  metrics: [ROUGEL, BLEU, METEOR]
+  metrics: [ROUGEL, BLEU, METEOR, chexbert]
   splits: [validate]
 
 

@@ -16,7 +16,7 @@ class DecoderModel(nn.Module):
 
     def __init__(self, decoder, **kwargs):
         super().__init__()
-        if 'proto' in decoder:
+        if decoder.proto is not None:
             path = decoder.pop('proto')
             dec_config = AutoConfig.from_pretrained(path)
             dec_config.is_decoder = True

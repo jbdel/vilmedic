@@ -37,7 +37,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     :name: model-zoo
     :maxdepth: 1
 
-    Overview                <vilmedic/model_zoo/overview>
+    Overview                 <vilmedic/model_zoo/overview>
     Radiology Report Generation                 <vilmedic/model_zoo/rrg>
     Radiology Report Summarization                 <vilmedic/model_zoo/rrs>
     Medical VQA                 <vilmedic/model_zoo/mvqa>

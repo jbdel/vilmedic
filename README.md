@@ -55,7 +55,7 @@ and full solutions for multimodal medical tasks using one or several blocks.
 
 ## Model Zoo
 
-ViLMedic hosts a [zoo of pretrained models](https://vilmedic.readthedocs.io/en/latest/vilmedic/model_zoo.html#).
+ViLMedic hosts a [zoo of pretrained models](https://vilmedic.readthedocs.io/en/latest/vilmedic/model_zoo/overview.html).
 
 ``` 
 from vilmedic import AutoModel

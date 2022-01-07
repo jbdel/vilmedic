@@ -169,7 +169,6 @@ class CheXbert(nn.Module):
         return v
 
     def forward(self, hyps, refs):
-        # If no dump to file
         if self.refs_filename is None:
             refs_chexbert = [self.get_label(l.strip()) for l in refs]
         else:

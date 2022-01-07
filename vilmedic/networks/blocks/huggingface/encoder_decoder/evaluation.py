@@ -12,7 +12,6 @@ def evaluation(models, config, dl, **kwargs):
 
     tokenizer = dl.dataset.tgt_tokenizer
     max_len = dl.dataset.tgt_tokenizer_max_len
-
     ref_list = []
     hyp_list = []
 

@@ -35,6 +35,10 @@ class EncoderDecoderModel(nn.Module):
 
         assert self.enc_dec.config.is_encoder_decoder == True
 
+        # Inference
+        self.generate = self.enc_dec.generate
+        self.config = self.enc_dec.config
+
     def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask):
         input_ids = input_ids.cuda()
         decoder_input_ids = decoder_input_ids.cuda()

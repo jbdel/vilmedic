@@ -36,13 +36,12 @@ hyps = model.dec.generate(
     input_ids=torch.ones((len(batch["images"]), 1), dtype=torch.long).cuda() * model.dec.config.bos_token_id,
     encoder_hidden_states=model.encode(**batch).index_select(0, expanded_idx),
     num_return_sequences=1,
-    max_length=120,
+    max_length=processor.tokenizer_max_len,
     num_beams=8,
 )
 hyps = [processor.tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False) for h in hyps]
 print(hyps)
 # ['no acute cardiopulmonary process .', 'in comparison with study of there is little change and no evidence of acute cardiopulmonary disease . no pneumonia vascular congestion or pleural effusion .']
-
 ```
 ## Output scoring
 

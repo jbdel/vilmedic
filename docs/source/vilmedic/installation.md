@@ -1,16 +1,18 @@
 # Installation
 ViLMedic is built on top of important packages:
 
-- [python](https://www.python.org/downloads/) >= 3.5
-- [pytorch](http://pytorch.org/) == 1.8.1
-- [transformers](https://huggingface.co/transformers/) == 4.5.1
+- [python](https://www.python.org/downloads/) 3.9
+- [pytorch](http://pytorch.org/) 1.8.1
+- [transformers](https://huggingface.co/transformers/) 4.5.1
 
-All the packages and minor dependencies can be installed using
+Install ViLMedic in development mode:
 ```bash
-pip install -r requirements.txt
+conda create --name vilmedic python==3.9 -y
+git clone https://github.com/jbdel/vilmedic
+python setup.py develop
 ```
 
-ViLMedic structure is as follows:
+ViLMedic is structured as follows:
 
 ```
 |-- vilmedic
@@ -26,4 +28,4 @@ ViLMedic structure is as follows:
 	|  |-- scorers
 ```
 
-All datasets downloaded from this documentation should be placed in the `data` folder.
+All pretrained models and datasets downloaded from this documentation will be placed in the `data` folder.

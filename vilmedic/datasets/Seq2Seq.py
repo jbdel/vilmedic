@@ -32,3 +32,20 @@ class Seq2Seq(Dataset):
 
     def __repr__(self):
         return "Seq2Seq\n" + str(self.src) + '\n' + str(self.tgt)
+
+    def inference(self, src=None, tgt=None):
+        if src is None and tgt is None:
+            return dict()
+
+        batch = {}
+        if src is not None:
+            batch.update(self.src.inference(src))
+
+        if tgt is not None:
+            tgt = self.tgt.inference(tgt)
+            tgt['decoder_input_ids'] = tgt.pop('input_ids')
+            tgt['decoder_attention_mask'] = tgt.pop('attention_mask')
+            batch.update(tgt)
+
+        assert len(set([len(v) for k, v in batch.items()])) == 1, 'elements in batch do not have the same size'
+        return batch

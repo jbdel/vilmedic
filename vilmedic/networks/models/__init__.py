@@ -2,7 +2,7 @@ from vilmedic.networks.models.mvqa.MVQA import MVQA
 
 from vilmedic.networks.models.rrs.SumRNN import SumRNN
 from vilmedic.networks.models.rrs.SumHugMulti import SumHugMulti
-from vilmedic.networks.models.rrs.SumHugMono import SumHugMono
+from vilmedic.networks.models.rrs.RRS import RRS
 from vilmedic.networks.models.rrs.SumHugMono_SCST import SumHugMono_SCST
 
 from vilmedic.networks.models.clip.VAE import VAE
@@ -19,7 +19,7 @@ from vilmedic.networks.models.selfsup.SimCLR import SimCLR
 from vilmedic.networks.models.selfsup.GLoRIA import GLoRIA
 
 
-from vilmedic.networks.models.others.RCNN import RCNN
+# from vilmedic.networks.models.others.RCNN import RCNN
 
 from vilmedic.networks.models.others.sim_mcan import SIM_MCAN
 

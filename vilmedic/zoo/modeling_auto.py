@@ -2,6 +2,7 @@ import os
 import glob
 import torch
 import tempfile
+import transformers
 import torch.nn as nn
 from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
@@ -13,6 +14,7 @@ from ..networks import *
 from ..datasets import *
 
 DATA_PATH = __file__.replace('vilmedic/zoo/modeling_auto.py', 'data')
+transformers.logging.set_verbosity_error()
 
 
 class AutoModel:
@@ -38,6 +40,7 @@ class AutoModel:
         checkpoint_dir = os.path.join(DATA_PATH, unzip_dir, pretrained_model_name)
 
         if not os.path.exists(checkpoint_dir):
+            print("Downloading in {}".format(DATA_PATH))
             download_model(file_id=file_id, unzip_dir=checkpoint_dir)
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))
@@ -70,10 +73,17 @@ class AutoModel:
             raise NameError(
                 "Model {} does not exists anymore. Deprecated checkpoint of vilmedic version?".format(classname))
 
-        model.load_state_dict(state_dict["model"], strict=True)
+        try:
+            model.load_state_dict(state_dict["model"], strict=True)
+        except Exception as e:
+            print(e)
+            raise
+
         model.eval()
         model.cuda()
 
         assert hasattr(dataset, "inference"), "Dataset has not implemented an inference function"
+
+        print("Everything has been loaded successfully")
 
         return model, dataset

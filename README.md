@@ -77,8 +77,9 @@ print(out.keys())
 
 ## Installation
 ```
-git clone  https://github.com/jbdel/vilmedic
-pip install -r requirements.txt
+conda create --name vilmedic python==3.9 -y
+git clone https://github.com/jbdel/vilmedic
+python setup.py develop
 ```
 
 

@@ -1,6 +1,6 @@
 # Overview
 
-## Usage:
+## Usage
 
 ``` 
 from vilmedic import AutoModel
@@ -10,12 +10,14 @@ batch = processor.inference(seq=["no acute cardiopulmonary process"],
 out = model(**batch)
 ```
 
-## Models:
+## Models
 
 | Name  |   dataset | Model Card | Report preprocessing
 | ------------- |:-------------:|:-------------:|:-------------:|
 | **Radiology report generation** 
 | rrg/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   | | [r2gen](https://github.com/jbdel/vilmedic/blob/main/vilmedic/datasets/base/papers/report_preprocessing.py#L6)
+| **Radiology report summarization** 
+| rrs/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   | | [rouge](https://github.com/jbdel/vilmedic/blob/main/vilmedic/datasets/base/papers/report_preprocessing.py#L70)
 | **Self-supervision** 
 | selfsup/convirt-mimic | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   | | [r2gen](https://github.com/jbdel/vilmedic/blob/main/vilmedic/datasets/base/papers/report_preprocessing.py#L6)
 | selfsup/convirt-mimic-balanced | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   | | [r2gen](https://github.com/jbdel/vilmedic/blob/main/vilmedic/datasets/base/papers/report_preprocessing.py#L6)

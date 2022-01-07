@@ -45,5 +45,5 @@ model:
 | ------------- |:-------------:|:-------------:|:-------------:|
 | **Mimic-test**
 | [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  44.70 |
-| <span id="biomed-roberta-mimic">BioMed-RoBERTa</span>   | 22.46  |  45.04  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| <span id="#rrg_biomed-roberta-mimic">BioMed-RoBERTa</span> (single model)   | 22.46  |  45.04  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
 

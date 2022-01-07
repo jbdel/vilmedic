@@ -11,8 +11,8 @@ def download_images(data_name, file_id, unzip_dir):
     target_dir = os.path.join(unzip_dir, data_name)
 
     if not os.path.exists(target_dir):
-        gdown.download("https://drive.google.com/uc?id=" + file_id,
-                       zip_name,
+        gdown.download(url="https://drive.google.com/uc?id=" + file_id,
+                       output=zip_name,
                        quiet=False)
         print("Unzipping...")
         with zipfile.ZipFile(zip_name, 'r') as zf:
@@ -27,14 +27,14 @@ def download_images(data_name, file_id, unzip_dir):
 def download_model(file_id, unzip_dir):
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir, exist_ok=True)
-        gdown.download_folder("https://drive.google.com/drive/folders/" + file_id,
-                              os.path.split(unzip_dir)[0],
+        gdown.download_folder(id=file_id,
+                              output=unzip_dir,
                               quiet=False)
 
 
 def download_data(file_id, unzip_dir):
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir, exist_ok=True)
-        gdown.download_folder("https://drive.google.com/drive/folders/" + file_id,
-                              os.path.split(unzip_dir)[0],
+        gdown.download_folder(id=file_id,
+                              output=unzip_dir,
                               quiet=False)

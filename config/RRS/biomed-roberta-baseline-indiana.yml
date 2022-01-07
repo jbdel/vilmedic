@@ -1,0 +1,15 @@
+includes:
+  - config/RRS/biomed-roberta-baseline-mimic.yml
+
+dataset:
+  proto: Seq2Seq
+  src:
+    root: data/RRS/indiana/
+    file: findings.tok
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 128
+  tgt:
+    root: data/RRS/indiana/
+    file: impression.tok
+    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer_max_len: 75

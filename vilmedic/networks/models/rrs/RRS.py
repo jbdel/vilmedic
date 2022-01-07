@@ -16,7 +16,7 @@ def create_state_dict(ckpt, diff, replace):
     return new_dict
 
 
-class SumHugMono(nn.Module):
+class RRS(nn.Module):
 
     def __init__(self, encoder, decoder, **kwargs):
         super().__init__()

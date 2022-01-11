@@ -41,6 +41,10 @@ model:
     use_cache: true
     vocab_size: 6106
 
+trainor:
+  batch_size: 128
+  optim_params:
+    lr: 0.0001
 
 validator:
   metrics: [ROUGEL, BLEU, METEOR]

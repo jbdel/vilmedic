@@ -41,9 +41,20 @@ model:
 
 ### Metrics and scores
 
-| Dataset |     ROUGE-L | F1-cheXbert (micro) | Config
-| ------------- |:-------------:|:-------------:|:-------------:|
-| **Mimic-test**
-| [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  44.70 |
-| <span id="#rrg_biomed-roberta-mimic">BioMed-RoBERTa</span> (single model)   | 22.46  |  45.04  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| Dataset |     ROUGE-L |  F1-cheXbert (micro) | F1-cheXbert-5 (micro) | Config
+| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|
+| **mimic-cxr-validation**
+| <span id="#rrg_biomed-roberta-mimic-val">BioMed-RoBERTa</span> (single model)   | 32.72  |  49.12  | 43.10  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| **mimic-cxr-test**
+| [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  - | 44.70 |
+| <span id="#rrg_biomed-roberta-mimic-test">BioMed-RoBERTa</span> (single model)   | 22.45  |  44.23  |  45.08  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| **indiana-validation**
+| <span id="#rrg_biomed-roberta-indiana-val">BioMed-RoBERTa</span> (single model)   | 20.78  |  61.96  |  34.07  | [RRG/biomed-roberta-baseline-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-indiana.yml)
+| **indiana-test**
+| [M2-Trans (2021)](https://arxiv.org/pdf/2010.10042.pdf) |  -  |  - | 32.20 |
+| <span id="#rrg_biomed-roberta-indiana-test">BioMed-RoBERTa</span> (single model)   | 21.41  |  60.58  |  31.04  | [RRG/biomed-roberta-baseline-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-indiana.yml)
+| **padchest-validation**
+| <span id="#baseline_padchest-val">baseline</span> (single model)   | 16.54  |  -  |  -  | [RRG/baseline-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/baseline-padchest.yml)
+| **indiana-test**
+| <span id="#baseline_padchest-test">baseline</span> (single model)   | 16.32  |  -  |  -  | [RRG/baseline-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/baseline-padchest.yml)
 

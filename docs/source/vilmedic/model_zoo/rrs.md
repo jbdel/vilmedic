@@ -42,6 +42,7 @@ print(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0])
 ```
 
 ## Models
-| Name  |   dataset | Model Card | 
+| Name  | Dataset  | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | rrs/biomed-roberta-baseline-mimic| [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| rrs/biomed-roberta-baseline-indiana| [indiana](https://www.kaggle.com/raddar/chest-xrays-indiana-university/)

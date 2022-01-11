@@ -36,7 +36,7 @@ trainor:
   epochs: 99
   early_stop: 10
   eval_start: 0
-  early_stop_metric: ROUGEL
+  early_stop_metric: chexbert-5_micro avg_f1-score
 
 validator:
   batch_size: 16

@@ -12,3 +12,8 @@ dataset:
     tokenizer: data/RRG/huggingface/biomed_roberta_base
     tokenizer_max_len: 90
     source: tgt
+
+trainor:
+  batch_size: 32
+  optim_params:
+    lr: 0.0001

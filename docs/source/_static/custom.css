@@ -1,3 +1,8 @@
+:target {
+    background-color: #ffa;
+    -webkit-transition: all 1s linear;
+}
+
 .warning_box {
     margin: 1em 2em;
     padding: 0.5em 1em 0.4em;

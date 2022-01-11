@@ -32,7 +32,7 @@ model:
     num_layers: 3
     num_tokens: 8192
     codebook_dim: 1024
-    hidden_dim: 64
+    hidden_dim: 128
     num_resnet_blocks: 1
     temperature: 0.9
     straight_through: False

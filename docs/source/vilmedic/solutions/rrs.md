@@ -40,11 +40,13 @@ model:
 
 This task has no previous work on the main open datasets.
 
-| Dataset |     ROUGE-L | F1-cheXbert (micro) | Config
-| ------------- |:-------------:|:-------------:|:-------------:|
-| **Mimic-validate**
-| <span id="#rrs_biomed-roberta-mimic">BioMed-RoBERTa</span> (single model)  | 22.46  |  45.04  | [RRS/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
-| **Mimic-test**
-| <span id="#rrs_biomed-roberta-mimic">BioMed-RoBERTa</span> (single model)  | 22.46  |  45.04  | [RRS/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
-
-
+| Dataset | ROUGE-2   |  ROUGE-L | F1-cheXbert (micro-avg) | F1-cheXbert-5 (micro-avg) | Config
+| ------------- |:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
+| **mimic-cxr-validate**
+| <span id="#rrs_biomed-roberta-mimic-val">BioMed-RoBERTa</span> (single model) | 48.15 | 57.34  |  77.54  |  75.24  | [RRS/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| **mimic-cxr-test**
+| <span id="#rrs_biomed-roberta-mimic-test">BioMed-RoBERTa</span> (single model) | 34.09 | 45.98  |  72.71  |  74.64  |  [RRS/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| **indiana-validate**
+| <span id="#rrs_biomed-roberta-indiana-val">BioMed-RoBERTa</span> (single model) | 70.19 | 76.92  |  86.59 |  71.15 | [RRS/biomed-roberta-baseline-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-indiana.yml)
+| **indiana-test**
+| <span id="#rrs_biomed-roberta-indiana-test">BioMed-RoBERTa</span> (single model) | 69.85 | 77.42  |  85.10 |  70.68 | [RRS/biomed-roberta-baseline-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-indiana.yml)

@@ -19,7 +19,7 @@ This framework contains reference implementations of state-of-the-art vision and
 and full solutions for multimodal medical tasks using one or several blocks.
 
 #### Implemented solutions
-| Solution  | 
+| Solutions  | 
 | ----------- | 
 | **Medical Visual Question Answering**
 | [SYSU-HCP at VQA-Med 2021](http://ceur-ws.org/Vol-2936/paper-99.pdf)

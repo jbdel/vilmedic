@@ -75,6 +75,7 @@ print(pd.DataFrame(class_similarities, columns=reports.keys()))
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|
 | [selfsup/gloria-chexpert](https://github.com/marshuang80/gloria)  | [CheXpert](https://stanfordmlgroup.github.io/competitions/chexpert/)   |  [Link]()
+| [selfsup/gloria-mimic-48]()  | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)  |  [Link]()
 
 ## ConVIRT
 

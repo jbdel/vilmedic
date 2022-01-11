@@ -1,13 +1,18 @@
 import json
 import os
 import torch
+import functools
 import torch.nn as nn
 from tqdm import tqdm
 import numpy as np
 from torchvision.utils import save_image
 from dalle_pytorch import DALLE as PyDALLE
-from vilmedic.networks.models.clip.VAE import VAE
+from .VAE import VAE
 from vilmedic.networks.models.utils import get_n_params
+
+import torch.nn.functional as F
+from einops import rearrange
+from .dalle_forward import forward
 
 
 def evaluation(models, config, dl, **kwargs):
@@ -42,6 +47,7 @@ class DALLE(nn.Module):
     def __init__(self,
                  vae,
                  dalle,
+                 forward_batch_size=256,
                  **kwargs):
         super(DALLE, self).__init__()
 
@@ -58,10 +64,41 @@ class DALLE(nn.Module):
             **self.dalle_config
         )
 
+        self.fbs = forward_batch_size
+        self.dalle.forward = functools.partial(forward, self.dalle)
         self.eval_func = evaluation
 
     def forward(self, input_ids, attention_mask, images, **kwargs):
-        loss = self.dalle(input_ids.cuda(), images.cuda(), mask=attention_mask.cuda(), return_loss=True)
+        images = images.cuda()
+        input_ids = input_ids.cuda()
+
+        bs = images.shape[0]
+        forward_logits = []
+        forward_images = []
+        forward_texts = []
+
+        # Forward pass
+        for i in range(int(bs / min(self.fbs, bs))):
+            input_id = input_ids[i * self.fbs:(i + 1) * self.fbs]
+            image = images[i * self.fbs:(i + 1) * self.fbs]
+            logits, text, image = self.dalle(input_id, image, return_loss=False)
+
+            forward_logits.append(logits)
+            forward_images.append(image)
+            forward_texts.append(text)
+
+        forward_logits = torch.cat(forward_logits)
+        forward_images = torch.cat(forward_images)
+        forward_texts = torch.cat(forward_texts)
+
+        # Compute loss
+        offsetted_image = forward_images + self.dalle.num_text_tokens
+        labels = torch.cat((forward_texts[:, 1:], offsetted_image), dim=1)
+        logits = rearrange(forward_logits, 'b n c -> b c n')
+        loss_text = F.cross_entropy(logits[:, :, :self.dalle.text_seq_len], labels[:, :self.dalle.text_seq_len])
+        loss_img = F.cross_entropy(logits[:, :, self.dalle.text_seq_len:], labels[:, self.dalle.text_seq_len:])
+        loss = (loss_text + self.dalle.loss_img_weight * loss_img) / (self.dalle.loss_img_weight + 1)
+
         return {'loss': loss}
 
     def __repr__(self):

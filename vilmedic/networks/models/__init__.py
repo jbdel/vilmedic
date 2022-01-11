@@ -5,9 +5,9 @@ from vilmedic.networks.models.rrs.SumHugMulti import SumHugMulti
 from vilmedic.networks.models.rrs.RRS import RRS
 from vilmedic.networks.models.rrs.SumHugMono_SCST import SumHugMono_SCST
 
-from vilmedic.networks.models.clip.VAE import VAE
-from vilmedic.networks.models.clip.DALLE import DALLE
-from vilmedic.networks.models.clip.CLIP import CLIP
+from vilmedic.networks.models.selfsup.clip.VAE import VAE
+from vilmedic.networks.models.selfsup.clip.DALLE import DALLE
+from vilmedic.networks.models.selfsup.clip.CLIP import CLIP
 
 from vilmedic.networks.models.rrg.RRG import RRG
 from vilmedic.networks.models.rrg.RRG_PPO import RRG_PPO

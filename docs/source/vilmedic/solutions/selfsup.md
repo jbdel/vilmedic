@@ -253,6 +253,8 @@ model:
 ### Metrics and scores
 | Dataset  |  batch-size |    Validation Loss | Config | 
 | ------------- |:-------------:|:-------------:|:-------------:|
-| **chexpert**   | 
-| GLoRIA  | 48  | - | [official](https://github.com/marshuang80/gloria)
-| **mimic-cxr**   | 
+| **chexpert-validate**   | 
+| [official](https://github.com/marshuang80/gloria)  | 48  | 9.67 | [original repo](https://github.com/marshuang80/gloria/blob/main/configs/chexpert_pretrain_config.yaml)
+| **mimic-cxr-validate**   | 
+| ours  | 48  | 9.37 | [SELFSUP/gloria-mimic](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+

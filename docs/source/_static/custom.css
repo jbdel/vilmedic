@@ -1,4 +1,4 @@
-:target {
+.card:target {
     background-color: #ffa;
     -webkit-transition: all 1s linear;
 }

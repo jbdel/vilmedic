@@ -24,6 +24,7 @@ dataset:
     root: data/CLIP/mimic-cxr/
     file: impression.tok
     tokenizer_max_len: 100
+    processing: r2gen_clean_report
 
 model:
   proto: DALLE
@@ -36,7 +37,6 @@ model:
     num_resnet_blocks: 1
     temperature: 0.9
     straight_through: False
-    ckpt: ckpt/vae_base/0.003458679188042879_0_651727.pth
 
   dalle:
     dim: 1024

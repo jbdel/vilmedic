@@ -6,7 +6,7 @@ dataset:
   image:
     root: data/RRG/padchest/all
     file: image.tok
-    image_path: data/images/padchest-images-224/
+    image_path: data/images/padchest-images-512/
   seq:
     root: data/RRG/padchest/all
     file: report.tok

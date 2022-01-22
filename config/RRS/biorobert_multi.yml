@@ -5,13 +5,14 @@ dataset:
   src:
     root: data/RRS/mimic-cxr/
     file: findings.tok
-    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 120
   tgt:
     root: data/RRS/mimic-cxr/
     file: impression.tok
-    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 80
+    processing: r2gen_clean_report
   image:
     root: data/RRS/mimic-cxr/
     file: image.tok
@@ -25,9 +26,9 @@ dataset:
 model:
   proto: SumHugMulti
   encoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
   decoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169

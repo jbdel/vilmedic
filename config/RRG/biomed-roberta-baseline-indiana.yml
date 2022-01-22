@@ -9,7 +9,7 @@ dataset:
   seq:
     root: data/RRG/indiana/
     file: impression.tok
-    tokenizer: data/RRG/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 90
     source: tgt
 

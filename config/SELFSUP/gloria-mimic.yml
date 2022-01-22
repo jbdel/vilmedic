@@ -11,15 +11,16 @@ dataset:
 
   seq:
     root: data/SELFSUP/mimic-cxr/
-    tokenizer: data/SELFSUP/huggingface/Bio_ClinicalBERT
+    tokenizer: emilyalsentzer/Bio_ClinicalBERT
     file: report.tok
     tokenizer_max_len: 128
+    processing: r2gen
 
 model:
   proto: GLoRIA
   forward_batch_size: 12
   encoder:
-    proto: data/SELFSUP/huggingface/Bio_ClinicalBERT
+    proto: emilyalsentzer/Bio_ClinicalBERT
     last_n_layers: 4
 
   cnn:

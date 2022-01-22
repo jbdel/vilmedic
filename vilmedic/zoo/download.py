@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from utils import download_data, download_images
 from constants import DATA_ZOO, IMAGE_ZOO
+from vilmedic.constants import DATA_DIR
 
 if __name__ == '__main__':
     ALL_ZOO = {**IMAGE_ZOO, **DATA_ZOO}
@@ -39,15 +40,14 @@ if __name__ == '__main__':
     for r in res:
         print("\t{} [{}] in {}".format(list_files[r - 1],
                                        ALL_ZOO[list_files[r - 1]][1],
-                                       ALL_ZOO[list_files[r - 1]][2]))
+                                       DATA_DIR))
 
     for r in res:
         key = list_files[r - 1]
-        unzip_dir = ALL_ZOO[key][2]
         file_id = ALL_ZOO[key][0]
-        if 'image' in unzip_dir:
-            download_images(data_name=key, file_id=file_id, unzip_dir=unzip_dir)
+        if 'images' in key:
+            download_images(data_name=key, file_id=file_id, unzip_dir=os.path.join(DATA_DIR, "images"))
         else:
-            download_data(file_id=file_id, unzip_dir=os.path.join(unzip_dir, key))
+            download_data(file_id=file_id, unzip_dir=os.path.join(DATA_DIR, key))
 
     print("done")

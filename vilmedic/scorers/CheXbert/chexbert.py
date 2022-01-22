@@ -3,6 +3,8 @@ import tqdm
 import os
 import logging
 
+from vilmedic.constants import EXTRA_CACHE_DIR
+
 import torch.nn as nn
 import pandas as pd
 
@@ -111,7 +113,7 @@ class CheXbert(nn.Module):
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.model = bert_labeler(inference=True)
-        state_dict = torch.load(os.path.join(os.path.dirname(__file__), "chexbert.pth"))['model_state_dict']
+        state_dict = torch.load(os.path.join(EXTRA_CACHE_DIR, "chexbert.pth"))['model_state_dict']
         new_state_dict = OrderedDict()
         for k, v in state_dict.items():
             name = k.replace('module.', '')  # remove `module.`

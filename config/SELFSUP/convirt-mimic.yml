@@ -13,15 +13,16 @@ dataset:
     ext: .jpg
   seq:
     root: data/SELFSUP/mimic-cxr/
-    tokenizer: data/SELFSUP/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     file: report.tok
     tokenizer_max_len: 128
+    processing: r2gen_clean_report
 
 model:
   proto: ConVIRT
   forward_batch_size: 4
   encoder:
-    proto: data/SELFSUP/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: resnet50

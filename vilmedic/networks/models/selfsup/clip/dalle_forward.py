@@ -2,25 +2,25 @@ import torch.nn.functional as F
 import torch
 from einops import rearrange
 
-
-def exists(val):
-    return val is not None
-
+def prob_mask_like(shape, prob, device):
+    return torch.zeros(shape, device = device).float().uniform_(0, 1) < prob
 
 def is_empty(t):
     return t.nelement() == 0
 
+def exists(val):
+    return val is not None
 
-def prob_mask_like(shape, prob, device):
-    return torch.zeros(shape, device=device).float().uniform_(0, 1) < prob
-
+def default(val, d):
+    return val if exists(val) else d
 
 def forward(
         self,
         text,
         image=None,
         return_loss=False,
-        null_cond_prob=0.
+        null_cond_prob=0.,
+        cache=None,
 ):
     assert text.shape[
                -1] == self.text_seq_len, f'the length {text.shape[-1]} of the text tokens you passed in does not have the correct length ({self.text_seq_len})'
@@ -52,7 +52,7 @@ def forward(
         if is_raw_image:
             image_size = self.vae.image_size
             assert tuple(image.shape[1:]) == (
-                3, image_size, image_size), f'invalid image of dimensions {image.shape} passed in during training'
+            3, image_size, image_size), f'invalid image of dimensions {image.shape} passed in during training'
 
             image = self.vae.get_codebook_indices(image)
 
@@ -76,7 +76,9 @@ def forward(
         alpha = 0.1
         tokens = tokens * alpha + tokens.detach() * (1 - alpha)
 
-    out = self.transformer(tokens)
+    if exists(cache) and cache.get('offset'):
+        tokens = tokens[:, -1:]
+    out = self.transformer(tokens, cache=cache)
 
     if self.stable:
         out = self.norm_by_max(out)
@@ -86,8 +88,13 @@ def forward(
     # mask logits to make sure text predicts text (except last token), and image predicts image
 
     logits_mask = self.logits_mask[:, :seq_len]
+    if exists(cache) and cache.get('offset'):
+        logits_mask = logits_mask[:, -1:]
     max_neg_value = -torch.finfo(logits.dtype).max
     logits.masked_fill_(logits_mask, max_neg_value)
+
+    if exists(cache):
+        cache['offset'] = cache.get('offset', 0) + logits.shape[1]
 
     if not return_loss:
         return logits, text, image

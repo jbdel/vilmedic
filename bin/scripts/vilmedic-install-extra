@@ -1,0 +1,12 @@
+import os
+import gdown
+from appdirs import user_cache_dir
+
+# Chexbert
+CACHE_DIR = user_cache_dir("vilmedic")
+EXTRA_CACHE_DIR = os.path.join(CACHE_DIR, "extras")
+os.makedirs(EXTRA_CACHE_DIR, exist_ok=True)
+
+gdown.download(url="https://drive.google.com/uc?id=1UxNmUDX7wJUS-I3M815igCZZokh_VUAS",
+               output=os.path.join(EXTRA_CACHE_DIR, "chexbert.pth"),
+               quiet=False)

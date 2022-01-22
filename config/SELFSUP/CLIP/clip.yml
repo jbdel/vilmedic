@@ -24,6 +24,7 @@ dataset:
     root: data/CLIP/mimic-cxr/
     file: impression.tok
     tokenizer_max_len: 256
+    processing: r2gen_clean_report
 
 model:
   proto: CLIP

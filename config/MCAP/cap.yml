@@ -15,7 +15,7 @@ dataset:
   seq:
     root: data/MCAP
     file: caption.tok
-    tokenizer: data/MCAP/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 50
     source: tgt
     show_length: True
@@ -23,7 +23,7 @@ dataset:
 model:
   proto: RRG
   decoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
   cnn:
     proto: CNN
     backbone: densenet169

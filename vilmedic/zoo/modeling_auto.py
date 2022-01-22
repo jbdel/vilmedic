@@ -1,19 +1,17 @@
 import os
 import glob
 import torch
-import tempfile
 import transformers
 import torch.nn as nn
 from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
-
+from vilmedic.constants import MODEL_ZOO_CACHE_DIR
 from .constants import MODEL_ZOO
 from .utils import download_model
 
 from ..networks import *
 from ..datasets import *
 
-DATA_PATH = __file__.replace('vilmedic/zoo/modeling_auto.py', 'data')
 transformers.logging.set_verbosity_error()
 
 
@@ -32,15 +30,15 @@ class AutoModel:
     @staticmethod
     def from_pretrained(pretrained_model_name):
         try:
-            file_id, _, unzip_dir = MODEL_ZOO[pretrained_model_name]
+            file_id, _ = MODEL_ZOO[pretrained_model_name]
         except KeyError:
             raise KeyError("Unrecognized pretrained_model_name {}. "
                            "Model name should be one of {}.".format(pretrained_model_name, MODEL_ZOO.keys()))
 
-        checkpoint_dir = os.path.join(DATA_PATH, unzip_dir, pretrained_model_name)
+        checkpoint_dir = os.path.join(MODEL_ZOO_CACHE_DIR, pretrained_model_name)
 
         if not os.path.exists(checkpoint_dir):
-            print("Downloading in {}".format(DATA_PATH))
+            print("Downloading in {}".format(MODEL_ZOO_CACHE_DIR))
             download_model(file_id=file_id, unzip_dir=checkpoint_dir)
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))

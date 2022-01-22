@@ -6,13 +6,14 @@ dataset:
   image:
     root: data/SELFSUP/padchest/all
     file: image.tok
-    image_path: data/images/padchest-images-224/
+    image_path: data/images/padchest-images-512/
     ext: .png
   seq:
     root: data/SELFSUP/padchest/all/
     tokenizer: null
     file: report.tok
     tokenizer_max_len: 60
+    processing: gloria_clean_report_chexpert
 
 model:
   forward_batch_size: 4

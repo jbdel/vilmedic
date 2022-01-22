@@ -6,20 +6,22 @@ dataset:
   src:
     root: data/RRS/mimic-cxr/
     file: findings.tok
-    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 128
+    processing: rouge
   tgt:
     root: data/RRS/mimic-cxr/
     file: impression.tok
-    tokenizer: data/RRS/huggingface/biomed_roberta_base
+    tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 80
+    processing: rouge
 
 model:
   proto: RRS
   encoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
   decoder:
-    proto: data/RRS/huggingface/biomed_roberta_base
+    proto: allenai/biomed_roberta_base
 
 trainor:
   batch_size: 128

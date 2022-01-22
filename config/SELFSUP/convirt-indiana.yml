@@ -12,6 +12,7 @@ dataset:
     root: data/SELFSUP/indiana
     file: report.tok
     tokenizer_max_len: 150
+    processing: r2gen_clean_report
 
 trainor:
   clip_grad_norm: 0.75

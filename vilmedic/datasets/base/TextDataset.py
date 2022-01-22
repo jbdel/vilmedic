@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from transformers import BertTokenizer
 from .utils import Vocab, load_file
+from .papers.report_preprocessing import *
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -15,13 +16,13 @@ sns.set_theme(style="darkgrid")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
 
 
-def split_sentences(sentences):
-    return [s.strip().split() for s in sentences]
+def split_sentences(sentences, processing):
+    return [processing(s.strip()).split() for s in sentences]
 
 
-def make_sentences(root, split, file):
+def make_sentences(root, split, file, processing):
     sentences = load_file(os.path.join(root, split + '.' + file))
-    return split_sentences(sentences)
+    return split_sentences(sentences, processing)
 
 
 class TextDataset(Dataset):
@@ -30,6 +31,7 @@ class TextDataset(Dataset):
                  file=None,
                  split=None,
                  ckpt_dir=None,
+                 processing=None,
                  tokenizer=None,
                  tokenizer_max_len=None,
                  vocab_file=None,
@@ -49,12 +51,13 @@ class TextDataset(Dataset):
         self.split = split
         self.source = source
         self.ckpt_dir = ckpt_dir
+        self.processing = eval(processing or 'lambda x: x')
         self.tokenizer_max_len = tokenizer_max_len
         self.vocab_file = vocab_file
         self.sentences = None
 
         if file is not None:
-            self.sentences = make_sentences(root, split, file)
+            self.sentences = make_sentences(root, split, file, self.processing)
 
         # Create tokenizer from pretrained or vocabulary file
         if tokenizer is not None:
@@ -103,7 +106,8 @@ class TextDataset(Dataset):
     def inference(self, sentences):
         if not isinstance(sentences, list):
             sentences = [sentences]
-        batch = [{'{}_seq'.format(self.source): s} for s in sentences]
+        batch = [{'{}_seq'.format(self.source): self.processing(s)} for s in sentences]
+        print(batch)
         return self.get_collate_fn()(batch)
 
     def __repr__(self):
@@ -111,6 +115,7 @@ class TextDataset(Dataset):
                json.dumps({"source": self.source,
                            "root": self.root,
                            "file": self.file,
+                           "processing": self.processing,
                            "Tokenizer": {
                                "name_or_path": self.tokenizer.name_or_path,
                                "vocab_size": self.tokenizer.vocab_size,

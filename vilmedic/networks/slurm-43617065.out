@@ -1,0 +1,130 @@
+[33;92m2022-01-22 12:52:26,661 - 213246 - SETTINGS - Override dict (utils.py:24)[0m
+2022-01-22 12:52:26,663 - 213246 - INFO - {
+    "ckpt_dir": "ckpt",
+    "dataset": {
+        "root": "data/SELFSUP/padchest/all"
+    },
+    "model": {
+        "codebook_dim": 1024,
+        "hidden_dim": 128,
+        "image_size": 256,
+        "num_layers": 3,
+        "num_tokens": 8192
+    },
+    "name": "vae_jan_padchest",
+    "trainor": {
+        "batch_size": 4,
+        "early_stop": 40,
+        "grad_accu": 8,
+        "lr_decay_params": {
+            "patience": 5
+        },
+        "optimizer": "Adam"
+    }
+} (utils.py:25)
+[33;92m2022-01-22 12:52:26,663 - 213246 - SETTINGS - trainor (utils.py:29)[0m
+2022-01-22 12:52:26,663 - 213246 - INFO - {
+    "batch_size": 4,
+    "early_stop": 40,
+    "early_stop_metric": "loss",
+    "epochs": 500,
+    "eval_start": 0,
+    "grad_accu": 8,
+    "lr_decay": "ReduceLROnPlateau",
+    "lr_decay_params": {
+        "factor": 0.8,
+        "min_lr": 1e-06,
+        "patience": 5,
+        "threshold_mode": "abs"
+    },
+    "optim_params": {
+        "lr": 0.001
+    },
+    "optimizer": "Adam"
+} (utils.py:30)
+[33;92m2022-01-22 12:52:26,664 - 213246 - SETTINGS - validator (utils.py:29)[0m
+2022-01-22 12:52:26,664 - 213246 - INFO - {
+    "batch_size": 16,
+    "metrics": [],
+    "splits": [
+        "validate"
+    ]
+} (utils.py:30)
+[33;92m2022-01-22 12:52:26,944 - 213246 - SETTINGS - DataLoader (utils.py:84)[0m
+2022-01-22 12:52:26,945 - 213246 - INFO - ImageDataset
+{
+    "image_path": "data/images/",
+    "root": "data/SELFSUP/padchest/all",
+    "file": "image.tok",
+    "transforms": [
+        "Resize(size=256, interpolation=bilinear)",
+        "CenterCrop(size=(256, 256))",
+        "ToTensor()"
+    ],
+    "ext": ".jpg"
+} (utils.py:85)
+2022-01-22 12:52:26,947 - 213246 - INFO - UsingRandomSampler (utils.py:91)
+[33;92m2022-01-22 12:52:27,110 - 213246 - SETTINGS - Model VAE created (utils.py:55)[0m
+2022-01-22 12:52:27,110 - 213246 - INFO - DiscreteVAE()
+# parameters: 11.52M (11.52M learnable)
+ (utils.py:65)
+[33;92m2022-01-22 12:52:33,442 - 213246 - SETTINGS - Optimizer Adam created (utils.py:41)[0m
+2022-01-22 12:52:33,442 - 213246 - INFO - Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 0
+) (utils.py:47)
+[33;92m2022-01-22 12:52:33,449 - 213246 - SETTINGS - Training scheduler created (utils.py:122)[0m
+2022-01-22 12:52:33,449 - 213246 - INFO - TrainingScheduler (
+ReduceLROnPlateau
+{
+    "factor": 0.8,
+    "min_lr": 1e-06,
+    "mode": "min",
+    "patience": 5,
+    "threshold_mode": "abs"
+}
+Early stopping
+    early_stop_limit: 40
+    metric_comp_func: <built-in function lt>
+    mode: min
+    current_best_metric: inf
+) (utils.py:127)
+[33;92m2022-01-22 12:52:33,449 - 213246 - SETTINGS - Using scaler : False (utils.py:108)[0m
+  0%|          | 0/31705 [00:00<?, ?it/s]  0%|          | 0/31705 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "bin/train.py", line 53, in <module>
+    main()
+  File "bin/train.py", line 49, in main
+    trainor.start()
+  File "/scratch/users/jbdel/vilmedic/vilmedic/executors/trainor.py", line 71, in start
+    for iteration, batch in enumerate(pbar, start=1):
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/tqdm/std.py", line 1180, in __iter__
+    for obj in iterable:
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/dataloader.py", line 517, in __next__
+    data = self._next_data()
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/dataloader.py", line 1199, in _next_data
+    return self._process_data(data)
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/dataloader.py", line 1225, in _process_data
+    data.reraise()
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/_utils.py", line 429, in reraise
+    raise self.exc_type(msg)
+FileNotFoundError: Caught FileNotFoundError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/_utils/worker.py", line 202, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/_utils/fetch.py", line 44, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/torch/utils/data/_utils/fetch.py", line 44, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/scratch/users/jbdel/vilmedic/vilmedic/datasets/base/ImageDataset.py", line 132, in __getitem__
+    image = open_image(image, self.ext)
+  File "/scratch/users/jbdel/vilmedic/vilmedic/datasets/base/ImageDataset.py", line 53, in open_image
+    return Image.open(image).convert('RGB')
+  File "/home/users/jbdel/scratch/miniconda3/envs/vilmedic/lib/python3.8/site-packages/PIL/Image.py", line 2975, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'data/images/284976545026197627778597586615913688030_c9gu2h.png'
+

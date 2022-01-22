@@ -1,10 +1,10 @@
 import re
 import six
 from nltk.stem import porter
-
+from nltk.tokenize import wordpunct_tokenize
 
 # https://github.com/cuhksz-nlp/R2Gen/blob/main/modules/tokenizers.py
-# https://arxiv.org/pdf/2010.16056.pdf
+# Generating Radiology Reports via Memory-driven Transformer
 def r2gen_clean_report(report):
     report_cleaner = lambda t: t.replace('\n', ' ').replace('__', '_').replace('__', '_').replace('__', '_') \
         .replace('__', '_').replace('__', '_').replace('__', '_').replace('__', '_').replace('  ', ' ') \
@@ -23,12 +23,11 @@ def r2gen_clean_report(report):
     return report
 
 
-# https://github.com/ysmiura/ifcc/blob/master/extract_reports.py#L36
+# https://github.com/ysmiura/ifcc/blob/6c111dbdfe7ce9d3150a5ad90360584cfd2b8442/clinicgen/text/tokenizer.py#L24
 # Improving Factual Completeness and Consistency of Image-to-text Radiology Report Generation.
 def ifcc_clean_report(report):
-    space_pattern = re.compile('\\s+')
-    report = report.replace('\n', ' ')
-    return space_pattern.sub(' ', report)
+    report = report.lower()
+    return ' '.join(wordpunct_tokenize(report))
 
 
 # https://github.com/marshuang80/gloria/blob/main/gloria/models/gloria_model.py#L165
@@ -67,7 +66,7 @@ def gloria_clean_report_chexpert(report):
 
 
 # https://github.com/google-research/google-research/blob/master/rouge/tokenize.py
-def tokenize(text, use_stemmer=False):
+def rouge(text, use_stemmer=False):
     """Tokenize input text into a list of tokens.
     This approach aims to replicate the approach taken by Chin-Yew Lin in
     the original ROUGE implementation.

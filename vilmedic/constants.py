@@ -1,7 +1,7 @@
 import os
 from appdirs import user_cache_dir
 
-DATA_DIR = __file__.replace('vilmedic/__init__.py', 'data')
+DATA_DIR = __file__.replace('vilmedic/constants.py', 'data')
 
 CACHE_DIR = user_cache_dir("vilmedic")
 EXTRA_CACHE_DIR = os.path.join(CACHE_DIR, "extras")

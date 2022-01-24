@@ -55,6 +55,6 @@ model:
 | <span id="rrg_biomed-roberta-indiana-test">BioMed-RoBERTa</span> (single model)   | 21.41  |  60.58  |  31.04  | [RRG/biomed-roberta-baseline-indiana.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-indiana.yml)
 | **padchest-validation**
 | <span class="card" id="baseline_padchest-val">baseline</span> (single model)   | 16.54  |  -  |  -  | [RRG/baseline-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/baseline-padchest.yml)
-| **indiana-test**
+| **padchest-test**
 | <span class="card" id="baseline_padchest-test">baseline</span> (single model)   | 16.32  |  -  |  -  | [RRG/baseline-padchest.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/baseline-padchest.yml)
 

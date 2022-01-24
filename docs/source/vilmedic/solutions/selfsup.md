@@ -156,7 +156,7 @@ python bin/ensemble.py config/SELFSUP/convirt-mimic.yml \
 
 Here is the results on mimic-cxr (balanced):
 
-| train full (linguistic)  |     train sampled (linguistic) | train full (visual) | train sampled (visual) 
+| train full (linguistic)  |     Valid sampled (linguistic) | train full (visual) | Valid sampled (visual) 
 | :-------------: |:-------------:|:-------------:|:-------------:|
 [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_linguistic.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_linguistic.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_linguistic.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_linguistic.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_visual.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_full_visual.png) | [<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_visual.png" />](https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/convirt_train_sampled_visual.png)
 *Click image to access full-size*

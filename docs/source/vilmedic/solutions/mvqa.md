@@ -55,7 +55,7 @@ Dataset |   Accuracy | Config
    | ours (ens-7) | 72.0| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
    | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 69.2
 | **VQA-Med-2021 val-2 (out-domain)**
-| ours (ens-7)  | 36.1| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
+| ours (ens-7)  | 37.8| [MVQA/vqa.yml](https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml)
    | [SYSU-HCP (ens-8)](http://ceur-ws.org/Vol-2936/paper-99.pdf) | 38.2
 
 ## Extras

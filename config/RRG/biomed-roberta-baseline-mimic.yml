@@ -3,7 +3,7 @@ ckpt_dir: ckpt
 dataset:
   proto: ImSeq
   image:
-    root: data/RRG/mimic-cxr/
+    root: data/RRG/mimic-cxr/impression/
     file: image.tok
     image_path: data/images/
     load_memory: False
@@ -11,11 +11,11 @@ dataset:
     crop: 224
     ext: .jpg
   seq:
-    root: data/RRG/mimic-cxr/
-    file: findings.tok
+    root: data/RRG/mimic-cxr/impression/
+    file: impression.tok
     tokenizer: allenai/biomed_roberta_base
     tokenizer_max_len: 120
-    processing: ifcc_clean_report
+    processing: r2gen_clean_report
     source: tgt
 
 model:

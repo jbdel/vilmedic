@@ -87,7 +87,6 @@ class TextDataset(Dataset):
             sys.exit()
 
     def __getitem__(self, index):
-        print(' '.join(self.sentences[index]))
         return {'{}_seq'.format(self.source): ' '.join(self.sentences[index])}
 
     def get_collate_fn(self):
@@ -108,7 +107,6 @@ class TextDataset(Dataset):
         if not isinstance(sentences, list):
             sentences = [sentences]
         batch = [{'{}_seq'.format(self.source): self.processing(s)} for s in sentences]
-        print(batch)
         return self.get_collate_fn()(batch)
 
     def __repr__(self):

@@ -45,8 +45,8 @@ class RRG(nn.Module):
         return self.enc(images)
 
     def __repr__(self):
-        s = "RRG\n"
-        s += str(self.enc) + '\n'
-        s += str(self.dec) + '\n'
+        s = "model: RRG\n"
+        s += "(enc):" + str(self.enc) + '\n'
+        s += "(dec):" + str(self.dec) + '\n'
         s += "{}\n".format(get_n_params(self))
         return s

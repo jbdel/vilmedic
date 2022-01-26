@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical VQA &mdash; ViLMedic latest documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Self-supervision" href="selfsup.html" />
+    <link rel="prev" title="Radiology Report Summarization" href="rrs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> ViLMedic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">ViLMedic</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Solutions</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rrg.html">Radiology Report Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rrs.html">Radiology Report Summarization</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Medical VQA</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metrics-and-scores">Metrics and scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extras">Extras</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="selfsup.html">Self-supervision</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Model Zoo</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../model_zoo/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_zoo/rrg.html">Radiology Report Generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_zoo/rrs.html">Radiology Report Summarization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_zoo/mvqa.html">Medical VQA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../model_zoo/selfsup.html">Self-supervision</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Advanced Topics</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../advance/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advance/models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advance/configs.html">Configs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ViLMedic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Medical VQA</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/vilmedic/solutions/mvqa.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="medical-vqa">
+<h1>Medical VQA<a class="headerlink" href="#medical-vqa" title="Permalink to this headline"></a></h1>
+<p>Since patients may now access structured and unstructured data related to their health via patient portals, such access also motivates the need to help them better understand their conditions regarding their available data, including medical images.</p>
+<div class="data_box">
+	<b>Data requirements: </b> imageclef-vqa-images and MVQA data<br/>
+	Please refer to <a href="https://vilmedic.readthedocs.io/en/latest/vilmedic/solutions/data.html">the data section</a>.
+</div>
+<section id="model">
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this headline"></a></h2>
+<p>The model is defined as such in the config file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="p">:</span>
+  <span class="n">proto</span><span class="p">:</span> <span class="n">MVQA</span>
+  <span class="n">cnn</span><span class="p">:</span>
+    <span class="n">proto</span><span class="p">:</span> <span class="n">CNN</span>
+    <span class="n">backbone</span><span class="p">:</span> <span class="n">densenet169</span>
+    <span class="n">output_layer</span><span class="p">:</span> <span class="n">features</span>
+    <span class="n">dropout_out</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">permute</span><span class="p">:</span> <span class="n">batch_first</span>
+    <span class="n">freeze</span><span class="p">:</span> <span class="kc">False</span>
+
+  <span class="n">adapter</span><span class="p">:</span>
+    <span class="n">input_size</span><span class="p">:</span> <span class="mi">1664</span>
+    <span class="n">output_size</span><span class="p">:</span> <span class="mi">768</span>
+
+  <span class="n">transformer</span><span class="p">:</span>
+    <span class="n">hidden_size</span><span class="p">:</span> <span class="mi">768</span>
+    <span class="n">intermediate_size</span><span class="p">:</span> <span class="mi">2048</span>
+    <span class="n">num_hidden_layers</span><span class="p">:</span> <span class="mi">12</span>
+    <span class="n">num_attention_heads</span><span class="p">:</span> <span class="mi">8</span>
+    <span class="n">attention_probs_dropout_prob</span><span class="p">:</span> <span class="mf">0.1</span>
+    <span class="n">hidden_dropout_prob</span><span class="p">:</span> <span class="mf">0.1</span>
+    <span class="n">hidden_act</span><span class="p">:</span> <span class="n">gelu</span>
+    <span class="n">initializer_range</span><span class="p">:</span> <span class="mf">0.02</span>
+    <span class="n">layer_norm_eps</span><span class="p">:</span> <span class="mf">1.e-12</span>
+
+  <span class="n">classifier</span><span class="p">:</span>
+    <span class="n">proto</span><span class="p">:</span> <span class="n">Classifier</span>
+    <span class="n">input_size</span><span class="p">:</span> <span class="mi">768</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="mi">330</span>
+    <span class="n">dropout</span><span class="p">:</span> <span class="mf">0.</span>
+
+  <span class="n">loss</span><span class="p">:</span>
+    <span class="n">proto</span><span class="p">:</span> <span class="n">LabelSmoothingCrossEntropy</span>
+</pre></div>
+</div>
+</section>
+<section id="metrics-and-scores">
+<h2>Metrics and scores<a class="headerlink" href="#metrics-and-scores" title="Permalink to this headline"></a></h2>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Dataset</p></th>
+<th class="text-center head"><p>Accuracy</p></th>
+<th class="text-right head"><p>Config</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>VQA-Med-2021 val-1 (in-domain)</strong></p></td>
+<td class="text-center"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ours (single model)</p></td>
+<td class="text-center"><p>69.0</p></td>
+<td class="text-right"><p><a class="reference external" href="https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml">MVQA/vqa.yml</a></p></td>
+</tr>
+<tr class="row-even"><td><p>ours (ens-7)</p></td>
+<td class="text-center"><p>72.0</p></td>
+<td class="text-right"><p><a class="reference external" href="https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml">MVQA/vqa.yml</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="http://ceur-ws.org/Vol-2936/paper-99.pdf">SYSU-HCP (ens-8)</a></p></td>
+<td class="text-center"><p>69.2</p></td>
+<td class="text-right"><p></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>VQA-Med-2021 val-2 (out-domain)</strong></p></td>
+<td class="text-center"><p></p></td>
+<td class="text-right"><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ours (ens-7)</p></td>
+<td class="text-center"><p>37.8</p></td>
+<td class="text-right"><p><a class="reference external" href="https://github.com/jbdel/vilmedic/blob/main/config/MVQA/vqa.yml">MVQA/vqa.yml</a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="http://ceur-ws.org/Vol-2936/paper-99.pdf">SYSU-HCP (ens-8)</a></p></td>
+<td class="text-center"><p>38.2</p></td>
+<td class="text-right"><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="extras">
+<h2>Extras<a class="headerlink" href="#extras" title="Permalink to this headline"></a></h2>
+<p>To ensemble, train 7 models and then do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="nb">bin</span><span class="o">/</span><span class="n">ensemble</span><span class="o">.</span><span class="n">py</span> <span class="n">config</span><span class="o">/</span><span class="n">VQA</span><span class="o">/</span><span class="n">vqa_tr</span><span class="o">.</span><span class="n">yml</span> \
+    <span class="n">ensemblor</span><span class="o">.</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span> \
+    <span class="n">ensemblor</span><span class="o">.</span><span class="n">mode</span><span class="o">=</span><span class="n">best</span><span class="o">-</span><span class="mi">7</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rrs.html" class="btn btn-neutral float-left" title="Radiology Report Summarization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="selfsup.html" class="btn btn-neutral float-right" title="Self-supervision" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Jean-Benoit Delbrouck.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

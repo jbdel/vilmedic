@@ -27,6 +27,7 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     :name: solutions
     :maxdepth: 1
 
+    Data                 <vilmedic/solutions/data>
     Radiology Report Generation                 <vilmedic/solutions/rrg>
     Radiology Report Summarization                 <vilmedic/solutions/rrs>
     Medical VQA                 <vilmedic/solutions/mvqa>
@@ -44,14 +45,12 @@ ViLMedic contains reference implementations of state-of-the-art vision and langu
     Self-supervision          <vilmedic/model_zoo/selfsup>
 
 .. toctree::
-    :caption: Advanced Topics
-    :name: advance
+    :caption: Blocks
+    :name: blocks
     :maxdepth: 1
 
-    Overview                 <advance/overview>
-    Models                 <advance/models>
-    Configs                 <advance/configs>
-    blocks                 <advance/blocks>
+    Overview                 <vilmedic/blocks/overview>
+    Blocks                 <vilmedic/blocks/blocks>
 ------
 
 This repo is currently maintained by JB Delbrouck.

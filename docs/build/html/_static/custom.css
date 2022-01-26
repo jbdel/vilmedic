@@ -1,1 +1,53 @@
-/* This file intentionally left blank. */
+.card:target {
+    background-color: #ffa;
+    -webkit-transition: all 1s linear;
+}
+
+.warning_box {
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #aaa;
+    text-align: justify;
+    background-color: #ffeedd;
+    border-color: #ff8822;
+    line-height: 1.8;
+}
+
+.data_box{
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #aaa;
+    background-color: #e6f0ff;
+    border-color: #002966;
+    line-height: 1.8;
+}
+
+.info_box{
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #aaa;
+    background-color: #e6f0ff;
+    border-color: #002966;
+    line-height: 1.8;
+}
+
+
+.summary_box{
+    margin: 1em 2em;
+    padding: 0.5em 1em 0.4em;
+    border: 1px solid #a2a9b1;
+    background-color: #f8f9fa;
+    width: 250px;
+}
+
+
+.div_pre{
+    color: #e74c3c !important;
+    white-space: normal !important;
+    max-width: 100% !important;
+    background: #fff !important;
+    border: 1px solid #e1e4e5 !important;
+    padding: 2px 5px !important;
+    font-size: 75% !important;
+    font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
+}

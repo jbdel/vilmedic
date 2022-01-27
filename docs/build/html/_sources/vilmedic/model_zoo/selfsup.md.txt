@@ -1,5 +1,63 @@
 # Self-supversion
 
+
+## VAE
+
+### Usage 
+```
+from vilmedic import AutoModel
+model, processor = AutoModel.from_pretrained("selfsup/vae-padchest")
+batch = processor.inference(image=[
+    "p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg",
+    "p10/p10000032/s50414267/174413ec-4ec4c1f7-34ea26b7-c5f994f8-79ef1962.jpg",
+])
+out = model(**batch)
+print(out.keys())
+# dict_keys(['loss', 'output'])
+```
+### Reconstruction
+```
+from vilmedic import AutoModel
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
+import torchvision.transforms.functional as F
+import numpy as np
+
+
+def show(imgs):
+    if not isinstance(imgs, list):
+        imgs = [imgs]
+    fix, axs = plt.subplots(ncols=len(imgs), squeeze=False)
+    for i, img in enumerate(imgs):
+        img = img.detach()
+        img = F.to_pil_image(img)
+        axs[0, i].imshow(np.asarray(img))
+        axs[0, i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+    plt.show()
+
+
+model, processor = AutoModel.from_pretrained("selfsup/vae-mimic")
+
+batch = processor.inference(image=[
+    "p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg",
+    "p10/p10000032/s50414267/174413ec-4ec4c1f7-34ea26b7-c5f994f8-79ef1962.jpg",
+])
+
+codes = model.vae.get_codebook_indices(batch['images'].cuda())
+hard_recons = model.vae.decode(codes)
+show(make_grid(hard_recons.detach().cpu(), normalize=True, range=(-1, 1)))
+```
+<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/vae_mimic.png" width="150px"/>
+
+### Models
+| Name  |   dataset | Model Card | 
+| ------------- |:-------------:|:-------------:|
+| selfsup/vae-mimic | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/vae-indiana | [indiana](https://www.kaggle.com/raddar/chest-xrays-indiana-university/)
+| selfsup/vae-padchest | [padchest](https://bimcv.cipf.es/bimcv-projects/padchest/) 
+
+
+
 ## SimCLR
 
 ### Usage 
@@ -11,6 +69,7 @@ out = model(**batch, from_training=False)
 print(out.keys())
 # dict_keys(['loss', 'visual'])
 ```
+
 ### Models
 | Name  |   dataset | Model Card | 
 | ------------- |:-------------:|:-------------:|

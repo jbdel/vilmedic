@@ -34,5 +34,8 @@ out = model(**batch)
 | selfsup/simclr-mimic-16 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 | selfsup/simclr-mimic-32 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
 | selfsup/simclr-mimic-64 | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/vae-mimic | [mimic-cxr](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)   
+| selfsup/vae-indiana | [indiana](https://www.kaggle.com/raddar/chest-xrays-indiana-university/)
+| selfsup/vae-padchest | [padchest](https://bimcv.cipf.es/bimcv-projects/padchest/) 
 | **Medical VQA** 
 | mvqa/mvqa-imageclef| [ImageCLEF-VQAMed](https://www.imageclef.org/2021/medical/vqa)   

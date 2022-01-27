@@ -13,23 +13,7 @@ Self-supervised learning (SSL) is a method of machine learning. It learns from u
 
 
 ### Model
-It is advised to use gradient accumulation. First, we need to train a VAE.
-
-``` 
-python bin/train.py config/CLIP/vae.yml \
-    model.image_size=256 \
-    model.num_layers=3 \
-    model.num_tokens=8192 \
-    model.codebook_dim=1024 \
-    model.hidden_dim=64 \
-    trainor.batch_size=16 \
-    trainor.grad_accu=4 \
-    name=vae
-```
-
-
-
-Secondly, we need to train a DALLE model using the trained VAE:
+First, we need to train a [VAE](#vae). Then, we need to train a DALLE model using the trained VAE:
 ```
 python bin/train.py config/CLIP/dalle.yml \
     model.vae.image_size=256 \
@@ -41,7 +25,7 @@ python bin/train.py config/CLIP/dalle.yml \
     trainor.clip_grad_norm=0.5 \
     trainor.grad_accu=5 \
     trainor.lr_decay_params.patience=1 \
-    model.vae.ckpt=data/CLIP/0.0022899999748915434_32_951498.pth \
+    model.vae.ckpt=my_vae.pth \
     name="dalle" 
 ```     
 
@@ -49,33 +33,8 @@ python bin/train.py config/CLIP/dalle.yml \
 
 | Dataset  | Validation Loss | 
 | ------------- |:-------------:|
-| **mimic-cxr**   | 
-| VAE   | 0.00345
+| **mimic-cxr-validation**   | 
 | DALLE  | 1.6828  
-
-### Extras
-(need rework)
-
-**Pretrained DALLE checkpoint**
-
-[Download DALLE checkpoint](https://drive.google.com/file/d/111lGGkg0c7HPA5dBeLU8v7_pKWJWvuoT/view?usp=sharing)
- and place it in `ckpt/dalle/`
-```
-python bin/ensemble.py config/CLIP/dalle.yml \
-    model.vae.image_size=256 \
-    model.dalle.dim=1024 \
-    model.dalle.heads=16 \
-    model.dalle.dim_head=64 \
-    model.dalle.depth=16 \
-    model.vae.ckpt=data/CLIP/0.0022899999748915434_32_951498.pth \
-    name="dalle" \
-    ckpt_dir=ckpt \
-    ckpt=1.661213994026184_4_406122.pth \
-    ensemblor.generate_images=True
-```
-
-This trigger [the following code](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/clip/DALLE.py#L17) 
-that generates a few images for one sample.
 
 ## conVIRT
 
@@ -255,5 +214,34 @@ model:
 | **chexpert-validate**   | 
 | [official](https://github.com/marshuang80/gloria)  | 48  | 9.67 | [original repo](https://github.com/marshuang80/gloria/blob/main/configs/chexpert_pretrain_config.yaml)
 | **mimic-cxr-validate**   | 
-| ours  | 48  | 9.37 | [SELFSUP/gloria-mimic](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)
+| ours  | 48  | 9.37 | [SELFSUP/gloria-mimic](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/gloria-mimic.yml)
 
+
+## VAE
+
+[Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114)
+
+### Model
+
+``` 
+model:
+  proto: VAE
+  image_size: 256
+  num_layers: 3
+  num_tokens: 8192
+  codebook_dim: 1024
+  hidden_dim: 128
+  num_resnet_blocks: 1
+  temperature: 0.9
+  straight_through: False
+```
+
+### Metrics and scores
+| Dataset  |  epochs |  Validation Loss | Config | 
+| ------------- |:-------------:|:-------------:|:-------------:|
+| **mimic-cxr-validate**   | 
+| ours  | 198  | 0.001772 | [SELFSUP/CLIP/vae.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/CLIP/vae.yml)
+| **indiana-validate**   | 
+| ours  | 139  | 0.001059 | [SELFSUP/CLIP/vae.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/CLIP/vae.yml)
+| **padchest-validate**   | 
+| ours  | 51  | 0.001316 | [SELFSUP/CLIP/vae.yml](https://github.com/jbdel/vilmedic/blob/main/config/SELFSUP/CLIP/vae.yml)

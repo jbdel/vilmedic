@@ -27,14 +27,14 @@ def download_images(data_name, file_id, unzip_dir):
 def download_model(file_id, unzip_dir):
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir, exist_ok=True)
-        gdown.download_folder(id=file_id,
-                              output=unzip_dir,
-                              quiet=False)
+    gdown.download_folder(id=file_id,
+                          output=unzip_dir,
+                          quiet=False)
 
 
 def download_data(file_id, unzip_dir):
     if not os.path.exists(unzip_dir):
         os.makedirs(unzip_dir, exist_ok=True)
-        gdown.download_folder(id=file_id,
-                              output=unzip_dir,
-                              quiet=False)
+    gdown.download_folder(id=file_id,
+                          output=unzip_dir,
+                          quiet=False)

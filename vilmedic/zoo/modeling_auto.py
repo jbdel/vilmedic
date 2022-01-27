@@ -26,6 +26,9 @@ MODEL_ZOO = {
     'selfsup/simclr-mimic-32': ["1ibtEQH8XXNPy1Y0fE1ooSF7Jh7bdG58C", "300 MB"],
     'selfsup/simclr-mimic-64': ["1RYhQkaR9F0LbozVs7hHv0c52Js1LDh6J", "300 MB"],
     'selfsup/simclr-mimic-128': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "300 MB"],
+    'selfsup/vae-mimic': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "138 MB"],
+    'selfsup/vae-indiana': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "138 MB"],
+    'selfsup/vae-padchest': ["1w1XYaprrJrjIk-JlKpbw7OSe3sABKDkN", "138 MB"],
     'rrg/biomed-roberta-baseline-mimic': ["1aXxHkzbLdYQpLYvlQLw7NENE7LXgkc1y", "1.8 GB"],
     'rrg/biomed-roberta-baseline-indiana': ["1BzTPf4AMLF_2KGs6RX3W30HyekeUElmW", "1.8 GB"],
     'rrg/baseline-padchest': ["1COYPFZJTiG5TBlhGSX7GyswXwKL6HAW0", "1.8 GB"],
@@ -57,7 +60,7 @@ class AutoModel:
 
         checkpoint_dir = os.path.join(MODEL_ZOO_CACHE_DIR, pretrained_model_name)
 
-        if not os.path.exists(checkpoint_dir):
+        if not os.path.exists(checkpoint_dir) or len(glob.glob(os.path.join(checkpoint_dir, '*.pth'))) == 0:
             print("Downloading in {}".format(MODEL_ZOO_CACHE_DIR))
             download_model(file_id=file_id, unzip_dir=checkpoint_dir)
 

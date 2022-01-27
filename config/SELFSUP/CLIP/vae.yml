@@ -22,19 +22,18 @@ dataset:
 model:
   proto: VAE
   image_size: 256
-  num_layers: 3  # number of downsamples - ex. 256 / (2 ** 3) :  (32 x 32 feature map)
+  num_layers: 3
   num_tokens: 8192
-  # number of visual tokens. in the paper, they used 8192, but could be smaller for downsized projects
-  codebook_dim: 1024  # codebook dimension
-  hidden_dim: 64  # hidden dimension
-  num_resnet_blocks: 1  # number of resnet blocks
-  temperature: 0.9  # gumbel softmax temperature, the lower this is, the harder the discretization
+  codebook_dim: 1024
+  hidden_dim: 128
+  num_resnet_blocks: 1
+  temperature: 0.9
   straight_through: False
 
 trainor:
-  optimizer: RAdam
+  optimizer: Adam
   optim_params: {lr: 1e-3}
-  batch_size: 16
+  batch_size: 32
   lr_decay: ReduceLROnPlateau
   lr_decay_params:
     factor: 0.8
@@ -42,7 +41,7 @@ trainor:
     min_lr: 0.000001
     threshold_mode: abs
   epochs: 500
-  early_stop: 10
+  early_stop: 40
   eval_start: 0
   early_stop_metric: loss
 

@@ -35,7 +35,7 @@ print(hyps)
 
 ## Output scoring
 ``` 
-from vilmedic.scorers.NLG import ROUGEScorer
+from vilmedic.blocks.scorers.NLG import ROUGEScorer
 refs = ["no acute cardiopulmonary process"]
 print(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0])
 # 1.0

@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data.sampler import BatchSampler, SequentialSampler, RandomSampler
 
-from vilmedic.networks import *
+from vilmedic.models import *
 from vilmedic.datasets import *
 
 import torch_optimizer

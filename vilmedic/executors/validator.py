@@ -3,8 +3,8 @@ import json
 import torch
 import logging
 from .utils import create_data_loader, get_eval_func
-from vilmedic.scorers.scores import compute_scores
-from vilmedic.scorers.post_processing import post_processing
+from vilmedic.blocks.scorers.scores import compute_scores
+from vilmedic.blocks.scorers.post_processing import post_processing
 
 
 class InitValidator(object):

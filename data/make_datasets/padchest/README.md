@@ -30,8 +30,32 @@ You are free to resize the images using the following transform:
 transforms.Compose([transforms.Resize(512)])        
 ```
 
-**Warning: do not use `transforms.Resize(512,512)`**        
+**Warning 1: do not use**
+```
+transforms.Resize(512,512)
+```
 
+**Warning 2: PadChest images are in 'I' mode (32-bit signed integer pixels).**
+
+To open padchest images using pillow, refer to the following script:
+
+
+```python
+from torchvision import transforms
+from PIL import Image
+import numpy as np
+
+def convert_I_to_L(img):
+    array = np.uint8(np.array(img) / 256)
+    return Image.fromarray(array)
+
+files = ["51994518378277613909386204527137968162_nbvxez.png"]
+t = transforms.Compose([transforms.Resize(512)])
+
+for f in tqdm(files):
+    image = convert_I_to_L(Image.open(f)).convert('RGB')
+    im1 = t(image).save(os.path.basename(f))
+```
 
 Your `data` tree should now look like this:
 

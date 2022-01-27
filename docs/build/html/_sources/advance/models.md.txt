@@ -1,6 +1,6 @@
 <div class="data_box">
 	Models are defined in: 	<div class="highlight">
-<pre>vilmedic/networks/models</pre></div>
+<pre>vilmedic/models</pre></div>
 </div>
 
 # Models

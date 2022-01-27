@@ -99,5 +99,5 @@ def rouge(text, use_stemmer=False):
 
     # One final check to drop any empty or invalid tokens.
     tokens = [x for x in tokens if VALID_TOKEN_RE.match(x)]
-
+    tokens = ' '.join(tokens)
     return tokens

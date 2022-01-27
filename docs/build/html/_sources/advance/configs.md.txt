@@ -64,7 +64,7 @@ class my_dataset(Dataset):
 #### Model <br/>
 <hr/>
 
-`proto` contains the model classname existing in the [model folder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/__init__.py).
+`proto` contains the model classname existing in the [model folder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/models/__init__.py).
 <br/>
 You can pass blocks to the `my_model` class as such:
 

@@ -1,6 +1,6 @@
 <div class="data_box">
 	Models are defined in: 	<div class="highlight">
-<pre>vilmedic/networks/models</pre></div>
+<pre>vilmedic/models</pre></div>
 </div>
 
 # Models
@@ -19,7 +19,7 @@ Those three components can be defined by the user of vilmedic blocks.
 
 ## Define a model
 
-Create a python class within the folder `vilmedic/networks` (or a new subfolder) that implements `nn.Module`.
+Create a python class within the folder `vilmedic/models` (or a new subfolder) that implements `nn.Module`.
 ```
 import torch.nn as nn
 class MyModel(nn.Module):

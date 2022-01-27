@@ -47,7 +47,7 @@ codes = model.vae.get_codebook_indices(batch['images'].cuda())
 hard_recons = model.vae.decode(codes)
 show(make_grid(hard_recons.detach().cpu(), normalize=True, range=(-1, 1)))
 ```
-<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/vae_mimic.png" width="150px"/>
+<img src="https://raw.githubusercontent.com/jbdel/vilmedic/main/docs/source/images/vae_mimic.png" width="80%"/>
 
 ### Models
 | Name  |   dataset | Model Card | 

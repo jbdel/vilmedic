@@ -12,11 +12,11 @@ tasks using one or several blocks (referred as "**models**").
 Models are full solutions for multimodal medical tasks, usually composed of blocks. <br/>
 
 For example, the task of Radiology Report Generation (RRG) encodes an image and outputs a report. Typically, a 
-[baseline solution](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/models/rrg/RRG.py) uses two blocks: a [CNN](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/blocks/vision/cnn.py) 
-and [BioMed-RoBERT HuggingFace transformer as decoder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/networks/blocks/huggingface/encoder_decoder/encoder_decoder_model.py).
+[baseline solution](https://github.com/jbdel/vilmedic/blob/main/vilmedic/models/rrg/RRG.py) uses two blocks: a [CNN](https://github.com/jbdel/vilmedic/blob/main/vilmedic/blocks/vision/cnn.py) 
+and [BioMed-RoBERT HuggingFace transformer as decoder](https://github.com/jbdel/vilmedic/blob/main/vilmedic/blocks/huggingface/encoder_decoder/encoder_decoder_model.py).
 
 Documentation of available solutions are available [here](https://vilmedic.readthedocs.io/en/latest/vilmedic/models.html) and their respective python code in 
-`vilmedic/networks/models`.
+`vilmedic/models`.
 
 ### Configuration files
 All configurations about training, evaluation, models and blocks parameters are stored in YALM file that will be processed with the 
@@ -48,5 +48,5 @@ The Validator process is the same in both cases except for two differences:
 
 ### Scorers
 Scorers are methods called by the Validator that outputs a score or a metrics based on the model's output.
-Available scorers are found in the `vilmedic/scorers` directory.
+Available scorers are found in the `vilmedic/blocks/scorers` directory.
 

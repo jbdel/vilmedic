@@ -42,8 +42,10 @@ To open padchest images using pillow, refer to the following script:
 
 ```python
 from torchvision import transforms
-from PIL import Image
+from PIL import Image, ImageFile
 import numpy as np
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # Use this when resizing images
+
 
 def convert_I_to_L(img):
     array = np.uint8(np.array(img) / 256)

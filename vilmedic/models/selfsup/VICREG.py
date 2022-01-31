@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 
-from vilmedic.blocks.vision import *
+from vilmedic.blocks.vision import CNN
+from vilmedic.blocks.losses import VIGREGLoss
+
 from vilmedic.blocks.huggingface.encoder.encoder_model import EncoderModel
-from vilmedic.blocks.losses import ConVIRTLoss, InfoNCELoss
 
 from tqdm import tqdm
 import numpy as np
@@ -37,9 +38,9 @@ def evaluation(models, config, dl, from_training, **kwargs):
             }
 
 
-class ConVIRT(nn.Module):
+class VICREG(nn.Module):
 
-    def __init__(self, encoder, cnn, projection, loss, forward_batch_size=256, **kwargs):
+    def __init__(self, encoder, cnn, projection, loss, **kwargs):
         super().__init__()
 
         # Linguistic encoder
@@ -50,18 +51,26 @@ class ConVIRT(nn.Module):
 
         # Projection
         self.vis_proj = nn.Sequential(
-            nn.Linear(projection.visual_embedding_dim, projection.projection_dim),
+            nn.Linear(projection.visual_embedding_dim, projection.proj_hidden_dim),
+            nn.BatchNorm1d(projection.proj_hidden_dim),
             nn.ReLU(),
-            nn.Linear(projection.projection_dim, projection.projection_dim),
-        )
-        self.lin_proj = nn.Sequential(
-            nn.Linear(projection.textual_embedding_dim, projection.projection_dim),
+            nn.Linear(projection.proj_hidden_dim, projection.proj_hidden_dim),
+            nn.BatchNorm1d(projection.proj_hidden_dim),
             nn.ReLU(),
-            nn.Linear(projection.projection_dim, projection.projection_dim),
+            nn.Linear(projection.proj_hidden_dim, projection.proj_output_dim),
         )
 
-        self.loss_fn = eval(loss.pop("proto"))(**loss)
-        self.fbs = forward_batch_size
+        self.lin_proj = nn.Sequential(
+            nn.Linear(projection.textual_embedding_dim, projection.proj_hidden_dim),
+            nn.BatchNorm1d(projection.proj_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(projection.proj_hidden_dim, projection.proj_hidden_dim),
+            nn.BatchNorm1d(projection.proj_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(projection.proj_hidden_dim, projection.proj_output_dim),
+        )
+
+        self.loss_fn = VIGREGLoss(**loss)
 
         # Evaluation
         self.eval_func = evaluation
@@ -71,34 +80,21 @@ class ConVIRT(nn.Module):
         input_ids = input_ids.cuda()
         attention_mask = attention_mask.cuda()
 
-        bs = images.shape[0]
-        linguistics = []
-        visuals = []
-        for i in range(int(bs / min(self.fbs, bs))):
-            inp = input_ids[i * self.fbs:(i + 1) * self.fbs]
-            att = attention_mask[i * self.fbs:(i + 1) * self.fbs]
-            im = images[i * self.fbs:(i + 1) * self.fbs]
+        linguistic = self.linguistic(input_ids=input_ids,
+                                     attention_mask=attention_mask,
+                                     **kwargs)
+        linguistic = self.lin_proj(linguistic['pooler_output'])
+        visual = self.vis_proj(self.visual(images))
 
-            linguistic = self.linguistic(input_ids=inp,
-                                         attention_mask=att,
-                                         **kwargs)
-            linguistic = self.lin_proj(linguistic['pooler_output'])
-            visual = self.vis_proj(self.visual(im))
+        vicreg_loss = self.loss_fn(linguistic, visual)
 
-            linguistics.append(linguistic)
-            visuals.append(visual)
-
-        linguistics = torch.cat(linguistics)
-        visuals = torch.cat(visuals)
-
-        loss, loss_l, loss_v = self.loss_fn(linguistics, visuals)
-
-        return {"loss": loss, "loss_l": loss_l, "loss_v": loss_v, "linguistic": linguistics, "visual": visuals}
+        return {"loss": vicreg_loss, "linguistic": linguistic, "visual": visual}
 
     def __repr__(self):
-        s = "ConVIRT\n"
+        s = "VICREG\n"
         s += str(self.visual) + '\n'
         s += str(self.linguistic) + '\n'
+        s += str(self.lin_proj) + '\n'
         s += str(self.loss_fn) + '\n'
         s += "{}\n".format(get_n_params(self))
         return s

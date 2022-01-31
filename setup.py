@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vilmedic',
-    version='1.0.8',
+    version='1.1.0',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',

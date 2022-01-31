@@ -17,9 +17,5 @@ from vilmedic.models.rrg.RRG_SCST import RRG_SCST
 from vilmedic.models.selfsup.conVIRT import ConVIRT
 from vilmedic.models.selfsup.SimCLR import SimCLR
 from vilmedic.models.selfsup.GLoRIA import GLoRIA
-
-
-# from vilmedic.models.others.RCNN import RCNN
-
-from vilmedic.models.others.sim_mcan import SIM_MCAN
+from vilmedic.models.selfsup.VICREG import VICREG
 

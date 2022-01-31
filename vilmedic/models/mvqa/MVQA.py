@@ -3,7 +3,8 @@ import torch.nn as nn
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.classifier import *
 from vilmedic.blocks.classifier.evaluation import evaluation
-from vilmedic.blocks.classifier.losses import get_loss
+from vilmedic.blocks.losses import LabelSmoothingCrossEntropy
+
 from vilmedic.models.utils import get_n_params
 
 from transformers.models.bert.modeling_bert import BertEncoder, BertPooler
@@ -30,7 +31,7 @@ class MVQA(nn.Module):
 
         self.classifier = eval(classifier_func)(**classifier)
 
-        self.loss_func = get_loss(loss_func, **loss).cuda()
+        self.loss_func = eval(loss_func)(**loss).cuda()
 
         # Evaluation
         self.eval_func = evaluation

@@ -1,0 +1,33 @@
+includes:
+  - config/SELFSUP/convirt-mimic.yml
+name: vicreg
+
+dataset:
+  proto: ImSeq
+  image:
+    root: data/SELFSUP/mimic-cxr-balanced/
+  seq:
+    root: data/SELFSUP/mimic-cxr-balanced/
+
+model:
+  proto: VICREG
+  forward_batch_size: 4
+  encoder:
+    proto: allenai/biomed_roberta_base
+  cnn:
+    proto: CNN
+    backbone: resnet50
+    output_layer: avgpool
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+  projection:
+    visual_embedding_dim: 2048
+    textual_embedding_dim: 768
+    proj_hidden_dim: 2048
+    proj_output_dim: 2048
+
+  loss:
+    sim_loss_weight: 25.0
+    var_loss_weight: 25.0
+    cov_loss_weight: 1.0

@@ -44,7 +44,8 @@ class LabelSmoothingCrossEntropy(nn.Module):
             loss = -log_preds.sum(dim=-1)
             if self.reduction == 'mean':
                 loss = loss.mean()
-        return loss * self.smoothing / c + (1 - self.smoothing) * F.nll_loss(log_preds, target, reduction=self.reduction)
+        return loss * self.smoothing / c + (1 - self.smoothing) * F.nll_loss(log_preds, target,
+                                                                             reduction=self.reduction)
 
 
 class LabelSmoothingCrossEntropyWithSuperLoss(nn.Module):
@@ -78,7 +79,7 @@ class LabelSmoothingCrossEntropyWithSuperLoss(nn.Module):
 class MixUpLoss(nn.Module):
     def __init__(self, criterion, **kwargs):
         super().__init__()
-        self.criterion = get_loss(criterion, **kwargs)
+        self.criterion = MixUpLoss.get_loss(criterion, **kwargs)
 
     def forward(self, pred, label, label_mixed, lam):
         label_mixed = label_mixed.cuda()
@@ -89,13 +90,13 @@ class MixUpLoss(nn.Module):
         s = 'MixUpLoss (criterion=' + str(self.criterion) + ')'
         return s
 
-
-def get_loss(loss_func, **loss_args):
-    if hasattr(nn, loss_func):
-        loss_func = getattr(nn, loss_func)(**loss_args)
-    else:
-        try:
-            loss_func = eval(loss_func)(**loss_args)
-        except NameError:
-            raise NotImplementedError("Loss {} not implemented".format(loss_args))
-    return loss_func
+    @staticmethod
+    def get_loss(loss_func, **loss_args):
+        if hasattr(nn, loss_func):
+            loss_func = getattr(nn, loss_func)(**loss_args)
+        else:
+            try:
+                loss_func = eval(loss_func)(**loss_args)
+            except NameError:
+                raise NotImplementedError("Loss {} not implemented".format(loss_args))
+        return loss_func

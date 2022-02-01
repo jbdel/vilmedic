@@ -19,6 +19,7 @@ import torch_optimizer
 from torch.optim import *
 from torch_optimizer import *
 from torch.optim.lr_scheduler import *
+from vilmedic.blocks.schedulers import LinearWarmupCosineAnnealingLR
 
 
 def get_eval_func(models):
@@ -118,7 +119,7 @@ def create_training_scheduler(config, optimizer, logger, state_dict=None):
                                            optimizer=optimizer,
                                            early_stop_metric=config.early_stop_metric,
                                            early_stop_limit=config.early_stop,
-                                           **config.lr_decay_params)
+                                           lr_decay_params=config.lr_decay_params)
     logger.settings('Training scheduler created')
     if state_dict is not None and "training_scheduler" in state_dict:
         training_scheduler.load_state_dict(state_dict["training_scheduler"])
@@ -162,12 +163,19 @@ class CheckpointSaver(object):
 
 
 class TrainingScheduler(object):
-    def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, **lr_decay_params):
+    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "LinearWarmupCosineAnnealingLR"}
+    epoch_step_scheduler = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", "ConstantLR", "LinearLR",
+                            "ExponentialLR", "CosineAnnealingLR", "ChainedScheduler", "SequentialLR",
+                            "ReduceLROnPlateau"}
+    val_step_scheduler = {"ReduceLROnPlateau"}
+
+    def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, lr_decay_params):
         super().__init__()
 
         self.epoch = 0
         self.early_stop = 0
         self.early_stop_limit = early_stop_limit
+
         self.metric_comp_func = operator.gt
         self.mode = 'max'
         self.current_best_metric = -float('inf')
@@ -180,26 +188,38 @@ class TrainingScheduler(object):
 
         self.scheduler_name = lr_decay_func
         if self.scheduler_name == 'ReduceLROnPlateau':
-            lr_decay_params["mode"] = self.mode
+            self.lr_decay_params["mode"] = self.mode
 
-        self.scheduler = eval(lr_decay_func)(optimizer, **lr_decay_params)
+        self.scheduler = eval(lr_decay_func)(optimizer, **self.lr_decay_params)
+        self.decay_on_training_loss = self.lr_decay_params.decay_on_training_loss or False
 
-    def step(self, mean_eval_metric=None, training_loss=None):
+    def iteration_step(self):
+        if self.scheduler_name in TrainingScheduler.iter_step_scheduler:
+            self.scheduler.step()
+
+    def epoch_step(self):
+        self.epoch = self.epoch + 1
+        if self.scheduler_name in TrainingScheduler.epoch_step_scheduler:
+            self.scheduler.step()
+
+    def eval_step(self, mean_eval_metric=None, total_training_loss=None):
         ret = {
             "done_training": False,
             "save_state": False,
         }
-        self.epoch = self.epoch + 1
 
-        # If eval has not started, dont compute early stop
+        # LR scheduler
+        if self.scheduler_name in TrainingScheduler.eval_step:
+            if self.decay_on_training_loss:
+                self.scheduler.step(total_training_loss)
+            elif mean_eval_metric is not None:
+                self.scheduler.step(mean_eval_metric)
+            else:
+                pass
+
+        # If eval has not started, do not compute early stop
         if mean_eval_metric is None:
             return ret
-
-        # LR sched
-        if self.scheduler_name == 'ReduceLROnPlateau':
-            self.scheduler.step(mean_eval_metric)
-        else:
-            self.scheduler.step()
 
         # Early stop
         if self.metric_comp_func(mean_eval_metric, self.current_best_metric):
@@ -221,6 +241,7 @@ class TrainingScheduler(object):
         s += '    {0}: {1}\n'.format("metric_comp_func", self.metric_comp_func)
         s += '    {0}: {1}\n'.format("mode", self.mode)
         s += '    {0}: {1}\n'.format("current_best_metric", self.current_best_metric)
+        s += '    {0}: {1}\n'.format("decay_on_training_loss", self.decay_on_training_loss)
         s += ')'
         return s
 

@@ -95,6 +95,7 @@ class Trainor(InitTrainor):
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                     self.optimizer.zero_grad()
+                    self.training_scheduler.iteration_step()
 
                     log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
                         epoch + 1,
@@ -115,8 +116,11 @@ class Trainor(InitTrainor):
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
+                self.training_scheduler.iteration_step()
 
+            # End of epoch
             self.logger.info(log)
+            self.training_scheduler.epoch_step()
 
             # Evaluation
             mean_eval_metric = None
@@ -125,8 +129,8 @@ class Trainor(InitTrainor):
                 self.evaluator.start()
                 mean_eval_metric = np.mean([s[self.config.early_stop_metric] for s in self.evaluator.scores])
 
-            # End of epochs instructions
-            ret = self.training_scheduler.step(mean_eval_metric, training_loss=sum(losses) / iteration)
+            ret = self.training_scheduler.eval_step(mean_eval_metric, total_training_loss=sum(losses) / iteration)
+
             if ret["done_training"]:
                 self.logger.info("Early stopped reached")
                 sys.exit()

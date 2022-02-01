@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class VIGREGLoss(nn.Module):
+class VICREGLoss(nn.Module):
     def __init__(self,
                  sim_loss_weight: float = 25.0,
                  var_loss_weight: float = 25.0,
@@ -26,9 +26,9 @@ class VIGREGLoss(nn.Module):
             torch.Tensor: VICReg loss.
         """
 
-        sim_loss = VIGREGLoss.invariance_loss(z1, z2)
-        var_loss = VIGREGLoss.variance_loss(z1, z2)
-        cov_loss = VIGREGLoss.covariance_loss(z1, z2)
+        sim_loss = VICREGLoss.invariance_loss(z1, z2)
+        var_loss = VICREGLoss.variance_loss(z1, z2)
+        cov_loss = VICREGLoss.covariance_loss(z1, z2)
 
         loss = self.sim_loss_weight * sim_loss + self.var_loss_weight * var_loss + self.cov_loss_weight * cov_loss
         return loss
@@ -86,7 +86,7 @@ class VIGREGLoss(nn.Module):
         return cov_loss
 
     def __repr__(self):
-        return "ConVIRTLoss(\n" + \
+        return "VICREGLoss(\n" + \
                "\t(sim_loss_weight): {}\n".format(self.sim_loss_weight) + \
                "\t(var_loss_weight): {}\n".format(self.var_loss_weight) + \
                "\t(cov_loss_weight): {}\n".format(self.cov_loss_weight) + \

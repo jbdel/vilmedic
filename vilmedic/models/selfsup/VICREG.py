@@ -3,7 +3,7 @@ import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 
 from vilmedic.blocks.vision import CNN
-from vilmedic.blocks.losses import VIGREGLoss
+from vilmedic.blocks.losses import VICREGLoss
 
 from vilmedic.blocks.huggingface.encoder.encoder_model import EncoderModel
 
@@ -70,7 +70,7 @@ class VICREG(nn.Module):
             nn.Linear(projection.proj_hidden_dim, projection.proj_output_dim),
         )
 
-        self.loss_fn = VIGREGLoss(**loss)
+        self.loss_fn = VICREGLoss(**loss)
 
         # Evaluation
         self.eval_func = evaluation

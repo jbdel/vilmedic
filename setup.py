@@ -15,7 +15,7 @@ setup(
     ],
     keywords='medical nlp deep-learning pytorch',
     python_requires='>=3.6',
-    install_requires=['Cython', 'urllib3==1.25', 'appdirs==1.4.4', 'omegaconf==2.0.6', 'torchvision==0.9.1',
+    install_requires=['Cython', 'appdirs==1.4.4', 'omegaconf==2.0.6', 'torchvision==0.9.1',
                       'rouge_score',
                       'scikit_image==0.18.2',
                       'scikit-learn==0.24.2', 'pydicom==2.2.0', 'transformers==4.5.1', 'tokenizers==0.10.3',

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vilmedic',
-    version='1.1.2',
+    version='1.1.4',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -14,9 +14,9 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='medical nlp deep-learning pytorch',
-    python_requires='>=3.6',
-    install_requires=['Cython', 'appdirs==1.4.4', 'omegaconf==2.0.6', 'torchvision==0.9.1',
-                      'rouge_score',
+    python_requires='==3.9',
+    setup_requires="Cython",
+    install_requires=['appdirs==1.4.4', 'omegaconf==2.0.6', 'torchvision==0.9.1', 'rouge_score',
                       'scikit_image==0.18.2',
                       'scikit-learn==0.24.2', 'pydicom==2.2.0', 'transformers==4.5.1', 'tokenizers==0.10.3',
                       'seaborn==0.11.1', 'gdown==4.2.0',
@@ -27,5 +27,6 @@ setup(
     include_package_data=True,
     exclude_package_data={'': ['.git']},
     packages=find_packages(exclude=["bin"]),
-    scripts=[str(p) for p in pathlib.Path('bin/scripts').glob('*')],
+    scripts=[str(p) for p in pathlib.Path(
+        'bin/scripts').glob('*')],
     zip_safe=False)

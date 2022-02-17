@@ -166,7 +166,7 @@ class TrainingScheduler(object):
     iter_step_scheduler = {"CyclicLR", "OneCycleLR", "LinearWarmupCosineAnnealingLR"}
     epoch_step_scheduler = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", "ConstantLR", "LinearLR",
                             "ExponentialLR", "CosineAnnealingLR", "ChainedScheduler", "SequentialLR",
-                            "ReduceLROnPlateau"}
+                            }
     val_step_scheduler = {"ReduceLROnPlateau"}
 
     def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, lr_decay_params):
@@ -209,7 +209,7 @@ class TrainingScheduler(object):
         }
 
         # LR scheduler
-        if self.scheduler_name in TrainingScheduler.eval_step:
+        if self.scheduler_name in TrainingScheduler.val_step_scheduler:
             if self.decay_on_training_loss:
                 self.scheduler.step(total_training_loss)
             elif mean_eval_metric is not None:

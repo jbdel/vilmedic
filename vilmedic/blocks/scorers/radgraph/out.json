@@ -1,0 +1,840 @@
+[
+    {
+        "text": "FINDINGS : Preliminary 3-plane localizer and axial T1-weighted images of the breast reveal unremarkable extramammary regional structures . The breasts are composed of dense tissue with interval decrease in degree of background enhancement relative to the prior study , now minimal . LEFT BREAST : An intact unilateral retropectoral saline implant is seen . L1 : Again seen is a dominant mass within the left breast at the two o'clock position , 9 cm from the nipple , best seen on series 7 , image 23 , slice locator S101 . 9 , which correlates with lesion labeled L1 on prior MRI with pathology demonstrating IDC by ultrasound-guided core biopsy on 2 / 14 / 2011 . This lesion has not significantly changed compared to the prior study and measures approximately 1 . 6 x 1 . 5 x 1 . 7 cm with a signal void at the superoanterior aspect of the mass likely representing postbiopsy metal marker , and a 4 mm probably satellite lesion immediately inferior to this dominant mass . L2 : The previously seen irregular mass , located posterolateral to L1 and labeled L2 on the prior MRI with pathology demonstrating micropapillary DCIS by ultrasound-guided core biopsy on 2 / 14 / 2011 , demonstrates no residual enhancement on today's study . A signal void is again seen at the site of the postbiopsy marker on series 7 , image 23 , slice locator S101 . 9 . L3 : The previously seen area of non-masslike enhancement in the retroareolar outer breast , labeled L3 on the prior MRI , is no longer evident on today's exam . L4 : The previously seen prominent left axillary lymph node , labeled L4 on the prior ultrasound with pathology demonstrating reactive follicular hyperplasia by FNA biopsy on 2 / 14 / 2011 , has slightly decreased in size and is now normal in size and morphology . Elsewhere , there are several scattered , nonspecific , gradually enhancing nonspecific foci in the left breast .",
+        "entities": {
+            "1": {
+                "tokens": "unremarkable",
+                "label": "OBS-DP",
+                "start_ix": 13,
+                "end_ix": 13,
+                "relations": [
+                    [
+                        "located_at",
+                        "2"
+                    ]
+                ]
+            },
+            "2": {
+                "tokens": "extramammary",
+                "label": "ANAT-DP",
+                "start_ix": 14,
+                "end_ix": 14,
+                "relations": []
+            },
+            "3": {
+                "tokens": "regional",
+                "label": "ANAT-DP",
+                "start_ix": 15,
+                "end_ix": 15,
+                "relations": []
+            },
+            "4": {
+                "tokens": "structures",
+                "label": "ANAT-DP",
+                "start_ix": 16,
+                "end_ix": 16,
+                "relations": [
+                    [
+                        "modify",
+                        "2"
+                    ]
+                ]
+            },
+            "5": {
+                "tokens": "breasts",
+                "label": "ANAT-DP",
+                "start_ix": 19,
+                "end_ix": 19,
+                "relations": []
+            },
+            "6": {
+                "tokens": "dense",
+                "label": "OBS-DP",
+                "start_ix": 23,
+                "end_ix": 23,
+                "relations": []
+            },
+            "7": {
+                "tokens": "tissue",
+                "label": "OBS-DP",
+                "start_ix": 24,
+                "end_ix": 24,
+                "relations": [
+                    [
+                        "located_at",
+                        "5"
+                    ]
+                ]
+            },
+            "8": {
+                "tokens": "interval",
+                "label": "OBS-DP",
+                "start_ix": 26,
+                "end_ix": 26,
+                "relations": [
+                    [
+                        "modify",
+                        "9"
+                    ]
+                ]
+            },
+            "9": {
+                "tokens": "decrease",
+                "label": "OBS-DP",
+                "start_ix": 27,
+                "end_ix": 27,
+                "relations": [
+                    [
+                        "modify",
+                        "11"
+                    ]
+                ]
+            },
+            "10": {
+                "tokens": "background",
+                "label": "OBS-DP",
+                "start_ix": 31,
+                "end_ix": 31,
+                "relations": [
+                    [
+                        "modify",
+                        "11"
+                    ]
+                ]
+            },
+            "11": {
+                "tokens": "enhancement",
+                "label": "OBS-DP",
+                "start_ix": 32,
+                "end_ix": 32,
+                "relations": []
+            },
+            "12": {
+                "tokens": "minimal",
+                "label": "OBS-DP",
+                "start_ix": 40,
+                "end_ix": 40,
+                "relations": []
+            },
+            "13": {
+                "tokens": "LEFT",
+                "label": "ANAT-DP",
+                "start_ix": 42,
+                "end_ix": 42,
+                "relations": [
+                    [
+                        "modify",
+                        "14"
+                    ]
+                ]
+            },
+            "14": {
+                "tokens": "BREAST",
+                "label": "ANAT-DP",
+                "start_ix": 43,
+                "end_ix": 43,
+                "relations": []
+            },
+            "15": {
+                "tokens": "intact",
+                "label": "OBS-DP",
+                "start_ix": 46,
+                "end_ix": 46,
+                "relations": [
+                    [
+                        "modify",
+                        "19"
+                    ]
+                ]
+            },
+            "16": {
+                "tokens": "unilateral",
+                "label": "ANAT-DP",
+                "start_ix": 47,
+                "end_ix": 47,
+                "relations": [
+                    [
+                        "modify",
+                        "14"
+                    ],
+                    [
+                        "modify",
+                        "17"
+                    ]
+                ]
+            },
+            "17": {
+                "tokens": "retropectoral",
+                "label": "ANAT-DP",
+                "start_ix": 48,
+                "end_ix": 48,
+                "relations": []
+            },
+            "18": {
+                "tokens": "saline",
+                "label": "OBS-DP",
+                "start_ix": 49,
+                "end_ix": 49,
+                "relations": [
+                    [
+                        "located_at",
+                        "17"
+                    ]
+                ]
+            },
+            "19": {
+                "tokens": "implant",
+                "label": "OBS-DP",
+                "start_ix": 50,
+                "end_ix": 50,
+                "relations": [
+                    [
+                        "located_at",
+                        "17"
+                    ],
+                    [
+                        "modify",
+                        "18"
+                    ]
+                ]
+            },
+            "20": {
+                "tokens": "dominant",
+                "label": "OBS-DP",
+                "start_ix": 60,
+                "end_ix": 60,
+                "relations": [
+                    [
+                        "modify",
+                        "21"
+                    ]
+                ]
+            },
+            "21": {
+                "tokens": "mass",
+                "label": "OBS-DP",
+                "start_ix": 61,
+                "end_ix": 61,
+                "relations": [
+                    [
+                        "located_at",
+                        "23"
+                    ]
+                ]
+            },
+            "22": {
+                "tokens": "left",
+                "label": "ANAT-DP",
+                "start_ix": 64,
+                "end_ix": 64,
+                "relations": [
+                    [
+                        "modify",
+                        "23"
+                    ]
+                ]
+            },
+            "23": {
+                "tokens": "breast",
+                "label": "ANAT-DP",
+                "start_ix": 65,
+                "end_ix": 65,
+                "relations": []
+            },
+            "24": {
+                "tokens": "two o'clock position",
+                "label": "OBS-DP",
+                "start_ix": 68,
+                "end_ix": 70,
+                "relations": []
+            },
+            "25": {
+                "tokens": "9 cm",
+                "label": "ANAT-DP",
+                "start_ix": 72,
+                "end_ix": 73,
+                "relations": [
+                    [
+                        "modify",
+                        "26"
+                    ]
+                ]
+            },
+            "26": {
+                "tokens": "nipple",
+                "label": "ANAT-DP",
+                "start_ix": 76,
+                "end_ix": 76,
+                "relations": []
+            },
+            "27": {
+                "tokens": "lesion",
+                "label": "OBS-DP",
+                "start_ix": 118,
+                "end_ix": 118,
+                "relations": []
+            },
+            "28": {
+                "tokens": "changed",
+                "label": "OBS-DA",
+                "start_ix": 122,
+                "end_ix": 122,
+                "relations": [
+                    [
+                        "modify",
+                        "27"
+                    ]
+                ]
+            },
+            "29": {
+                "tokens": "1 . 7 cm",
+                "label": "OBS-DP",
+                "start_ix": 139,
+                "end_ix": 142,
+                "relations": []
+            },
+            "30": {
+                "tokens": "signal",
+                "label": "OBS-DP",
+                "start_ix": 145,
+                "end_ix": 145,
+                "relations": []
+            },
+            "31": {
+                "tokens": "void",
+                "label": "OBS-DP",
+                "start_ix": 146,
+                "end_ix": 146,
+                "relations": [
+                    [
+                        "modify",
+                        "30"
+                    ]
+                ]
+            },
+            "32": {
+                "tokens": "superoanterior",
+                "label": "ANAT-DP",
+                "start_ix": 149,
+                "end_ix": 149,
+                "relations": [
+                    [
+                        "modify",
+                        "29"
+                    ]
+                ]
+            },
+            "33": {
+                "tokens": "mass",
+                "label": "OBS-DP",
+                "start_ix": 153,
+                "end_ix": 153,
+                "relations": []
+            },
+            "34": {
+                "tokens": "postbiopsy",
+                "label": "OBS-U",
+                "start_ix": 156,
+                "end_ix": 156,
+                "relations": [
+                    [
+                        "modify",
+                        "35"
+                    ],
+                    [
+                        "modify",
+                        "36"
+                    ]
+                ]
+            },
+            "35": {
+                "tokens": "metal",
+                "label": "OBS-U",
+                "start_ix": 157,
+                "end_ix": 157,
+                "relations": []
+            },
+            "36": {
+                "tokens": "marker",
+                "label": "OBS-U",
+                "start_ix": 158,
+                "end_ix": 158,
+                "relations": [
+                    [
+                        "modify",
+                        "35"
+                    ]
+                ]
+            },
+            "37": {
+                "tokens": "4 mm",
+                "label": "OBS-DP",
+                "start_ix": 162,
+                "end_ix": 163,
+                "relations": [
+                    [
+                        "modify",
+                        "39"
+                    ],
+                    [
+                        "modify",
+                        "42"
+                    ]
+                ]
+            },
+            "38": {
+                "tokens": "satellite",
+                "label": "OBS-U",
+                "start_ix": 165,
+                "end_ix": 165,
+                "relations": [
+                    [
+                        "modify",
+                        "39"
+                    ],
+                    [
+                        "modify",
+                        "42"
+                    ]
+                ]
+            },
+            "39": {
+                "tokens": "lesion",
+                "label": "OBS-U",
+                "start_ix": 166,
+                "end_ix": 166,
+                "relations": []
+            },
+            "40": {
+                "tokens": "inferior",
+                "label": "ANAT-DP",
+                "start_ix": 168,
+                "end_ix": 168,
+                "relations": []
+            },
+            "41": {
+                "tokens": "dominant",
+                "label": "OBS-DP",
+                "start_ix": 171,
+                "end_ix": 171,
+                "relations": [
+                    [
+                        "modify",
+                        "42"
+                    ]
+                ]
+            },
+            "42": {
+                "tokens": "mass",
+                "label": "OBS-U",
+                "start_ix": 172,
+                "end_ix": 172,
+                "relations": []
+            },
+            "43": {
+                "tokens": "irregular",
+                "label": "OBS-DP",
+                "start_ix": 179,
+                "end_ix": 179,
+                "relations": [
+                    [
+                        "modify",
+                        "44"
+                    ]
+                ]
+            },
+            "44": {
+                "tokens": "mass",
+                "label": "OBS-DP",
+                "start_ix": 180,
+                "end_ix": 180,
+                "relations": []
+            },
+            "45": {
+                "tokens": "posterolateral",
+                "label": "ANAT-DP",
+                "start_ix": 183,
+                "end_ix": 183,
+                "relations": []
+            },
+            "46": {
+                "tokens": "L2",
+                "label": "OBS-DP",
+                "start_ix": 188,
+                "end_ix": 188,
+                "relations": []
+            },
+            "47": {
+                "tokens": "micropapillary",
+                "label": "OBS-DP",
+                "start_ix": 196,
+                "end_ix": 196,
+                "relations": [
+                    [
+                        "modify",
+                        "48"
+                    ]
+                ]
+            },
+            "48": {
+                "tokens": "DCIS",
+                "label": "OBS-DP",
+                "start_ix": 197,
+                "end_ix": 197,
+                "relations": []
+            },
+            "49": {
+                "tokens": "residual",
+                "label": "OBS-DA",
+                "start_ix": 211,
+                "end_ix": 211,
+                "relations": [
+                    [
+                        "modify",
+                        "50"
+                    ]
+                ]
+            },
+            "50": {
+                "tokens": "enhancement",
+                "label": "OBS-DA",
+                "start_ix": 212,
+                "end_ix": 212,
+                "relations": []
+            },
+            "51": {
+                "tokens": "signal",
+                "label": "OBS-DP",
+                "start_ix": 218,
+                "end_ix": 218,
+                "relations": []
+            },
+            "52": {
+                "tokens": "void",
+                "label": "OBS-DP",
+                "start_ix": 219,
+                "end_ix": 219,
+                "relations": [
+                    [
+                        "modify",
+                        "51"
+                    ]
+                ]
+            },
+            "53": {
+                "tokens": "postbiopsy",
+                "label": "OBS-DP",
+                "start_ix": 228,
+                "end_ix": 228,
+                "relations": []
+            },
+            "54": {
+                "tokens": "enhancement",
+                "label": "OBS-DP",
+                "start_ix": 251,
+                "end_ix": 251,
+                "relations": [
+                    [
+                        "located_at",
+                        "57"
+                    ]
+                ]
+            },
+            "55": {
+                "tokens": "retroareolar",
+                "label": "ANAT-DP",
+                "start_ix": 254,
+                "end_ix": 254,
+                "relations": [
+                    [
+                        "modify",
+                        "57"
+                    ]
+                ]
+            },
+            "56": {
+                "tokens": "outer",
+                "label": "ANAT-DP",
+                "start_ix": 255,
+                "end_ix": 255,
+                "relations": [
+                    [
+                        "modify",
+                        "57"
+                    ]
+                ]
+            },
+            "57": {
+                "tokens": "breast",
+                "label": "ANAT-DP",
+                "start_ix": 256,
+                "end_ix": 256,
+                "relations": []
+            },
+            "58": {
+                "tokens": "L3",
+                "label": "OBS-DP",
+                "start_ix": 259,
+                "end_ix": 259,
+                "relations": []
+            },
+            "59": {
+                "tokens": "prominent",
+                "label": "OBS-DP",
+                "start_ix": 278,
+                "end_ix": 278,
+                "relations": [
+                    [
+                        "modify",
+                        "63"
+                    ]
+                ]
+            },
+            "60": {
+                "tokens": "left",
+                "label": "ANAT-DP",
+                "start_ix": 279,
+                "end_ix": 279,
+                "relations": [
+                    [
+                        "modify",
+                        "61"
+                    ]
+                ]
+            },
+            "61": {
+                "tokens": "axillary",
+                "label": "ANAT-DP",
+                "start_ix": 280,
+                "end_ix": 280,
+                "relations": []
+            },
+            "62": {
+                "tokens": "lymph",
+                "label": "OBS-DP",
+                "start_ix": 281,
+                "end_ix": 281,
+                "relations": [
+                    [
+                        "located_at",
+                        "61"
+                    ]
+                ]
+            },
+            "63": {
+                "tokens": "node",
+                "label": "OBS-DP",
+                "start_ix": 282,
+                "end_ix": 282,
+                "relations": [
+                    [
+                        "located_at",
+                        "61"
+                    ]
+                ]
+            },
+            "64": {
+                "tokens": "L4",
+                "label": "OBS-DP",
+                "start_ix": 285,
+                "end_ix": 285,
+                "relations": []
+            },
+            "65": {
+                "tokens": "reactive",
+                "label": "OBS-DP",
+                "start_ix": 293,
+                "end_ix": 293,
+                "relations": [
+                    [
+                        "modify",
+                        "67"
+                    ]
+                ]
+            },
+            "66": {
+                "tokens": "follicular",
+                "label": "ANAT-DP",
+                "start_ix": 294,
+                "end_ix": 294,
+                "relations": []
+            },
+            "67": {
+                "tokens": "hyperplasia",
+                "label": "OBS-DP",
+                "start_ix": 295,
+                "end_ix": 295,
+                "relations": [
+                    [
+                        "located_at",
+                        "66"
+                    ]
+                ]
+            },
+            "68": {
+                "tokens": "FNA biopsy",
+                "label": "OBS-DP",
+                "start_ix": 297,
+                "end_ix": 298,
+                "relations": [
+                    [
+                        "located_at",
+                        "66"
+                    ]
+                ]
+            },
+            "69": {
+                "tokens": "slightly",
+                "label": "OBS-DP",
+                "start_ix": 307,
+                "end_ix": 307,
+                "relations": [
+                    [
+                        "modify",
+                        "70"
+                    ]
+                ]
+            },
+            "70": {
+                "tokens": "decreased",
+                "label": "OBS-DP",
+                "start_ix": 308,
+                "end_ix": 308,
+                "relations": []
+            },
+            "71": {
+                "tokens": "size",
+                "label": "OBS-DP",
+                "start_ix": 310,
+                "end_ix": 310,
+                "relations": []
+            },
+            "72": {
+                "tokens": "normal",
+                "label": "OBS-DP",
+                "start_ix": 314,
+                "end_ix": 314,
+                "relations": [
+                    [
+                        "located_at",
+                        "73"
+                    ]
+                ]
+            },
+            "73": {
+                "tokens": "size",
+                "label": "ANAT-DP",
+                "start_ix": 316,
+                "end_ix": 316,
+                "relations": []
+            },
+            "74": {
+                "tokens": "morphology",
+                "label": "ANAT-DP",
+                "start_ix": 318,
+                "end_ix": 318,
+                "relations": []
+            },
+            "75": {
+                "tokens": "several",
+                "label": "OBS-DP",
+                "start_ix": 324,
+                "end_ix": 324,
+                "relations": []
+            },
+            "76": {
+                "tokens": "scattered",
+                "label": "OBS-DP",
+                "start_ix": 325,
+                "end_ix": 325,
+                "relations": [
+                    [
+                        "modify",
+                        "81"
+                    ]
+                ]
+            },
+            "77": {
+                "tokens": "nonspecific",
+                "label": "OBS-DP",
+                "start_ix": 327,
+                "end_ix": 327,
+                "relations": [
+                    [
+                        "modify",
+                        "81"
+                    ]
+                ]
+            },
+            "78": {
+                "tokens": "gradually",
+                "label": "OBS-DP",
+                "start_ix": 329,
+                "end_ix": 329,
+                "relations": [
+                    [
+                        "modify",
+                        "79"
+                    ]
+                ]
+            },
+            "79": {
+                "tokens": "enhancing",
+                "label": "OBS-DP",
+                "start_ix": 330,
+                "end_ix": 330,
+                "relations": [
+                    [
+                        "modify",
+                        "81"
+                    ]
+                ]
+            },
+            "80": {
+                "tokens": "nonspecific",
+                "label": "OBS-DP",
+                "start_ix": 331,
+                "end_ix": 331,
+                "relations": [
+                    [
+                        "modify",
+                        "81"
+                    ]
+                ]
+            },
+            "81": {
+                "tokens": "foci",
+                "label": "OBS-DP",
+                "start_ix": 332,
+                "end_ix": 332,
+                "relations": [
+                    [
+                        "located_at",
+                        "83"
+                    ]
+                ]
+            },
+            "82": {
+                "tokens": "left",
+                "label": "ANAT-DP",
+                "start_ix": 335,
+                "end_ix": 335,
+                "relations": [
+                    [
+                        "modify",
+                        "83"
+                    ]
+                ]
+            },
+            "83": {
+                "tokens": "breast",
+                "label": "ANAT-DP",
+                "start_ix": 336,
+                "end_ix": 336,
+                "relations": []
+            }
+        },
+        "data_source": null,
+        "data_split": "inference"
+    }
+]

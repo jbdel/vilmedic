@@ -1,0 +1,13 @@
+allennlp==1.1.0
+allennlp_models==1.1.0
+h5py==3.6.0
+jsonpickle
+overrides==3.1.0
+boto3
+tensorboardX
+spacy==2.1.0
+
+conllu==4.1
+py-rouge==1.1
+word2number>=1.1
+jsonnet>=0.10.0

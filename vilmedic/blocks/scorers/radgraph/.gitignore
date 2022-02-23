@@ -1,0 +1,10 @@
+  *__pycache__
+.mypy_cache/*
+*.pyc
+data/*
+models/*
+cache/*
+pretrained/*
+predictions/*
+**/stanford*/*
+scratch*

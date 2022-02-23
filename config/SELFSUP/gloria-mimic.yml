@@ -14,7 +14,7 @@ dataset:
     tokenizer: emilyalsentzer/Bio_ClinicalBERT
     file: report.tok
     tokenizer_max_len: 128
-    processing: r2gen
+    processing: r2gen_clean_report
 
 model:
   proto: GLoRIA
@@ -55,7 +55,7 @@ trainor:
     threshold: 0.01
     threshold_mode: abs
   epochs: 99
-  early_stop: 10
+  early_stop: 20
   eval_start: 0
   early_stop_metric: loss
 

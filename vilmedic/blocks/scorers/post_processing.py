@@ -69,6 +69,23 @@ def plot_attention(results, pp_dir, seed, logger, split, epoch, dl, smooth=True,
         plt.savefig(os.path.join(out_dir, "att"))
 
 
+def save_representation(keys, results, pp_dir, seed, logger, split, **kwargs):
+    out_dir = os.path.join(pp_dir, "save_representation_{}_{}".format(seed, split))
+    os.makedirs(out_dir, exist_ok=True)
+    for key in keys:
+        if key not in results:
+            logger.warn("Key {} is not found in results dictionary")
+            continue
+
+        embeddings = np.array([vector.numpy() for vector in results[key]])
+
+        np.save(os.path.join(out_dir, split
+                             + '_'
+                             + str(key)
+                             + '_'
+                             + "embeddings"), embeddings)
+
+
 def plot_representation(keys, results, pp_dir, seed, logger, split, dl, labels_keep=None, max_samples_per_class=None,
                         **kwargs):
     # Getting labels
@@ -182,5 +199,8 @@ def post_processing(post_processing, results, ckpt_dir, seed, dl, **kwargs):
         if "plot_representation" in pp:
             plot_representation(results=results, pp_dir=pp_dir, seed=seed, logger=logger, dl=dl,
                                 **pp["plot_representation"], **kwargs)
+        if "save_representation" in pp:
+            save_representation(results=results, pp_dir=pp_dir, seed=seed, logger=logger,
+                                **pp["save_representation"], **kwargs)
         else:
             logger.warn("Post-processing: No function implemented for '{}'".format(pp))

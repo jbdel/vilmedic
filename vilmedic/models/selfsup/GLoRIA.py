@@ -26,8 +26,8 @@ def evaluation(models, config, dl, from_training, **kwargs):
         losses.append(out['loss'].mean().cpu().data.numpy())
 
         if not from_training:
-            linguistics.append(out['linguistic'].cpu().data)
-            visuals.append(out['visual'].cpu().data)
+            linguistics.append(out['sent_embeddings'].cpu().data)
+            visuals.append(out['global_features'].cpu().data)
 
     if from_training:
         return {'loss': np.ndarray.mean(np.array(losses))}
@@ -37,6 +37,11 @@ def evaluation(models, config, dl, from_training, **kwargs):
             'visual': torch.cat(visuals)
             }
 
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
 class GLoRIA(nn.Module):
@@ -84,10 +89,10 @@ class GLoRIA(nn.Module):
         hidden_states = []
 
         # Forward passes
-        for i in range(int(bs / min(self.fbs, bs))):
-            input_ids_ = input_ids[i * self.fbs:(i + 1) * self.fbs]
-            attention_mask_ = attention_mask[i * self.fbs:(i + 1) * self.fbs]
-            images_ = images[i * self.fbs:(i + 1) * self.fbs]
+        for i in list(chunks(range(bs), min(self.fbs, bs))):
+            input_ids_ = input_ids[i]
+            attention_mask_ = attention_mask[i]
+            images_ = images[i]
 
             global_features.append(self.global_embedder(self.visual(self.up_sample(images_.cuda()))))
             local_features.append(self.local_embedder(self.activation["local_features"]))
@@ -183,7 +188,6 @@ class GLoRIA(nn.Module):
         )
         class_similarities = similarities.max(axis=1)  # average between class prompts
         return class_similarities
-
 
     def get_similarities(self, input_ids, attention_mask, images, similarity_type="both"):
 

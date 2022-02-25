@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vilmedic',
-    version='1.1.5',
+    version='1.1.6',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -21,6 +21,7 @@ setup(
                       'scikit-learn==0.24.2', 'pydicom==2.2.0', 'transformers==4.5.1', 'tokenizers==0.10.3',
                       'seaborn==0.11.1', 'gdown==4.3.1',
                       'dalle-pytorch==1.4.2', 'torchxrayvision==0.0.32',
+                      'stanza==1.3.0',
                       'torch==1.8.1', 'pytorch-lightning==1.4.2', 'pytorch-metric-learning==0.9.99',
                       'torch-optimizer==0.1.0', 'umap-learn==0.5.2', 'opencv-python==4.5.4.60',
                       'mauve-text', 'numba==0.54.1', 'torchmetrics==0.5.0', 'numpy==1.20.3'],

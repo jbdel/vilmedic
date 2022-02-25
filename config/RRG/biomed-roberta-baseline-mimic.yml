@@ -51,13 +51,13 @@ trainor:
 validator:
   batch_size: 4
   beam_width: 8
-  metrics: [ROUGEL, BLEU, METEOR, chexbert]
+  metrics: [ROUGEL, BLEU, METEOR, chexbert, radentitymatchexact]
   splits: [validate]
 
 
 ensemblor:
   batch_size: 4
   beam_width: 8
-  metrics: [ROUGEL, BLEU, METEOR, chexbert]
+  metrics: [ROUGEL, BLEU, METEOR, chexbert, radentitymatchexact]
   splits: [validate, test]
   mode: best-1

@@ -4,3 +4,4 @@ from .NLG.meteor.meteor import METEORScorer
 from .NLG.cider.cider import Cider
 from .NLG.ciderd.ciderd import CiderD
 from .CheXbert.chexbert import CheXbert
+from .RadEntityMatchExact.RadEntityMatchExact import RadEntityMatchExact

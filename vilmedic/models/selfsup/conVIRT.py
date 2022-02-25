@@ -37,6 +37,12 @@ def evaluation(models, config, dl, from_training, **kwargs):
             }
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 class ConVIRT(nn.Module):
 
     def __init__(self, encoder, cnn, projection, loss, forward_batch_size=256, **kwargs):
@@ -74,10 +80,10 @@ class ConVIRT(nn.Module):
         bs = images.shape[0]
         linguistics = []
         visuals = []
-        for i in range(int(bs / min(self.fbs, bs))):
-            inp = input_ids[i * self.fbs:(i + 1) * self.fbs]
-            att = attention_mask[i * self.fbs:(i + 1) * self.fbs]
-            im = images[i * self.fbs:(i + 1) * self.fbs]
+        for i in list(chunks(range(bs), min(self.fbs, bs))):
+            inp = input_ids[i]
+            att = attention_mask[i]
+            im = images[i]
 
             linguistic = self.linguistic(input_ids=inp,
                                          attention_mask=att,

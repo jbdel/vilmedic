@@ -58,11 +58,14 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
         elif metric == 'auroc':
             scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         elif metric == 'chexbert':
-            _, scores["chexbert-5"] = CheXbert(refs_filename=base.format('refs.chexbert.txt'),
-                                               hyps_filename=base.format('hyps.chexbert.txt'))(hyps, refs)
-            scores["chexbert-5_micro avg_f1-score"] = scores["chexbert-5"]["micro avg"]["f1-score"]
+            chexbert_all, chexbert_5 = CheXbert(refs_filename=base.format('refs.chexbert.txt'),
+                                                hyps_filename=base.format('hyps.chexbert.txt'))(hyps, refs)
+            scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
+            scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
-            scores["radentitymatchexact"] = RadEntityMatchExact()(refs, hyps)
+            scores["radentitymatchexact"], _, _, _ = RadEntityMatchExact()(refs, hyps)
+        elif metric == 'radentitynli':
+            scores["radentitynli"], _, _, _ = RadEntityNLI()(refs, hyps)
         else:
             raise NotImplementedError(metric)
 

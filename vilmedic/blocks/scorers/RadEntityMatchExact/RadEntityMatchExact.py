@@ -19,25 +19,22 @@ class RadEntityMatchExact(nn.Module):
         for doc_h, doc_r in zip(docs_h, docs_r):
 
             # NER
-            ner_1 = []
+            ner_h = []
             for sentence in doc_h.sentences:
-                ner_1.extend([ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types])
+                ner_h.extend([ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types])
 
-            ner_2 = []
+            ner_r = []
             for sentence in doc_r.sentences:
-                ner_2.extend([ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types])
-
-            ner_1 = set(ner_1)
-            ner_2 = set(ner_2)
+                ner_r.extend([ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types])
 
             # precision
-            match_p = len(ner_1.intersection(ner_2))
-            total_p = len(ner_1)
+            match_p = sum([1.0 for ner in ner_h if ner in ner_r])
+            total_p = len(ner_h)
             pr_e = match_p / total_p if total_p > 0 else 0.0
 
             # recall
-            match_r = len(ner_2.intersection(ner_1))
-            total_r = len(ner_2)
+            match_r = sum([1.0 for ner in ner_h if ner in ner_r])
+            total_r = len(ner_r)
             rc_e = match_r / total_r if total_r > 0 else 0.0
 
             # harmonic mean
@@ -45,12 +42,12 @@ class RadEntityMatchExact(nn.Module):
             scores_e.append(score_e)
 
         mean_exact_e = np.mean(scores_e)
-        return mean_exact_e
+        return mean_exact_e, scores_e, docs_h, docs_r
 
 
 if __name__ == '__main__':
     v = RadEntityMatchExact()
-    x = v(hyps=['No pleural effusion.', 'Normal heart size.'] * 1,
+    x = v(hyps=['No pleural effusion. Normal heart size.', 'Normal heart size.'] * 1,
           refs=['No pleural effusions.', 'Enlarged heart.'] * 1)
 
-    print(x)
+    print(x[0], x[1])  # 0.7 [0.4, 1.0]

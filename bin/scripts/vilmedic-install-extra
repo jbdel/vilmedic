@@ -7,10 +7,16 @@ CACHE_DIR = user_cache_dir("vilmedic")
 EXTRA_CACHE_DIR = os.path.join(CACHE_DIR, "extras")
 os.makedirs(EXTRA_CACHE_DIR, exist_ok=True)
 
-gdown.download(url="https://drive.google.com/uc?id=1UxNmUDX7wJUS-I3M815igCZZokh_VUAS",
-               output=os.path.join(EXTRA_CACHE_DIR, "chexbert.pth"),
-               quiet=False)
+extras = [
+("1UxNmUDX7wJUS-I3M815igCZZokh_VUAS", "chexbert.pth"),
+("1RF4GmjyeB2vYy6Y8S3wx-G25ASj2j4HA", "radgraph.tar.gz"),
+("17ZKYgS7boxMB9xHwrp0hOzpl96oLlF7T","model_medrad_19k.gz"),
 
-gdown.download(url="https://drive.google.com/uc?id=1RF4GmjyeB2vYy6Y8S3wx-G25ASj2j4HA",
-               output=os.path.join(EXTRA_CACHE_DIR, "radgraph.tar.gz"),
-               quiet=False)
+]
+
+for id, name in extras:
+    output = os.path.join(EXTRA_CACHE_DIR, name)
+    if not os.path.exists(output):
+        gdown.download(url="https://drive.google.com/uc?id={}".format(id),
+                       output=output,
+                       quiet=False)

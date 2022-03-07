@@ -1,2 +1,0 @@
-spacy==2.0.18
-numpy

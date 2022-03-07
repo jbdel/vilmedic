@@ -1,8 +1,0 @@
-FINDINGS:
-The breasts are composed of heterogeneous fibroglandular tissue with mild background parenchymal enhancement that is symmetric between both breasts.
-RIGHT BREAST: There is no suspicious enhancement or lymphadenopathy.
-LEFT BREAST: 
-L1: There is ill-defined segmental nonmass enhancement that measures 1.9 x 4.1 x 1.9 cm (transverse, AP, CC), which extends from posterior depth to anterior depth. There is susceptibility artifact from postbiopsy markers in the superior and posterior aspects of the mass. The overall volume of enhancement is substantially decreased from the comparison. Worst curve kinetics are initial phase fast and delayed phase washout. The nonmass enhancement is well visualized on series 24, image 1942, and sagittal high-resolution series image 44.
-L2: There is no abnormal enhancement associated with susceptibility artifact from L2 postbiopsy marker at 1:00, posterior depth, 9 cm from the nipple on MRI. 
-Interval normalization of the imaging appearance of the left axillary lymph nodes, with susceptibility artifact from postbiopsy marker in one of the normal-appearing nodes, which reflected metastatic adenocarcinoma of breast origin from the 11/29/2018 fine-needle aspiration.
-OTHER FINDINGS: There is a right-sided chest port.

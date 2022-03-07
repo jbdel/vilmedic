@@ -1,7 +1,0 @@
-FINDINGS:
-The breasts are composed of heterogeneous fibroglandular tissue with minimal background parenchymal enhancement that is symmetric between both breasts.
-RIGHT BREAST: There is no suspicious enhancement or lymphadenopathy
-LEFT BREAST:  At 5 o'clock, middle depth, 5.9 cm from the nipple, there is an irregular bilobed mass with irregular margins, and rim enhancement, measuring 3.1 x 2.0 x 2.1 cm. Worst-curve kinetics are initial phase fast and delayed phase wash-out. The enhancement is best seen on axial peak contrast series 23,  image 1965. The mass has high signal on high diffusion weighted images, and low signal on T2-weighted images.  There is also asymmetrically increased macroscopic vascularity of the left breast compared to the right breast, which has been reported with invasive carcinomas. There is no skin thickening, nor breast edema to suggest inflammatory carcinoma. This corresponds to the biopsy-proven triple negative breast cancer. There is a susceptibility artifact from a coil marker centered within adjacent linear high T2 signal, suggesting a "hydromark" type clip. Overall the appearances exactly corresponds to the previous ultrasound performed just before the biopsy.
-.
-There are mildly increased size and number of left axillary lymph nodes. The largest measures 1.1 cm on series 23 image 1903, and has a reduced fatty hilum.
-OTHER FINDINGS: None significant.

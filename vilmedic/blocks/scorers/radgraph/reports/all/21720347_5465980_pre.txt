@@ -1,8 +1,0 @@
-FINDINGS:
-The breast tissue is heterogeneously dense.  Contrast images show a 
-4.5 cm mass with rapid wash-in and rapid wash-out, best seen on 
-series 6, image 156, slice locator 82.93.  Extending from the mass is 
-segmental enhancement which spans a 2.5 x 4.5 cm region, best seen on 
-series 6, image 156, slice locator 82.9, which is located 
-approximately 2 cm from the nipple. 
- 

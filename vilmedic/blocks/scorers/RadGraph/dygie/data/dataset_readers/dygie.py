@@ -31,6 +31,7 @@ class DyGIEReader(DatasetReader):
     Reads a single JSON-formatted file. This is the same file format as used in the
     scierc, but is preprocessed
     """
+
     def __init__(self,
                  max_span_width: int,
                  token_indexers: Dict[str, TokenIndexer] = None,
@@ -41,13 +42,9 @@ class DyGIEReader(DatasetReader):
 
     @overrides
     def _read(self, file_path: str):
-        # if `file_path` is a URL, redirect to the cache
-        file_path = cached_path(file_path)
-
-        with open(file_path, "r") as f:
-            lines = f.readlines()
-
-        for line in lines:
+        # Modified by JB: file path is a list of json dict, not a file anymore. Removed Open
+        file_path = eval(file_path)
+        for line in file_path:
             # Loop over the documents.
             doc_text = json.loads(line)
             instance = self.text_to_instance(doc_text)

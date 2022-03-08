@@ -137,14 +137,6 @@ class _PredictManager:
         else:
             self._dataset_reader = None
 
-    def _predict_json(self, batch_data: List[JsonDict]) -> Iterator[str]:
-        if len(batch_data) == 1:
-            results = [self._predictor.predict_json(batch_data[0])]
-        else:
-            results = self._predictor.predict_batch_json(batch_data)
-        for output in results:
-            yield self._predictor.dump_line(output)
-
     def _predict_instances(self, batch_data: List[Instance]) -> Iterator[str]:
         if len(batch_data) == 1:
             results = [self._predictor.predict_instance(batch_data[0])]
@@ -152,28 +144,6 @@ class _PredictManager:
             results = self._predictor.predict_batch_instance(batch_data)
         for output in results:
             yield self._predictor.dump_line(output)
-
-    def _maybe_print_to_console_and_file(
-            self, index: int, prediction: str, model_input: str = None
-    ) -> None:
-        if self._print_to_console:
-            if model_input is not None:
-                print(f"input {index}: ", model_input)
-            print("prediction: ", prediction)
-        if self._output_file is not None:
-            self._output_file.write(prediction)
-
-    def _get_json_data(self) -> Iterator[JsonDict]:
-        if self._input_file == "-":
-            for line in sys.stdin:
-                if not line.isspace():
-                    yield self._predictor.load_line(line)
-        else:
-            input_file = cached_path(self._input_file)
-            with open(input_file, "r") as file_input:
-                for line in file_input:
-                    if not line.isspace():
-                        yield self._predictor.load_line(line)
 
     def _get_instance_data(self) -> Iterator[Instance]:
         if self._input_file == "-":
@@ -183,26 +153,14 @@ class _PredictManager:
         else:
             yield from self._dataset_reader.read(self._input_file)
 
-    def run(self) -> None:
-        has_reader = self._dataset_reader is not None
+    def run(self) -> List:
         index = 0
-        if has_reader:
-            for batch in lazy_groups_of(self._get_instance_data(), self._batch_size):
-                for model_input_instance, result in zip(batch, self._predict_instances(batch)):
-                    self._maybe_print_to_console_and_file(index, result, str(model_input_instance))
-                    index = index + 1
-        else:
-            for batch_json in lazy_groups_of(self._get_json_data(), self._batch_size):
-                for model_input_json, result in zip(batch_json, self._predict_json(batch_json)):
-                    self._maybe_print_to_console_and_file(
-                        index, result, json.dumps(model_input_json)
-                    )
-                    index = index + 1
-
-        if self._output_file is not None:
-            self._output_file.close()
-
-
+        ret = []
+        for batch in lazy_groups_of(self._get_instance_data(), self._batch_size):
+            for model_input_instance, result in zip(batch, self._predict_instances(batch)):
+                ret.append(result)
+                index = index + 1
+        return ret
 
 
 def _predict(args: argparse.Namespace) -> None:

@@ -1,5 +1,6 @@
 import os
 import torch.nn as nn
+import numpy as np
 
 from allennlp.commands.predict import _predict, _PredictManager
 from allennlp.common.plugins import import_plugins
@@ -9,7 +10,7 @@ from allennlp.models.archival import load_archive
 from allennlp.common.checks import check_for_gpu
 
 from vilmedic.constants import EXTRA_CACHE_DIR
-from utils import preprocess_reports, postprocess_reports, cleanup, compute_reward
+from utils import preprocess_reports, postprocess_reports, compute_reward
 
 
 class RadGraph(nn.Module):
@@ -64,22 +65,20 @@ class RadGraph(nn.Module):
                             if i not in empty_report_index_list
                             ]
 
-        preprocess_reports(report_list)
-
+        model_input = preprocess_reports(report_list)
         # AllenNLP
         manager = _PredictManager(
             predictor=self.predictor,
-            input_file='./temp_dygie_input.json',
-            output_file='./temp_dygie_output.json',
+            input_file=str(model_input),  # trick the manager, make the list as string so it thinks its a filename
+            output_file=None,
             batch_size=self.batch_size,
             print_to_console=False,
             has_dataset_reader=True,
         )
-        manager.run()
+        results = manager.run()
 
         # Postprocessing
-        inference_dict = postprocess_reports()
-        cleanup()
+        inference_dict = postprocess_reports(results)
 
         # Compute reward
         reward_list = []
@@ -104,7 +103,7 @@ class RadGraph(nn.Module):
             hypothesis_annotation_lists.append(hypothesis_annotation_list)
             non_empty_report_index += 1
 
-        return reward_list, hypothesis_annotation_lists, reference_annotation_lists
+        return np.mean(reward_list), reward_list, hypothesis_annotation_lists, reference_annotation_lists
 
 
 if __name__ == '__main__':
@@ -116,4 +115,4 @@ if __name__ == '__main__':
     reference_report_list = [report_2, report_2, report_2, report_2]
 
     reward_list = m(hyps=hypothesis_report_list, refs=reference_report_list)
-    print(reward_list[0])  # [0.8666666666666667, 0, 0, 0.8666666666666667]
+    print(reward_list[1])  # [0.8666666666666667, 0, 0, 0.8666666666666667]

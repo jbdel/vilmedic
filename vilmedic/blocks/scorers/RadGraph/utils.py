@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from io import StringIO
 from reward_functions import exact_entity_token_match_reward, partially_exact_relation_token_and_label_match_reward, \
     partially_exact_entity_token_and_label_match_reward, \
     exact_entity_token_and_label_match_reward, exact_relation_token_and_label_match_reward
@@ -45,23 +46,17 @@ def preprocess_reports(report_list):
 
         final_list.append(temp_dict)
 
-    with open("./temp_dygie_input.json", 'w') as outfile:
-        for item in final_list:
-            json.dump(item, outfile)
-            outfile.write("\n")
+    return [json.dumps(item) for item in final_list]
 
 
-def postprocess_reports():
+def postprocess_reports(results):
     """Post processes all the reports and saves the result in train.json format
     """
     final_dict = {}
-
-    file_name = f"./temp_dygie_output.json"
     data = []
 
-    with open(file_name, 'r') as f:
-        for line in f:
-            data.append(json.loads(line))
+    for r in results:
+        data.append(json.loads(r))
 
     for file in data:
         postprocess_individual_report(file, final_dict)
@@ -135,11 +130,3 @@ def get_entity(n, r, s):
         dict_entity[str(idx + 1)] = temp_dict
 
     return dict_entity
-
-
-def cleanup():
-    """Removes all the temporary files created during the inference process
-
-    """
-    os.system("rm temp_dygie_input.json")
-    os.system("rm temp_dygie_output.json")

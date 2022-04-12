@@ -7,7 +7,7 @@ if sys.version_info < (3, 8):
 
 setup(
     name='vilmedic',
-    version='1.1.9',
+    version='1.2.0',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',

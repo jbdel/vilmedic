@@ -3,6 +3,8 @@ import torch.nn as nn
 from torchvision.models import *
 from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
 from .vgg_hgap import *
+from transformers import DeiTModel, DeiTConfig
+from transformers import ViTModel, ViTConfig
 
 
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
@@ -17,11 +19,18 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
         sub_network.add_module('flatten', nn.Flatten(1))
         return sub_network
 
-    # torchxrayvision
+    # Vision transformer
+    if "vit" in backbone.lower():
+        return ViTModel(ViTConfig(**kwargs))
+    if "deit" in backbone.lower():
+        return DeiTModel(DeiTConfig(**kwargs))
+
+    # Torchxrayvision
     if "xrv" in backbone.lower():
         network = eval(backbone)(weights=weights)
         if hasattr(network, 'model'):  # XrvResNet Fix
             network = network.model
+    # PyTorch
     else:
         network = eval(backbone)(pretrained=pretrained, **kwargs)
 

@@ -1,9 +1,13 @@
 import pathlib
+import sys
 from setuptools import setup, find_packages
+
+if sys.version_info < (3, 8):
+    sys.exit('Sorry, Python >=3.8 is required for ViLMedic.')
 
 setup(
     name='vilmedic',
-    version='1.1.7',
+    version='1.1.9',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -16,16 +20,31 @@ setup(
     keywords='medical nlp deep-learning pytorch',
     python_requires='==3.9',
     setup_requires="Cython",
-    install_requires=['appdirs==1.4.4', 'omegaconf==2.0.6', 'torchvision==0.9.1', 'rouge_score',
+    install_requires=['appdirs==1.4.4',
+                      'omegaconf==2.0.6',
+                      'torchvision==0.9.1',
+                      'rouge_score',
+                      'youtokentome==1.0.3',
+                      'tokenizers==0.11.6',
                       'scikit_image==0.18.2',
-                      'scikit-learn==0.24.2', 'pydicom==2.2.0', 'transformers==4.5.1', 'tokenizers==0.10.3',
+                      'scikit-learn==0.24.2',
+                      'pydicom==2.2.0',
+                      'transformers==4.17.0',
                       'seaborn==0.11.1',
-                      'dalle-pytorch==1.4.2', 'torchxrayvision==0.0.32',
+                      'dalle-pytorch==1.4.2',
+                      'torchxrayvision==0.0.32',
                       'stanza==1.3.0',
                       'bert-score==0.3.11',
-                      'torch==1.8.1', 'pytorch-lightning==1.4.2', 'pytorch-metric-learning==0.9.99',
-                      'torch-optimizer==0.1.0', 'umap-learn==0.5.2', 'opencv-python==4.5.4.60',
-                      'mauve-text', 'numba==0.54.1', 'torchmetrics==0.5.0', 'numpy==1.20.3',
+                      'torch==1.8.1',
+                      'pytorch-lightning==1.4.2',
+                      'pytorch-metric-learning==0.9.99',
+                      'torch-optimizer==0.1.0',
+                      'umap-learn==0.5.2',
+                      'opencv-python==4.5.4.60',
+                      'mauve-text',
+                      'numba==0.54.1',
+                      'torchmetrics==0.5.0',
+                      'numpy==1.20.3',
                       'gdown==4.3.1'],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

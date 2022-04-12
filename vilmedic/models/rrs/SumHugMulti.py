@@ -4,7 +4,7 @@ import torch
 from vilmedic.blocks.huggingface.encoder_decoder.evaluation import evaluation
 from vilmedic.models.utils import get_n_params
 
-# v4.3.2
+
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from vilmedic.blocks.huggingface.encoder_decoder.encoder_decoder_model import EncoderDecoderModel
 

@@ -1,7 +1,7 @@
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 import functools
-# v4.3.2
+
 
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.huggingface.decoder.evaluation import evaluation as evaluation_

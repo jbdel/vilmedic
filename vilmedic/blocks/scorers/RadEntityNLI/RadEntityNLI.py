@@ -1,18 +1,18 @@
 import os
+import torch
+import time
 import numpy as np
 import torch.nn as nn
 from vilmedic.blocks.scorers import RadEntityMatchExact
 from vilmedic.blocks.scorers.RadEntityNLI.nli import SimpleNLI
 from vilmedic.constants import EXTRA_CACHE_DIR
 
+from torchmetrics.functional.text.bert import BERTScorer
+from itertools import chain, product
 
-def _nli_label(prediction):
-    best_label, best_prob = 'entailment', 0.0
-    for label, prob in prediction.items():
-        if prob > best_prob:
-            best_label = label
-            best_prob = prob
-    return best_label
+import logging
+
+logging.getLogger("stanza").setLevel(logging.WARNING)
 
 
 class RadEntityNLI(nn.Module):
@@ -28,79 +28,101 @@ class RadEntityNLI(nn.Module):
                              bert_score='distilbert-base-uncased', cache=200000,
                              verbose=False)
 
+        # BertSore
+        self.bert_scorer = BERTScorer(model_type='distilbert-base-uncased',
+                                      num_layers=5,
+                                      batch_size=64,
+                                      nthreads=4,
+                                      all_layers=False,
+                                      idf=False,
+                                      device='cuda',
+                                      lang='en',
+                                      rescale_with_baseline=True,
+                                      baseline_path=None)
+
     def forward(self, refs, hyps):
-        # Getting radiology reports with rad entities
-        _, _, docs_h, docs_r = self.match_exact(refs, hyps)
+        t = time.time()
+        with torch.no_grad():
+            # # Getting radiology reports with rad entities
+            _, _, docs_h, docs_r = self.match_exact(refs, hyps)
 
-        # Split reports as a list of sentences
-        refs_reports_split = []
-        hyps_reports_split = []
-        for doc_h, doc_r in zip(docs_h, docs_r):
-            hyps_reports_split.append([' '.join([token['text'] for token in sentence.to_dict()]) for sentence in
-                                       doc_h.sentences])
-            refs_reports_split.append([' '.join([token['text'] for token in sentence.to_dict()]) for sentence in
-                                       doc_r.sentences])
+            scores_e = []
+            for doc_h, doc_r in zip(docs_h, docs_r):
 
-        # Getting BERT scores
-        _, _, _, stats = self.nli.sentence_scores_bert_score(refs_reports_split, hyps_reports_split,
-                                                             label='all',
-                                                             prf='f')
-        hypos_nli, refs_nli = [], []
-        for i, stat in enumerate(stats):
-            ref_stat = stat['scores'][0]
-            hyp_stat = stat['scores'][1]
-            refs_nli.append({sid: _nli_label(pred[0]) for sid, pred in ref_stat.items()})
-            hypos_nli.append({sid: _nli_label(pred[0]) for sid, pred in hyp_stat.items()})
+                hyp_report = [' '.join([token['text'] for token in sentence.to_dict()]) for sentence in
+                              doc_h.sentences]
+                ref_report = [' '.join([token['text'] for token in sentence.to_dict()]) for sentence in
+                              doc_r.sentences]
 
-        assert len(docs_h) == len(docs_r) == len(refs_nli) == len(hypos_nli)
-
-        # Compute NLI score
-        scores_e = []
-        for doc_h, doc_r, hypo_nli, ref_nli in zip(docs_h, docs_r, hypos_nli, refs_nli):
-
-            # NER, with sentence number
-            ner_h = []
-            for i, sentence in enumerate(doc_h.sentences):
-                ner_h.extend([(i, ner['text']) for ner in sentence.to_dict() if ner['ner'] in self.target_types])
-
-            ner_r = []
-            for i, sentence in enumerate(doc_r.sentences):
-                ner_r.extend([(i, ner['text']) for ner in sentence.to_dict() if ner['ner'] in self.target_types])
-
-            # precision
-            total_p = len(ner_h)
-            match_p = 0
-            entity_ner_r = [ent[1] for ent in ner_r]
-            for index, entity in ner_h:
-                if hypo_nli[index] == 'contradiction':
+                if len(hyp_report) == 0 or len(ref_report) == 0:
                     continue
-                if hypo_nli[index] == 'entailment':
-                    match_p += 1
-                    continue
-                if hypo_nli[index] == 'neutral' and entity in entity_ner_r:
-                    match_p += 1
-            pr_e = match_p / total_p if total_p > 0 else 0.0
 
-            # recall
-            total_r = len(ner_r)
-            match_r = 0
-            entity_ner_h = [ent[1] for ent in ner_h]
-            for index, entity in ner_r:
-                if ref_nli[index] == 'contradiction':
-                    continue
-                if ref_nli[index] == 'entailment':
-                    match_r += 1
-                    continue
-                if ref_nli[index] == 'neutral' and entity in entity_ner_h:
-                    match_r += 1
-            rc_e = match_r / total_r if total_r > 0 else 0.0
+                ner_h = [[ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types] for sentence in
+                         doc_h.sentences]
+                ner_r = [[ner['text'] for ner in sentence.to_dict() if ner['ner'] in self.target_types] for sentence in
+                         doc_r.sentences]
 
-            # harmonic mean
-            score_e = 2 * pr_e * rc_e / (pr_e + rc_e) if pr_e > 0.0 and rc_e > 0.0 else 0.0
-            scores_e.append(score_e)
+                # getting all sentence pairs scores
+                pairs = list(product(hyp_report, ref_report))
+                _, _, f_scores = self.bert_scorer.score(
+                    cands=[p[0] for p in pairs],
+                    refs=[p[1] for p in pairs],
+                    verbose=False,
+                    batch_size=64,
+                )
 
-        mean_exact_e = np.mean(scores_e)
-        return mean_exact_e, scores_e
+                f_scores = torch.reshape(torch.tensor(f_scores), (len(hyp_report), len(ref_report)))
+
+                # self.bert_scorer.plot_example([p[0] for p in pairs][0], [p[1] for p in pairs][0])
+
+                # precision
+                match_p = 0
+                entity_ner_r = list(chain.from_iterable(ner_r))
+                total_p = 0
+                for hyp_sentence, hyp_sentence_entities, hyp_f_score in zip(hyp_report, ner_h, f_scores):
+                    # No entites in current sentence
+                    if not hyp_sentence_entities:
+                        continue
+                    sim_index = torch.argmax(hyp_f_score)
+                    nli_label = self.nli.predict([hyp_sentence], [ref_report[sim_index]])[1][0]
+                    for entity in hyp_sentence_entities:
+                        total_p += 1
+                        if nli_label == 'contradiction':
+                            continue
+                        if nli_label == 'entailment':
+                            match_p += 1
+                            continue
+                        if nli_label == 'neutral' and entity in entity_ner_r:
+                            match_p += 1
+
+                match_r = 0
+                entity_ner_h = list(chain.from_iterable(ner_h))
+                total_r = 0
+                for ref_sentence, ref_sentence_entities, ref_f_score in zip(ref_report, ner_r, f_scores.T):
+                    # No entites in current sentence
+                    if not ref_sentence_entities:
+                        continue
+                    sim_index = torch.argmax(ref_f_score)
+                    nli_label = self.nli.predict([ref_sentence], [hyp_report[sim_index]])[1][0]
+                    for entity in ref_sentence_entities:
+                        total_r += 1
+                        if nli_label == 'contradiction':
+                            continue
+                        if nli_label == 'entailment':
+                            match_r += 1
+                            continue
+                        if nli_label == 'neutral' and entity in entity_ner_h:
+                            match_r += 1
+
+                pr_e = match_p / total_p if total_p > 0 else 0.0
+                rc_e = match_r / total_r if total_r > 0 else 0.0
+
+                # harmonic mean
+                score_e = 2 * pr_e * rc_e / (pr_e + rc_e) if pr_e > 0.0 and rc_e > 0.0 else 0.0
+                scores_e.append(score_e)
+
+            mean_exact_e = np.mean(scores_e)
+            return mean_exact_e, scores_e
 
 
 if __name__ == '__main__':

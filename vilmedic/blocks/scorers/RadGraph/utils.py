@@ -1,8 +1,6 @@
 import json
-import os
 import re
-from io import StringIO
-from reward_functions import exact_entity_token_match_reward, partially_exact_relation_token_and_label_match_reward, \
+from .reward_functions import exact_entity_token_match_reward, partially_exact_relation_token_and_label_match_reward, \
     partially_exact_entity_token_and_label_match_reward, \
     exact_entity_token_and_label_match_reward, exact_relation_token_and_label_match_reward
 

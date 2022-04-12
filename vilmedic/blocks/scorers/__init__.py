@@ -1,4 +1,5 @@
 from .NLG.rouge import ROUGEScorer
+from .NLG.mauve_ import MauveScorer
 from .NLG.bleu.bleu import BLEUScorer
 from .NLG.meteor.meteor import METEORScorer
 from .NLG.cider.cider import Cider
@@ -6,3 +7,4 @@ from .NLG.ciderd.ciderd import CiderD
 from .CheXbert.chexbert import CheXbert
 from .RadEntityMatchExact.RadEntityMatchExact import RadEntityMatchExact
 from .RadEntityNLI.RadEntityNLI import RadEntityNLI
+from .RadGraph.RadGraph import RadGraph

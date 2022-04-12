@@ -1,7 +1,7 @@
 import torch.nn as nn
 import copy
 
-# v4.3.2
+
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
 from transformers import EncoderDecoderModel as HFEncoderDecoderModel
 from vilmedic.models.utils import get_n_params

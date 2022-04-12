@@ -20,18 +20,31 @@ def evaluation(models, config, dl, **kwargs):
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() for k, v in batch.items()}
+            # Expanding inputs
             batch_size = batch['images'].shape[0]
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
+            # Getting encoder infos
+            encoder_outputs = []
+            encoder_attention_masks = []
+            for hf in models:
+                encoder_output, encoder_attention_mask = hf.encode(**batch)
+                encoder_outputs.append(encoder_output)
+                encoder_attention_masks.append(encoder_attention_mask)
 
+            # Registering models and encoder outputs
             model_kwargs = {
-                "encoders_hidden_states":
-                    [{"encoder_hidden_states": hf.encode(**batch).index_select(0, expanded_return_idx)} for hf in
-                     models],
+                "encoders_outputs":
+                    [
+                        {"encoder_hidden_states": output.index_select(0, expanded_return_idx),
+                         "encoder_attention_mask": mask.index_select(0, expanded_return_idx)
+                         } for output, mask in zip(encoder_outputs, encoder_attention_masks)
+                    ],
                 "hf_models": hf_models
             }
 
+            # lets gooooo
             hyps = hf_models[0].generate(
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * hf_models[0].config.bos_token_id,
                 num_return_sequences=1,

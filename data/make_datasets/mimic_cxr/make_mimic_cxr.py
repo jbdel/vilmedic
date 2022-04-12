@@ -8,7 +8,7 @@ from tqdm import tqdm
 DATA_PATH = os.path.join(__file__.split('vilmedic/data/')[0], 'vilmedic/data/')
 
 RULES = {
-    'rrg': ['findings', 'impression', 'one_image_per_study'],
+    'rrg': ['findings', 'impression'],
     'rrs': ['impression_and_findings'],
     'selfup': ['impression_and_or_findings'],
 }
@@ -114,60 +114,61 @@ def main():
 
             skipped_study = 0
             written_study = defaultdict(int)
-            study_set = set()
 
+            # Grouping images per study_id
+            study_images = defaultdict(list)
             for row in tqdm(csv.DictReader(open('mimic-cxr-2.0.0-split.csv'))):
-
-                study_id = 's' + row['study_id']
-                if "one_image_per_study" in rules and study_id in study_set:
-                    continue
-
-                im_path = os.path.join(
+                key = ('s' + row['study_id'], row['split'])
+                study_images[key].append(os.path.join(
                     'mimic-cxr-images-512/files',
                     'p' + str(row['subject_id'])[:2],  # 10000032 -> p10
                     'p' + str(row['subject_id']),
                     's' + str(row['study_id']),
                     row['dicom_id'] + '.jpg'
-                )
+                ))
 
+            for key, im_paths in study_images.items():
+                study_id, split = key
                 if r == "impression":
                     if study_id not in reports["impression"]:
                         skipped_study += 1
                         continue
-                    files[row['split'] + '_impression'].write(reports["impression"][study_id] + '\n')
+                    files[split + '_impression'].write(reports["impression"][study_id] + '\n')
 
                 if r == "findings":
                     if study_id not in reports["findings"]:
                         skipped_study += 1
                         continue
-                    files[row['split'] + '_findings'].write(reports["findings"][study_id] + '\n')
+                    files[split + '_findings'].write(reports["findings"][study_id] + '\n')
 
                 if r == "impression_and_findings":
                     if study_id not in reports["impression"] and study_id not in reports["findings"]:
                         skipped_study += 1
                         continue
-                    files[row['split'] + '_impression'].write(reports["impression"][study_id] + '\n')
-                    files[row['split'] + '_findings'].write(reports["findings"][study_id] + '\n')
+                    files[split + '_impression'].write(reports["impression"][study_id] + '\n')
+                    files[split + '_findings'].write(reports["findings"][study_id] + '\n')
 
                 if r == "impression_and_or_findings":
                     if study_id not in reports["impression"] or study_id not in reports["findings"]:
                         skipped_study += 1
                         continue
                     if study_id not in reports["impression"]:
-                        files[row['split'] + '_report'].write(reports["findings"][study_id] + '\n')
+                        files[split + '_report'].write(reports["findings"][study_id] + '\n')
                     if study_id not in reports["findings"]:
-                        files[row['split'] + '_report'].write(reports["impression"][study_id] + '\n')
+                        files[split + '_report'].write(reports["impression"][study_id] + '\n')
                     if study_id in reports["impression"] or study_id in reports["findings"]:
-                        files[row['split'] + '_report'].write(
+                        files[split + '_report'].write(
                             reports["impression"][study_id] + ' ' + reports["findings"][study_id] + '\n')
 
-                files[row['split'] + '_image'].write(im_path + '\n')
-                written_study[row['split']] += 1
                 if "one_image_per_study" in rules:
-                    study_set.add(study_id)
+                    files[split + '_image'].write(im_paths[0] + '\n')
+                else:
+                    files[split + '_image'].write(','.join(im_paths) + '\n')
 
-            print('rule', r, 'skipped studies because no reports', skipped_study)
-            print('rule', r, 'written studies', written_study)
+                written_study[split] += 1
+
+            print('rule', r, ': skipped studies because no reports', skipped_study)
+            print('rule', r, ': written studies', written_study)
 
     [v.close() for k, v in files.items()]
 

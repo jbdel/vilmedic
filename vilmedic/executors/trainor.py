@@ -97,16 +97,16 @@ class Trainor(InitTrainor):
                     self.optimizer.zero_grad()
                     self.training_scheduler.iteration_step()
 
-                    log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {}'.format(
+                    log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {} {}'.format(
                         epoch + 1,
                         [param_group['lr'] for param_group in self.optimizer.param_groups],
                         sum(losses) / iteration,
                         self.config.early_stop_metric,
                         self.training_scheduler.current_best_metric,
                         self.training_scheduler.early_stop,
+                        out["custom_print"] if "custom_print" in out else ""
                     )
                     pbar.set_description(log)
-                # break
 
             # Perform last update if needed
             if (iteration % self.grad_accu != 0) and ('loss' in out):

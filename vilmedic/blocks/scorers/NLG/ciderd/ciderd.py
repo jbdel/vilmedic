@@ -10,18 +10,23 @@
 from .ciderD_scorer import CiderScorer
 import pdb
 
+
 class CiderD:
     """
     Main Class to compute the CIDEr metric
 
     """
+
     def __init__(self, n=4, sigma=6.0, df="corpus"):
         # set cider to sum over 1 to 4-grams
         self._n = n
         # set the standard deviation parameter for gaussian penalty
         self._sigma = sigma
         # set which where to compute document frequencies from
-        self._df = df
+        refs = [ref.strip() for ref in open(df).readlines()]
+        scorer = CiderScorer(refs=refs)
+        scorer.compute_doc_freq()
+        self._df = scorer.document_frequency
 
     def compute_score(self, gts, res):
         """
@@ -31,8 +36,7 @@ class CiderD:
         :return: cider (float) : computed CIDEr score for the corpus
         """
 
-        cider_scorer = CiderScorer(n=self._n)
-
+        cider_scorer = CiderScorer(n=self._n, sigma=self._sigma, df=self._df)
         res = {i: [v] for i, v in enumerate(res)}
         gts = {i: [v] for i, v in enumerate(gts)}
         for id in sorted(gts.keys()):
@@ -40,13 +44,13 @@ class CiderD:
             ref = gts[id]
 
             # Sanity check.
-            assert(type(hypo) is list)
-            assert(len(hypo) == 1)
-            assert(type(ref) is list)
-            assert(len(ref) > 0)
+            assert (type(hypo) is list)
+            assert (len(hypo) == 1)
+            assert (type(ref) is list)
+            assert (len(ref) > 0)
             cider_scorer += (hypo[0], ref)
 
-        (score, scores) = cider_scorer.compute_score(self._df)
+        (score, scores) = cider_scorer.compute_score()
 
         return score
 

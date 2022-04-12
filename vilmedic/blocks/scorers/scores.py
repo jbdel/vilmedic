@@ -3,13 +3,24 @@ import numpy as np
 import json
 import torch.nn.functional as F
 import torch
-import mauve
 from sklearn.metrics import classification_report, roc_auc_score
-
+from omegaconf import OmegaConf
 from . import *
 
+REWARD_COMPLIANT = {
+    "BLEU": BLEUScorer,
+    "ROUGE1": ROUGEScorer,
+    "ROUGE2": ROUGEScorer,
+    "ROUGEL": BLEUScorer,
+    "METEOR": METEORScorer,
+    "CIDER": Cider,
+    "MAUVE": MauveScorer,
+    "radentitymatchexact": RadEntityMatchExact,
+    "radentitynli": RadEntityNLI,
+}
 
-def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
+
+def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
     scores = dict()
     # If metric is None or empty list
     if metrics is None or not metrics:
@@ -36,6 +47,17 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
         f.close()
 
     for metric in metrics:
+        metric_args = dict()
+
+        # if metric has arguments
+        if OmegaConf.is_dict(metric):
+            if len(metric) != 1:
+                logger.warning("Metric badly formatted: {}. Skipping.".format(metric))
+                continue
+            metric_args = metric[list(metric.keys())[0]]
+            metric = list(metric.keys())[0]
+
+        # Iterating over metrics
         if metric == 'BLEU':
             scores["BLEU"] = round(BLEUScorer().compute(refs_file, hyps_file), 2)
         elif metric == 'ROUGE1':
@@ -47,10 +69,12 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
         elif metric == 'METEOR':
             scores["METEOR"] = round(METEORScorer().compute(refs_file, hyps_file) * 100, 2)
         elif metric == 'CIDER':
-            scores["CIDER"] = Cider().compute_score(refs, hyps)
+            scores["CIDER"] = Cider(**metric_args).compute_score(refs, hyps)
+        elif metric == 'CIDERD':
+            scores["CIDERD"] = CiderD(**metric_args).compute_score(refs, hyps)
         elif metric == 'MAUVE':
-            scores["MAUVE"] = mauve.compute_mauve(p_text=refs, q_text=hyps, device_id=0, max_text_length=256,
-                                                  featurize_model_name=config.mauve_featurize_model_name or "gpt2-large")
+            scores["MAUVE"] = round(
+                MauveScorer(config.mauve_featurize_model_name or "distilgpt2").compute(refs, hyps) * 100, 2)
         elif metric == 'accuracy':
             scores["accuracy"] = round(np.mean(np.array(refs) == np.argmax(hyps, axis=-1)) * 100, 2)
         elif metric == 'f1-score':
@@ -65,9 +89,11 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch):
         elif metric == 'radentitymatchexact':
             scores["radentitymatchexact"], _, _, _ = RadEntityMatchExact()(refs, hyps)
         elif metric == 'radentitynli':
-            scores["radentitynli"], _, _, _ = RadEntityNLI()(refs, hyps)
+            scores["radentitynli"], _ = RadEntityNLI()(refs, hyps)
+        elif metric == 'radgraph':
+            scores["radgraph"], _ = RadGraph()(refs=refs, hyps=hyps)
         else:
-            raise NotImplementedError(metric)
+            logger.warning("Metric not implemented: {}".format(metric))
 
     with open(metrics_file, 'a+') as f:
         f.write(json.dumps({

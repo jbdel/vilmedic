@@ -3,6 +3,10 @@ import torch.nn as nn
 import stanza
 from stanza import Pipeline
 
+import logging
+
+logging.getLogger("stanza").setLevel(logging.WARNING)
+
 
 class RadEntityMatchExact(nn.Module):
     def __init__(self):

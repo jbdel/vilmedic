@@ -78,7 +78,7 @@ def save_representation(keys, results, pp_dir, seed, logger, split, **kwargs):
             continue
 
         embeddings = np.array([vector.numpy() for vector in results[key]])
-
+        results.pop(key)
         np.save(os.path.join(out_dir, split
                              + '_'
                              + str(key)

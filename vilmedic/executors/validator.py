@@ -8,10 +8,11 @@ from vilmedic.blocks.scorers.post_processing import post_processing
 
 
 class InitValidator(object):
-    def __init__(self, config, models, seed, from_training):
+    def __init__(self, config, models, train_dl, seed, from_training):
         self.seed = seed
         self.config = config
         self.from_training = from_training
+        self.train_dl = train_dl
 
         # Logger
         self.logger = logging.getLogger(str(seed))
@@ -67,7 +68,8 @@ class Validator(InitValidator):
                                      split=split,
                                      seed=self.seed,
                                      config=self.config,
-                                     epoch=self.epoch
+                                     epoch=self.epoch,
+                                     logger=self.logger
                                      )
             scores.update(metrics)
 

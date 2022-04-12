@@ -39,10 +39,3 @@ trainor:
   optim_params:
     lr: 0.001
 
-validator:
-  metrics: [ROUGEL, BLEU, METEOR]
-
-ensemblor:
-  metrics: [ROUGEL, BLEU, METEOR]
-
-

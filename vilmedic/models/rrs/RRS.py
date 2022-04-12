@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 from collections import OrderedDict
-# v4.3.2
+
 from vilmedic.blocks.huggingface.encoder_decoder.evaluation import evaluation
 from vilmedic.blocks.huggingface.encoder_decoder.encoder_decoder_model import EncoderDecoderModel
 

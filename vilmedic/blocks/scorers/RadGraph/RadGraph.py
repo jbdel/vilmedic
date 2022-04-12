@@ -1,6 +1,9 @@
 import os
 import torch.nn as nn
 import numpy as np
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 from allennlp.commands.predict import _predict, _PredictManager
 from allennlp.common.plugins import import_plugins
@@ -8,9 +11,13 @@ from allennlp.common.util import import_module_and_submodules
 from allennlp.predictors.predictor import Predictor
 from allennlp.models.archival import load_archive
 from allennlp.common.checks import check_for_gpu
+from .utils import preprocess_reports, postprocess_reports, compute_reward
 
 from vilmedic.constants import EXTRA_CACHE_DIR
-from utils import preprocess_reports, postprocess_reports, compute_reward
+
+import logging
+logging.getLogger("allennlp").setLevel(logging.CRITICAL)
+logging.getLogger("tqdm").setLevel(logging.CRITICAL)
 
 
 class RadGraph(nn.Module):
@@ -43,7 +50,6 @@ class RadGraph(nn.Module):
         self.predictor = Predictor.from_archive(
             archive, predictor_name='dygie', dataset_reader_to_load='validation'
         )
-        print("Radgraph loaded")
 
     def forward(self, refs, hyps):
         # Preprocessing

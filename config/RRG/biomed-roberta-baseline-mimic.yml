@@ -51,7 +51,14 @@ trainor:
 validator:
   batch_size: 4
   beam_width: 8
-  metrics: [ROUGEL, BLEU, METEOR, chexbert, radentitymatchexact]
+  metrics:
+    - ROUGEL
+    - BLEU
+    - METEOR
+    - CIDERD:
+        df: data/RRG/mimic-cxr/impression/train.impression.tok
+    - chexbert
+    - radentitymatchexact
   splits: [validate]
 
 

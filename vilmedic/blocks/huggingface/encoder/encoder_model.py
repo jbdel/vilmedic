@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-# v4.3.2
+
 from transformers.models.auto import AutoModel, AutoConfig
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig
 

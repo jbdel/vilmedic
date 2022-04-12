@@ -18,6 +18,11 @@ PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
+def read_images(root, image_path, split, file):
+    lines = load_file(os.path.join(root, split + '.' + file))
+    return [[os.path.join(image_path, image) for image in line.split(',')] for line in lines]
+
+
 def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext):
     if ext in [".npy", ".npz"]:
         return lambda x: x
@@ -79,9 +84,10 @@ def open_image(image, ext):
     raise NotImplementedError("Image extension {} not implemented".format(ext))
 
 
-def make_images(root, image_path, split, file):
-    images = load_file(os.path.join(root, split + '.' + file))
-    return [os.path.join(image_path, image) for image in images]
+def do_image(image, transform, ext):
+    opened_images = [open_image(im, ext) for im in image]
+    transformed_images = [transform(im) for im in opened_images]
+    return transformed_images
 
 
 class ImageDataset(Dataset):
@@ -96,6 +102,7 @@ class ImageDataset(Dataset):
                  resize=256,
                  crop=224,
                  ext='.jpg',
+                 multi_image=None,
                  **kwargs):
 
         assert split is not None, "Argument split cant be None"
@@ -108,10 +115,11 @@ class ImageDataset(Dataset):
         self.resize = eval(str(resize))
         self.crop = eval(str(crop))
         self.ext = ext
+        self.multi_image = multi_image or 0
         self.images = None
 
         if file is not None:
-            self.images = make_images(root, image_path, split, file)
+            self.images = read_images(root, image_path, split, file)
 
         self.transform = get_transforms(split,
                                         self.resize,
@@ -120,27 +128,45 @@ class ImageDataset(Dataset):
                                         custom_transform_val,
                                         self.ext)
 
-        if self.load_memory and self.file is not None:
-            self.images = [open_image(image, ext) for image in self.images]
-
     def __len__(self):
         return len(self.images or [])
 
     def __getitem__(self, index):
-        image = self.images[index]
-        if not self.load_memory:
-            image = open_image(image, self.ext)
-        return {'image': self.transform(image)}
+        return {'image': do_image(self.images[index], self.transform, self.ext)}
 
     def inference(self, image):
         if not isinstance(image, list):
             image = [image]
-        batch = [{'image': self.transform(open_image(i, self.ext))} for i in image]
+        batch = [{'image': do_image(i, self.transform, self.ext)} for i in image]
         return self.get_collate_fn()(batch)
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            collated = {'images': torch.stack([s['image'] for s in batch])}
+            # Return one image
+            if not self.multi_image or self.multi_image == 1:
+                return {'images': torch.stack([s['image'][0] for s in batch])}
+
+            # Return multiple image
+            new_batch = []
+            new_masks = []
+            for sample in batch:
+                sample_images = sample['image']
+                # Remove image to get to self.multi_image
+                if len(sample_images) > self.multi_image:
+                    sample_images = sample_images[:self.multi_image]
+                # Pad with zeros to get to self.multi_image
+                if len(sample_images) < self.multi_image:
+                    first_image = sample_images[0]
+                    for _ in range(self.multi_image - len(sample_images)):
+                        sample_images.append(first_image.new_zeros(first_image.size()))
+                # Stack
+                sample_images = torch.cat([s.unsqueeze(dim=0) for s in sample_images], dim=0)
+                sample_mask = (sample_images.sum(dim=(1, 2, 3)) != 0)
+                new_batch.append(sample_images)
+                new_masks.append(sample_mask)
+
+            collated = {'images': torch.stack(new_batch),
+                        'images_mask': torch.stack(new_masks)}
             return collated
 
         return collate_fn

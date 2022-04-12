@@ -1,8 +1,13 @@
 import os
 import gdown
 from appdirs import user_cache_dir
+import stanza
 
-# Chexbert
+# stanza
+stanza.download('en', processors='tokenize,ner')
+stanza.download('en', package='radiology')
+
+
 CACHE_DIR = user_cache_dir("vilmedic")
 EXTRA_CACHE_DIR = os.path.join(CACHE_DIR, "extras")
 os.makedirs(EXTRA_CACHE_DIR, exist_ok=True)

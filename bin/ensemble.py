@@ -46,6 +46,7 @@ def main():
     # Create validator, dont give any models yet
     evaluator = Validator(config=ensemble_config,
                           models=None,
+                          train_dl=None,
                           seed=seed,
                           from_training=False)
 

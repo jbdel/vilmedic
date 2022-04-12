@@ -54,7 +54,6 @@ class SimCLR(nn.Module):
     def forward(self, images, from_training=True, **kwargs):
         if from_training:
             images = torch.cat(torch.split(images, [3, 3], dim=1), dim=0)
-
         # forward passes
         visuals = []
         images = images.cuda()
@@ -83,3 +82,4 @@ class SimCLR(nn.Module):
         s += str(self.loss_fn) + '\n'
         s += "{}\n".format(get_n_params(self))
         return s
+

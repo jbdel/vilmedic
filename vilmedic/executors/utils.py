@@ -4,6 +4,7 @@ import os
 import operator
 import re
 import json
+import inspect
 
 import numpy as np
 import torch.nn as nn
@@ -163,9 +164,10 @@ class CheckpointSaver(object):
 
 
 class TrainingScheduler(object):
-    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "LinearWarmupCosineAnnealingLR"}
+    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "LinearWarmupCosineAnnealingLR", "CosineAnnealingLR",
+                           "CosineAnnealingWarmRestarts"}
     epoch_step_scheduler = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", "ConstantLR", "LinearLR",
-                            "ExponentialLR", "CosineAnnealingLR", "ChainedScheduler", "SequentialLR",
+                            "ExponentialLR", "ChainedScheduler", "SequentialLR",
                             }
     val_step_scheduler = {"ReduceLROnPlateau"}
 
@@ -190,8 +192,14 @@ class TrainingScheduler(object):
         if self.scheduler_name == 'ReduceLROnPlateau':
             self.lr_decay_params["mode"] = self.mode
 
-        self.scheduler = eval(lr_decay_func)(optimizer, **self.lr_decay_params)
+        def remove_unused_args(func, **kwargs):
+            sig = [param.name for param in inspect.signature(func).parameters.values()]
+            return {k: v for k, v in kwargs.items() if k in sig}
+
         self.decay_on_training_loss = self.lr_decay_params.decay_on_training_loss or False
+
+        self.lr_decay_params = remove_unused_args(eval(lr_decay_func), **self.lr_decay_params)
+        self.scheduler = eval(lr_decay_func)(optimizer, **self.lr_decay_params)
 
     def iteration_step(self):
         if self.scheduler_name in TrainingScheduler.iter_step_scheduler:

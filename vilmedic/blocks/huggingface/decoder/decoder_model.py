@@ -2,7 +2,7 @@ import torch.nn as nn
 import copy
 import functools
 
-# v4.3.2
+
 from transformers.models.auto import AutoModelForCausalLM, AutoConfig
 from transformers.models.bert_generation import BertGenerationConfig, BertGenerationDecoder
 from vilmedic.blocks.huggingface.decoder.beam_search import prepare_inputs_for_generation

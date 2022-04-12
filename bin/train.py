@@ -39,6 +39,7 @@ def main():
     # Evaluator
     evaluator = Validator(config=val_config,
                           models=[trainor.model],
+                          train_dl=trainor.dl,
                           seed=seed,
                           from_training=True)
 

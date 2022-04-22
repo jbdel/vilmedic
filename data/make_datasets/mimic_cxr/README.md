@@ -78,7 +78,7 @@ data
 
 #### Labels
 
-For any report file, you can compute the labels using the following scripts:
+For any report file, you can compute the labels using the following script:
 ```
 python get_get_chexbert_label.py {PATH_TO_REPORT_FILE}
 ```

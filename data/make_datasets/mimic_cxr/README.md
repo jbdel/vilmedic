@@ -80,11 +80,11 @@ data
 
 For any report file, you can compute the labels using the following script:
 ```
-python get_get_chexbert_label.py {PATH_TO_REPORT_FILE}
+python get_chexbert_label.py {PATH_TO_REPORT_FILE}
 ```
 Example : 
 ```
-python get_get_chexbert_label.py /home/user/vilmedic/data/SELFSUP/mimic-cxr/train.report.tok
+python get_chexbert_label.py /home/user/vilmedic/data/SELFSUP/mimic-cxr/train.report.tok
 ```
 The ouput of the script will be `/home/user/vilmedic/data/SELFSUP/mimic-cxr/train.label.tok` with all the labels.
 

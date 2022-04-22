@@ -40,7 +40,7 @@ model:
 
 ### Metrics and scores
 
-| Dataset |     ROUGE-L |  F1-cheXbert (micro) | F1-cheXbert-5 (micro) | Config
+| Dataset |     ROUGEL |  F1-cheXbert (micro) | F1-cheXbert-5 (micro) | Config
 | ------------- |:-------------:|:-------------:|:-------------:|:-------------:|
 | **mimic-cxr-validation**
 | <span class="card" id="rrg_biomed-roberta-mimic-val">BioMed-RoBERTa</span> (single model)   | 32.72  |  49.12  | 43.10  | [RRG/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)

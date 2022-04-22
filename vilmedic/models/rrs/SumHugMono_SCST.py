@@ -9,8 +9,8 @@ from collections import OrderedDict
 
 from vilmedic.blocks.huggingface.encoder_decoder.evaluation import evaluation
 from vilmedic.blocks.huggingface.encoder_decoder.encoder_decoder_model import EncoderDecoderModel
-from vilmedic.blocks.scorers.NLG import ROUGEScorer
-from vilmedic.blocks.scorers.scores import CheXbert
+from vilmedic.blocks.scorers import Rouge
+from vilmedic.blocks.scorers import CheXbert
 from transformers.models.roberta.modeling_roberta import RobertaForCausalLM
 import numpy as np
 
@@ -190,7 +190,7 @@ class SumHugMono_SCST(nn.Module):
             chexbert, _ = self.chexbert(hyp_list, ref_list)
             reward = torch.tensor(chexbert["micro avg"]["f1-score"]).cuda()
         else:
-            reward = ROUGEScorer(rouges=[self.score]).compute(ref_list, hyp_list)[1]
+            reward = Rouge(rouges=[self.score]).compute(ref_list, hyp_list)[1]
         return reward
 
     def __repr__(self):

@@ -39,7 +39,7 @@ model:
 
 This task has no previous work on the main open datasets.
 
-| Dataset | ROUGE-2   |  ROUGE-L | F1-cheXbert (micro-avg) | F1-cheXbert-5 (micro-avg) | Config
+| Dataset | ROUGE-2   |  ROUGEL | F1-cheXbert (micro-avg) | F1-cheXbert-5 (micro-avg) | Config
 | ------------- |:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
 | **mimic-cxr-validate**
 | <span class="card" id="rrs_biomed-roberta-mimic-val">BioMed-RoBERTa</span> (single model) | 48.15 | 57.34  |  77.54  |  75.24  | [RRS/biomed-roberta-baseline-mimic.yml](https://github.com/jbdel/vilmedic/blob/main/config/RRG/biomed-roberta-baseline-mimic.yml)

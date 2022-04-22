@@ -108,6 +108,7 @@ class Trainor(InitTrainor):
                     )
                     pbar.set_description(log)
 
+                # break
             # Perform last update if needed
             if (iteration % self.grad_accu != 0) and ('loss' in out):
                 if self.clip_grad_norm is not None:

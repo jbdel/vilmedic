@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 
-
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.huggingface.decoder.decoder_model import DecoderModel
 from vilmedic.blocks.huggingface.decoder.evaluation import evaluation
@@ -46,6 +45,7 @@ class RRG(nn.Module):
     def encode(self, images, images_mask=None, **kwargs):
         images = images.cuda()
 
+        # Single-image forward pass
         if len(images.shape) == 4:
             feature = self.enc(images)
             feature_mask = (torch.sum(torch.abs(feature), dim=-1) != 0)

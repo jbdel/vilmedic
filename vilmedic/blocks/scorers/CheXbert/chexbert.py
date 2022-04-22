@@ -1,5 +1,4 @@
 import torch
-import tqdm
 import os
 import logging
 
@@ -199,3 +198,9 @@ class CheXbert(nn.Module):
         for module in self.children():
             module.train(mode)
         return self
+
+
+if __name__ == '__main__':
+    print("hello")
+    # print(CheXbert()(hyps=['No pleural effusion. Normal heart size.', 'Normal heart size.'] * 1,
+    #                  refs=['No pleural effusions.', 'Enlarged heart.'] * 1))

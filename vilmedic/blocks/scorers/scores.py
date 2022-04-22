@@ -8,17 +8,19 @@ from omegaconf import OmegaConf
 from . import *
 
 REWARD_COMPLIANT = {
-    "BLEU": BLEUScorer,
-    "ROUGE1": ROUGEScorer,
-    "ROUGE2": ROUGEScorer,
-    "ROUGEL": BLEUScorer,
-    "METEOR": METEORScorer,
-    "CIDER": Cider,
-    "MAUVE": MauveScorer,
-    "radentitymatchexact": RadEntityMatchExact,
-    "radentitynli": RadEntityNLI,
-}
+    # "ROUGE1": [ROUGEScorer(rouges=["rouge1"]), 1],
+    # "ROUGE2": [ROUGEScorer(rouges=["rouge1"]), 1],
+    "ROUGEL": [Rouge(rouges=['rougeL']), 1],
+    "ROUGE2": [Rouge(rouges=['rouge1']), 1],
+    "ROUGE1": [Rouge(rouges=['rouge2']), 1],
+    "BLEU": [Bleu(), 1],
+    "METEOR": [Meteor(), 1],
+    # "MAUVE": [MauveScorer, 0],
+    # "radentitymatchexact": [RadEntityMatchExact(), 1],
+    # "radentitynli": [RadEntityNLI(), 1],
+    # "CheXbert": [CheXbert(), 1],
 
+}
 
 def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
     scores = dict()
@@ -59,22 +61,18 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
 
         # Iterating over metrics
         if metric == 'BLEU':
-            scores["BLEU"] = round(BLEUScorer().compute(refs_file, hyps_file), 2)
-        elif metric == 'ROUGE1':
-            scores["ROUGE1"] = round(ROUGEScorer(rouges=['rouge1']).compute(refs, hyps)[0] * 100, 2)
-        elif metric == 'ROUGE2':
-            scores["ROUGE2"] = round(ROUGEScorer(rouges=['rouge2']).compute(refs, hyps)[0] * 100, 2)
-        elif metric == 'ROUGEL':
-            scores["ROUGEL"] = round(ROUGEScorer(rouges=['rougeL']).compute(refs, hyps)[0] * 100, 2)
+            scores["BLEU"] = Bleu()(refs, hyps)[0]
         elif metric == 'METEOR':
-            scores["METEOR"] = round(METEORScorer().compute(refs_file, hyps_file) * 100, 2)
-        elif metric == 'CIDER':
-            scores["CIDER"] = Cider(**metric_args).compute_score(refs, hyps)
+            scores["METEOR"] = Meteor()(refs, hyps)[0]
         elif metric == 'CIDERD':
-            scores["CIDERD"] = CiderD(**metric_args).compute_score(refs, hyps)
+            scores["CIDERD"] = CiderD()(refs, hyps)[0]
+        elif metric in ['ROUGE1', 'ROUGE2', 'ROUGEL']:
+            scores[metric] = Rouge(rouges=[metric.lower()])(refs, hyps)[0]
+        elif metric == 'CIDErRL':
+            scores["CIDErRL"] = CiderDRL(**metric_args).compute_score(refs, hyps)[0]
         elif metric == 'MAUVE':
             scores["MAUVE"] = round(
-                MauveScorer(config.mauve_featurize_model_name or "distilgpt2").compute(refs, hyps) * 100, 2)
+                MauveScorer(config.mauve_featurize_model_name or "distilgpt2")(refs, hyps) * 100, 2)
         elif metric == 'accuracy':
             scores["accuracy"] = round(np.mean(np.array(refs) == np.argmax(hyps, axis=-1)) * 100, 2)
         elif metric == 'f1-score':

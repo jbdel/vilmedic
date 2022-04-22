@@ -203,7 +203,7 @@ class ROUGE(Metric):
             self._total_rouge_n_precisions[n] += precision
             self._total_rouge_n_f1s[n] += f1
 
-        # ROUGE-L
+        # ROUGEL
         self._total_rouge_l_f1 += self._get_rouge_l_score(predictions, gold_targets)
 
         self._total_sequence_count += len(predictions)
@@ -254,9 +254,9 @@ class ROUGE(Metric):
             }
         )
 
-        # ROUGE-L
+        # ROUGEL
         # F1
-        metrics["ROUGE-L"] = self._metric_mean(self._total_rouge_l_f1)
+        metrics["ROUGEL"] = self._metric_mean(self._total_rouge_l_f1)
 
         if reset:
             self.reset()

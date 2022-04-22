@@ -53,6 +53,8 @@ setup(
                       'jsonpickle==2.1.0',
                       'h5py==3.6.0',
                       'tensorboardX==2.5',
+                      ##
+                      'psutil==5.9.0',
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

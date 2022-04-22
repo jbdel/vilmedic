@@ -7,11 +7,11 @@
 #
 # Authors: Ramakrishna Vedantam <vrama91@vt.edu> and Tsung-Yi Lin <tl483@cornell.edu>
 
-from .cider_scorer import CiderScorer
+from .ciderD_RL_scorer import CiderScorer
 import pdb
 
 
-class Cider:
+class CiderDRL:
     """
     Main Class to compute the CIDEr metric
 
@@ -55,4 +55,4 @@ class Cider:
         return score
 
     def method(self):
-        return "CIDEr"
+        return "CIDEr-D"

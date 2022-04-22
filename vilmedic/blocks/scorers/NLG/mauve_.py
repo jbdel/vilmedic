@@ -2,7 +2,7 @@ from mauve.utils import get_model, get_tokenizer, featurize_tokens_from_model
 from mauve.compute_mauve import cluster_feats, get_divergence_curve_for_multinomials, compute_area_under_curve, \
     get_fronter_integral, SimpleNamespace
 import numpy as np
-
+import torch.nn as nn
 
 def compute_mauve(
         p_features, q_features,
@@ -46,13 +46,14 @@ def compute_mauve(
     return to_return
 
 
-class MauveScorer:
+class MauveScorer(nn.Module):
     def __init__(self, model):
+        super().__init__()
         self.model = model
         self.tokenizer = get_tokenizer(self.model)
         self.model = get_model(self.model, self.tokenizer, -1)
 
-    def compute(self, refs, hyps):
+    def forward(self, refs, hyps):
         tokenized_refs = [self.tokenizer.encode(sen, return_tensors='pt', truncation=True, max_length=512)
                           for sen in refs]
         tokenized_hyps = [self.tokenizer.encode(sen, return_tensors='pt', truncation=True, max_length=512)

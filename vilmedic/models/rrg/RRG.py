@@ -12,7 +12,6 @@ class RRG(nn.Module):
 
     def __init__(self, decoder, cnn, **kwargs):
         super().__init__()
-
         # Decoder
         self.dec = DecoderModel(decoder)
 
@@ -44,7 +43,6 @@ class RRG(nn.Module):
     # Necessary for generation
     def encode(self, images, images_mask=None, **kwargs):
         images = images.cuda()
-
         # Single-image forward pass
         if len(images.shape) == 4:
             feature = self.enc(images)
@@ -65,7 +63,6 @@ class RRG(nn.Module):
         # Creating feature-wise attention mask
         feature = rearrange(feature, 'd0 d1 d2 d3 -> d0 (d1 d2) d3')
         feature_mask = (torch.sum(torch.abs(feature), dim=-1) != 0)
-
         return feature, feature_mask
 
     def __repr__(self):

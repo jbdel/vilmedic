@@ -8,19 +8,19 @@ from omegaconf import OmegaConf
 from . import *
 
 REWARD_COMPLIANT = {
-    # "ROUGE1": [ROUGEScorer(rouges=["rouge1"]), 1],
-    # "ROUGE2": [ROUGEScorer(rouges=["rouge1"]), 1],
     "ROUGEL": [Rouge(rouges=['rougeL']), 1],
     "ROUGE2": [Rouge(rouges=['rouge1']), 1],
     "ROUGE1": [Rouge(rouges=['rouge2']), 1],
     "BLEU": [Bleu(), 1],
     "METEOR": [Meteor(), 1],
+    "CiderDRL": [CiderDRL, 1],
     # "MAUVE": [MauveScorer, 0],
     # "radentitymatchexact": [RadEntityMatchExact(), 1],
     # "radentitynli": [RadEntityNLI(), 1],
     # "CheXbert": [CheXbert(), 1],
 
 }
+
 
 def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
     scores = dict()
@@ -49,15 +49,15 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
         f.close()
 
     for metric in metrics:
-        metric_args = dict()
-
-        # if metric has arguments
-        if OmegaConf.is_dict(metric):
-            if len(metric) != 1:
-                logger.warning("Metric badly formatted: {}. Skipping.".format(metric))
-                continue
-            metric_args = metric[list(metric.keys())[0]]
-            metric = list(metric.keys())[0]
+        # metric_args = dict()
+        #
+        # # if metric has arguments
+        # if OmegaConf.is_dict(metric):
+        #     if len(metric) != 1:
+        #         logger.warning("Metric badly formatted: {}. Skipping.".format(metric))
+        #         continue
+        #     metric_args = metric[list(metric.keys())[0]]
+        #     metric = list(metric.keys())[0]
 
         # Iterating over metrics
         if metric == 'BLEU':
@@ -68,8 +68,6 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
             scores["CIDERD"] = CiderD()(refs, hyps)[0]
         elif metric in ['ROUGE1', 'ROUGE2', 'ROUGEL']:
             scores[metric] = Rouge(rouges=[metric.lower()])(refs, hyps)[0]
-        elif metric == 'CIDErRL':
-            scores["CIDErRL"] = CiderDRL(**metric_args).compute_score(refs, hyps)[0]
         elif metric == 'MAUVE':
             scores["MAUVE"] = round(
                 MauveScorer(config.mauve_featurize_model_name or "distilgpt2")(refs, hyps) * 100, 2)

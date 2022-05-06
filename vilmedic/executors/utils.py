@@ -27,6 +27,7 @@ def get_eval_func(models):
     dummy = models[0]
     if isinstance(dummy, nn.DataParallel):
         dummy = dummy.module
+    assert hasattr(dummy, "eval_func")
     return dummy.eval_func
 
 
@@ -50,14 +51,11 @@ def create_optimizer(config, logger, params, state_dict=None):
     return optimizer
 
 
-def create_model(config, dl, logger, state_dict=None):
+def create_model(config, dl, logger, from_training=True, state_dict=None):
     # Create model, give him dataloader also
     config = copy.deepcopy(config.model)
-    model = eval(config.pop('proto'))(**config, dl=dl, logger=logger)
+    model = eval(config.pop('proto'))(**config, dl=dl, logger=logger, from_training=from_training)
     logger.settings('Model {} created'.format(type(model).__name__))
-
-    # eval_func is the method called by the Validator to evaluate the model
-    assert hasattr(model, "eval_func")
 
     if state_dict is not None and "model" in state_dict:
         params = {k.replace('module.', ''): v for k, v in state_dict["model"].items()}
@@ -73,33 +71,41 @@ def create_model(config, dl, logger, state_dict=None):
     return model.cuda()
 
 
-def create_data_loader(config, split, logger, called_by_validator=False):
+def create_data_loader(config, split, logger, called_by_validator=False, called_by_ensemblor=False):
     dataset_config = copy.deepcopy(config.dataset)
-    dataset = eval(dataset_config.proto)(split=split, ckpt_dir=config.ckpt_dir, **dataset_config)
+    # Its important the dataset receive info if call from ensemblor (test time):
+    # split can be train with validation transformation
+    dataset = eval(dataset_config.proto)(split=split,
+                                         ckpt_dir=config.ckpt_dir,
+                                         called_by_ensemblor=called_by_ensemblor,
+                                         **dataset_config)
 
     if hasattr(dataset, 'get_collate_fn'):
         collate_fn = dataset.get_collate_fn()
     else:
         collate_fn = default_collate
 
+    # RandomSampler for train split, during training only
     if split == 'train' and not called_by_validator:
-        logger.settings('DataLoader')
-        logger.info(dataset)
-
         sampler = BatchSampler(
             RandomSampler(dataset),
             batch_size=config.batch_size,
-            drop_last=False)
+            drop_last=config.drop_last or False)
         logger.info('Using' + type(sampler.sampler).__name__)
 
-    else:  # eval or test
+    else:
         sampler = BatchSampler(
             SequentialSampler(dataset),
             batch_size=config.batch_size,
             drop_last=False)
 
+    # Print dataset for training and ensemblor
+    if not called_by_validator or called_by_ensemblor:
+        logger.settings('DataLoader')
+        logger.info(dataset)
+
     return DataLoader(dataset,
-                      num_workers=4,
+                      num_workers=dataset_config.num_workers or 4,
                       collate_fn=collate_fn,
                       batch_sampler=sampler,
                       pin_memory=True)
@@ -141,7 +147,7 @@ class CheckpointSaver(object):
         if ckpt is not None:
             self.current_tag, self.current_epoch = self.extract_tag_and_step(ckpt)
             self.logger.settings(
-                'Resuming checkpoint at epoch {} with tag {}.'.format(self.current_epoch, self.current_tag))
+                'Resuming checkpoint after epoch {} with tag {}.'.format(self.current_epoch + 1, self.current_tag))
 
     def save(self, state_dict, tag, current_epoch):
         if self.current_tag is not None:
@@ -177,13 +183,16 @@ class TrainingScheduler(object):
         self.epoch = 0
         self.early_stop = 0
         self.early_stop_limit = early_stop_limit
-
         self.metric_comp_func = operator.gt
         self.mode = 'max'
         self.current_best_metric = -float('inf')
         self.lr_decay_params = lr_decay_params
+        self.early_stop_metric = early_stop_metric
 
-        if early_stop_metric == 'loss':
+        # 4info: You can decay_on_training_loss and have a early_stop_metric different than training loss
+        self.decay_on_training_loss = self.lr_decay_params.decay_on_training_loss or False
+
+        if early_stop_metric in ['validation_loss', 'training_loss']:
             self.metric_comp_func = operator.lt
             self.mode = 'min'
             self.current_best_metric = float('inf')
@@ -195,8 +204,6 @@ class TrainingScheduler(object):
         def remove_unused_args(func, **kwargs):
             sig = [param.name for param in inspect.signature(func).parameters.values()]
             return {k: v for k, v in kwargs.items() if k in sig}
-
-        self.decay_on_training_loss = self.lr_decay_params.decay_on_training_loss or False
 
         self.lr_decay_params = remove_unused_args(eval(lr_decay_func), **self.lr_decay_params)
         self.scheduler = eval(lr_decay_func)(optimizer, **self.lr_decay_params)
@@ -210,34 +217,27 @@ class TrainingScheduler(object):
         if self.scheduler_name in TrainingScheduler.epoch_step_scheduler:
             self.scheduler.step()
 
-    def eval_step(self, mean_eval_metric=None, total_training_loss=None):
+    def eval_step(self, decay_metric=None, early_stop_score=None):
         ret = {
             "done_training": False,
             "save_state": False,
         }
 
         # LR scheduler
-        if self.scheduler_name in TrainingScheduler.val_step_scheduler:
-            if self.decay_on_training_loss:
-                self.scheduler.step(total_training_loss)
-            elif mean_eval_metric is not None:
-                self.scheduler.step(mean_eval_metric)
-            else:
-                pass
-
-        # If eval has not started, do not compute early stop
-        if mean_eval_metric is None:
-            return ret
+        if decay_metric is not None:
+            if self.scheduler_name in TrainingScheduler.val_step_scheduler:
+                self.scheduler.step(decay_metric)
 
         # Early stop
-        if self.metric_comp_func(mean_eval_metric, self.current_best_metric):
-            self.current_best_metric = mean_eval_metric
-            self.early_stop = 0
-            ret["save_state"] = True
-        else:
-            self.early_stop += 1
-            if self.early_stop == self.early_stop_limit:
-                ret["done_training"] = True
+        if early_stop_score is not None:
+            if self.metric_comp_func(early_stop_score, self.current_best_metric):
+                self.current_best_metric = early_stop_score
+                self.early_stop = 0
+                ret["save_state"] = True
+            else:
+                self.early_stop += 1
+                if self.early_stop == self.early_stop_limit:
+                    ret["done_training"] = True
         return ret
 
     def __repr__(self):

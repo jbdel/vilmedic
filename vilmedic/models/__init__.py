@@ -18,4 +18,7 @@ from vilmedic.models.selfsup.conVIRT import ConVIRT
 from vilmedic.models.selfsup.SimCLR import SimCLR
 from vilmedic.models.selfsup.GLoRIA import GLoRIA
 from vilmedic.models.selfsup.VICREG import VICREG
+from vilmedic.models.selfsup.SwaV import SwaV
+from vilmedic.models.selfsup.PCL import PCL
+from vilmedic.models.selfsup.PCL2 import PCL2
 

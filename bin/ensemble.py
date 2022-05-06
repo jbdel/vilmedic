@@ -68,6 +68,7 @@ def main():
                                      # we give the first evaluation split's dataloader to model
                                      dl=evaluator.splits[0][1],
                                      logger=evaluator.logger,
+                                     from_training=False,
                                      state_dict=torch.load(ckpt)).cuda().eval() for ckpt in ckpts]
 
     # Boom

@@ -7,7 +7,7 @@ if sys.version_info < (3, 8):
 
 setup(
     name='vilmedic',
-    version='1.2.0',
+    version='1.2.1',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -55,6 +55,8 @@ setup(
                       'tensorboardX==2.5',
                       ##
                       'psutil==5.9.0',
+                      'lightning-bolts==0.5.0',
+                      'faiss-gpu',
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

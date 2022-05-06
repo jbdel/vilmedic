@@ -6,7 +6,7 @@ import torch.nn as nn
 from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 from vilmedic.constants import MODEL_ZOO_CACHE_DIR
-from .utils import download_model
+from .utils import download_model, edit_vocab_path_in_dict
 
 from ..models import *
 from ..datasets import *
@@ -31,7 +31,8 @@ MODEL_ZOO = {
     'selfsup/vae-padchest': ["1_b4lwEjgL4W_mw4UAnwqBSjTN1quqCzs", "138 MB"],
     'rrg/biomed-roberta-baseline-mimic': ["1aXxHkzbLdYQpLYvlQLw7NENE7LXgkc1y", "1.8 GB"],
     'rrg/biomed-roberta-baseline-indiana': ["1BzTPf4AMLF_2KGs6RX3W30HyekeUElmW", "1.8 GB"],
-    'rrg/baseline-padchest': ["1COYPFZJTiG5TBlhGSX7GyswXwKL6HAW0", "1.8 GB"],
+    'rrg/baseline-padchest': ["1COYPFZJTiG5TBlhGSX7GyswXwKL6HAW0", "320 MB"],
+    'rrg/baseline-mimic': ["StanfordAIMI/RRG", "320 MB"],
     'rrs/biomed-roberta-baseline-mimic': ["1hmEvUjKOlNsY-xipEgUZOCQm4k9mHgWR", "3.3 GB"],
     'rrs/biomed-roberta-baseline-indiana': ["1xG80gsckbdNvAVhqGo-4Lsvkwk7wy_-v", "3.3 GB"],
     'mvqa/mvqa-imageclef': ["1VmiJEGs-jYNGlbVXGi6uGmdhc06Ps4GF", "970 MB"],
@@ -82,17 +83,20 @@ class AutoModel:
 
         try:
             classname = dataset_config.pop("proto")
+            dataset_config = edit_vocab_path_in_dict(OmegaConf.to_container(dataset_config),
+                                                     "vocab_file",
+                                                     os.path.join(MODEL_ZOO_CACHE_DIR, pretrained_model_name))
             dataset = eval(classname)(split='test', ckpt_dir=None, **dataset_config)
         except NameError:
             raise NameError(
-                "Dataset {} does not exist anymore. Deprecated checkpoint of vilmedic version?".format(classname))
+                "Dataset {} does not exist anymore. Deprecated checkpoint of vilmedic?".format(classname))
 
         try:
             classname = model_config.pop("proto")
             model: nn.Module = eval(classname)(**model_config, dl=DataLoader(dataset), logger=None)
         except NameError:
             raise NameError(
-                "Model {} does not exists anymore. Deprecated checkpoint of vilmedic version?".format(classname))
+                "Model {} does not exists anymore. Deprecated checkpoint of vilmedic?".format(classname))
 
         try:
             model.load_state_dict(state_dict["model"], strict=True)
@@ -100,8 +104,9 @@ class AutoModel:
             print(e)
             raise
 
+        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        model = model.to(device)
         model.eval()
-        model.cuda()
 
         assert hasattr(dataset, "inference"), "Dataset has not implemented an inference function"
 

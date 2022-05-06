@@ -56,7 +56,7 @@ trainor:
   epochs: 99
   early_stop: 10
   eval_start: 0
-  early_stop_metric: loss
+  early_stop_metric: validation_loss
 
 validator:
   batch_size: 8

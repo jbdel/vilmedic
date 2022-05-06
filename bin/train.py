@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -19,7 +20,10 @@ def main():
 
     # If ckpt is specified, we continue training. Lets extract seed
     if config.ckpt is not None:
-        config.ckpt = os.path.join(config.ckpt_dir, config.ckpt)
+        copy_ckpt_path = copy.deepcopy(config.ckpt)
+        if not os.path.exists(config.ckpt):
+            config.ckpt = os.path.join(config.ckpt_dir, config.ckpt)
+        assert os.path.exists(config.ckpt), "Path '{}' or '{}' does not exist".format(copy_ckpt_path, config.ckpt)
         seed = extract_seed_from_ckpt(config.ckpt)
 
     # Create logger according to seed

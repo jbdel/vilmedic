@@ -23,18 +23,20 @@ import torch
 model, processor = AutoModel.from_pretrained("rrg/biomed-roberta-baseline-mimic")
 
 batch = processor.inference(image=[
-    "files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg",
-    "files/p10/p10000032/s50414267/174413ec-4ec4c1f7-34ea26b7-c5f994f8-79ef1962.jpg",
+    ["files/p10/p10000032/s50414267/02aa804e-bde0afdd-112c0b34-7bc16630-4e384014.jpg"],
+    ["files/p10/p10000032/s50414267/174413ec-4ec4c1f7-34ea26b7-c5f994f8-79ef1962.jpg"],
 ])
 
 batch_size = len(batch["images"])
 beam_size = 8
+encoder_output, encoder_attention_mask = model.encode(**batch)
 expanded_idx = torch.arange(batch_size).view(-1, 1).repeat(1, beam_size).view(-1).cuda()
 
 # Using huggingface generate method
 hyps = model.dec.generate(
     input_ids=torch.ones((len(batch["images"]), 1), dtype=torch.long).cuda() * model.dec.config.bos_token_id,
-    encoder_hidden_states=model.encode(**batch).index_select(0, expanded_idx),
+    encoder_hidden_states=encoder_output.index_select(0, expanded_idx),
+    encoder_attention_mask=encoder_attention_mask.index_select(0, expanded_idx),
     num_return_sequences=1,
     max_length=processor.tokenizer_max_len,
     num_beams=8,

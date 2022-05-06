@@ -31,7 +31,8 @@ class InitTrainor(object):
         self.dl = create_data_loader(self.config, split='train', logger=self.logger)
 
         # Model
-        self.model = create_model(self.config, dl=self.dl, logger=self.logger, state_dict=self.state)
+        self.model = create_model(self.config, dl=self.dl, logger=self.logger, from_training=True,
+                                  state_dict=self.state)
 
         # Optimizer
         self.optimizer = create_optimizer(config=self.config, logger=self.logger, params=self.model.parameters(),
@@ -45,7 +46,9 @@ class InitTrainor(object):
         self.scaler = create_scaler(config=self.config, logger=self.logger, state_dict=self.state)
 
         # Training
-        self.eval_start = self.config.eval_start
+        self.eval_start = self.config.eval_start or 0
+        self.decay_metric_start = self.config.decay_metric_start or 0
+        self.early_stop_start = self.config.early_stop_start or 0
         self.grad_accu = self.config.grad_accu or 1
         self.clip_grad_norm = self.config.clip_grad_norm
 
@@ -64,16 +67,12 @@ class Trainor(InitTrainor):
 
             losses = []
             log = ""
-            do_eval = epoch > self.eval_start - 1
             pbar = tqdm.tqdm(self.dl, total=len(self.dl))
 
             # Training
             for iteration, batch in enumerate(pbar, start=1):
                 with torch.cuda.amp.autocast(enabled=self.scaler.is_enabled()):
-                    if type(batch) is dict:
-                        out = self.model(**batch)
-                    else:
-                        out = self.model(batch)
+                    out = self.model(**batch, epoch=epoch, iteration=iteration)
 
                 # If the model is taking care of it own training
                 if 'loss' not in out:
@@ -101,7 +100,7 @@ class Trainor(InitTrainor):
                         epoch + 1,
                         [param_group['lr'] for param_group in self.optimizer.param_groups],
                         sum(losses) / iteration,
-                        self.config.early_stop_metric,
+                        self.training_scheduler.early_stop_metric,
                         self.training_scheduler.current_best_metric,
                         self.training_scheduler.early_stop,
                         out["custom_print"] if "custom_print" in out else ""
@@ -123,14 +122,34 @@ class Trainor(InitTrainor):
             self.logger.info(log)
             self.training_scheduler.epoch_step()
 
-            # Evaluation
-            mean_eval_metric = None
+            # Evaluation starts
+            early_stop_score = None
+            decay_metric = None
+            do_earl_stop = epoch + 1 >= self.early_stop_start
+            do_lr_decay = epoch + 1 >= self.decay_metric_start
+            do_eval = epoch + 1 >= self.eval_start
+            training_loss = sum(losses) / iteration
+
+            # Compute early_stop_score according to early_stop_metric if specified
+            if self.config.early_stop_metric == "training_loss" and do_earl_stop:
+                early_stop_score = training_loss
+
+            # Do eval ?
             if do_eval:
                 self.evaluator.epoch = epoch
                 self.evaluator.start()
-                mean_eval_metric = np.mean([s[self.config.early_stop_metric] for s in self.evaluator.scores])
+                # Compute early stop according to evaluation metric if specified
+                if self.config.early_stop_metric != "training_loss" and do_earl_stop:
+                    early_stop_score = np.mean([s[self.config.early_stop_metric] for s in self.evaluator.scores])
 
-            ret = self.training_scheduler.eval_step(mean_eval_metric, total_training_loss=sum(losses) / iteration)
+            # Record decay_metric (will not be used further if scheduler != ReduceLROnPlateau)
+            if do_lr_decay:
+                if self.training_scheduler.decay_on_training_loss:
+                    decay_metric = training_loss
+                else:
+                    decay_metric = early_stop_score
+
+            ret = self.training_scheduler.eval_step(decay_metric=decay_metric, early_stop_score=early_stop_score)
 
             if ret["done_training"]:
                 self.logger.info("Early stopped reached")
@@ -142,6 +161,6 @@ class Trainor(InitTrainor):
                                             "config": self.config,
                                             "scaler": self.scaler.state_dict()
                                             },
-                                tag=mean_eval_metric,
-                                current_epoch=epoch,
+                                tag=early_stop_score,
+                                current_epoch=epoch + 1,
                                 )

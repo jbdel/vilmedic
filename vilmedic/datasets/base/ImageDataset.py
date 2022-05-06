@@ -6,16 +6,55 @@ import PIL
 import skimage
 import logging
 
+from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
 import torchxrayvision as xrv
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
 from torchvision.transforms import *
 from .utils import load_file
 from .papers.open_image import *
+from .papers.transforms import *
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
 logging.getLogger('PIL').setLevel(logging.WARNING)
+
+
+def vilmedic_collate(batch, multi_image=None):
+    # vilmedic_collate only accepts list of tensors (list of images that are transformed)
+
+    # Return one image
+    if not multi_image or multi_image == 1:
+        return {'images': torch.stack([s['image'][0] for s in batch])}
+
+    # Return multiple image
+    new_batch = []
+    new_masks = []
+    for sample in batch:
+        sample_images = sample['image']
+        # Remove image to get to multi_image
+        if len(sample_images) > multi_image:
+            sample_images = sample_images[:multi_image]
+        # Pad with zeros to get to multi_image
+        if len(sample_images) < multi_image:
+            first_image = sample_images[0]
+            for _ in range(multi_image - len(sample_images)):
+                sample_images.append(first_image.new_zeros(first_image.size()))
+        # Stack
+        sample_images = torch.cat([s.unsqueeze(dim=0) for s in sample_images], dim=0)
+        sample_mask = (sample_images.sum(dim=(1, 2, 3)) != 0)
+        new_batch.append(sample_images)
+        new_masks.append(sample_mask)
+
+    collated = {'images': torch.stack(new_batch),
+                'images_mask': torch.stack(new_masks)}
+    return collated
+
+
+def default_collate(batch):
+    collated = {'images': pytorch_default_collate([s['image'][0] for s in batch]),
+                'images_mask': None}
+    return collated
 
 
 def read_images(root, image_path, split, file):
@@ -23,12 +62,19 @@ def read_images(root, image_path, split, file):
     return [[os.path.join(image_path, image) for image in line.split(',')] for line in lines]
 
 
-def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext):
+def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext, called_by_ensemblor):
+    # If called_by_ensemblor, return custom_transform_val or evaluation transform
+    if called_by_ensemblor:
+        split = not "train"
+
+    if custom_transform_train is not None and split == "train":
+        return eval(custom_transform_train)
+
+    if custom_transform_val is not None and not split == "train":
+        return eval(custom_transform_val)
+
     if ext in [".npy", ".npz"]:
         return lambda x: x
-
-    assert not (custom_transform_train is not None and (ext in ['.xrv'])), \
-        'Cant specify custom transform when using xrv'
 
     if ext == '.xrv':
         return transforms.Compose([xrv.datasets.XRayCenterCrop(),
@@ -42,15 +88,13 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406),
-                                 (0.229, 0.224, 0.225))]) if custom_transform_train is None else eval(
-            custom_transform_train)
+                                 (0.229, 0.224, 0.225))])
     else:
         return transforms.Compose([
             transforms.Resize((crop, crop)),
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406),
-                                 (0.229, 0.224, 0.225))]) if custom_transform_val is None else eval(
-            custom_transform_val)
+                                 (0.229, 0.224, 0.225))])
 
 
 def open_image(image, ext):
@@ -103,6 +147,7 @@ class ImageDataset(Dataset):
                  crop=224,
                  ext='.jpg',
                  multi_image=None,
+                 called_by_ensemblor=None,
                  **kwargs):
 
         assert split is not None, "Argument split cant be None"
@@ -126,7 +171,8 @@ class ImageDataset(Dataset):
                                         self.crop,
                                         custom_transform_train,
                                         custom_transform_val,
-                                        self.ext)
+                                        self.ext,
+                                        called_by_ensemblor)
 
     def __len__(self):
         return len(self.images or [])
@@ -142,32 +188,10 @@ class ImageDataset(Dataset):
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            # Return one image
-            if not self.multi_image or self.multi_image == 1:
-                return {'images': torch.stack([s['image'][0] for s in batch])}
-
-            # Return multiple image
-            new_batch = []
-            new_masks = []
-            for sample in batch:
-                sample_images = sample['image']
-                # Remove image to get to self.multi_image
-                if len(sample_images) > self.multi_image:
-                    sample_images = sample_images[:self.multi_image]
-                # Pad with zeros to get to self.multi_image
-                if len(sample_images) < self.multi_image:
-                    first_image = sample_images[0]
-                    for _ in range(self.multi_image - len(sample_images)):
-                        sample_images.append(first_image.new_zeros(first_image.size()))
-                # Stack
-                sample_images = torch.cat([s.unsqueeze(dim=0) for s in sample_images], dim=0)
-                sample_mask = (sample_images.sum(dim=(1, 2, 3)) != 0)
-                new_batch.append(sample_images)
-                new_masks.append(sample_mask)
-
-            collated = {'images': torch.stack(new_batch),
-                        'images_mask': torch.stack(new_masks)}
-            return collated
+            try:
+                return vilmedic_collate(batch, self.multi_image)
+            except TypeError:
+                return default_collate(batch)
 
         return collate_fn
 

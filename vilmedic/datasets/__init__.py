@@ -6,3 +6,4 @@ from .ImSeq import ImSeq
 from .base.ImageDataset import ImageDataset
 from .base.TextDataset import TextDataset
 from .base.LabelDataset import LabelDataset
+from .base.papers.IndexDataset import IndexDataset

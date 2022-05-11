@@ -67,7 +67,8 @@ class AutoModel:
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))
         assert len(checkpoint) == 1, "More than one or no checkpoint found"
-        state_dict = torch.load(checkpoint[0])
+
+        state_dict = torch.load(checkpoint[0]) if torch.cuda.is_available() else torch.load(checkpoint[0], map_location=torch.device('cpu'))
 
         try:
             config = OmegaConf.load(os.path.join(checkpoint_dir, 'config.yml'))

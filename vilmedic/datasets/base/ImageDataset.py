@@ -202,6 +202,7 @@ class ImageDataset(Dataset):
 
         return "ImageDataset\n" + \
                json.dumps({
+                   "split": self.split,
                    "image_path": self.image_path,
                    "root": self.root,
                    "file": self.file,

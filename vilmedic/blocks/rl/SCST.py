@@ -1,9 +1,14 @@
 import torch
 from vilmedic.blocks.scorers.scores import REWARD_COMPLIANT
+from omegaconf.listconfig import ListConfig
 import inspect
 import torch.nn.functional as F
 import json
+import numpy as np
 
+
+# scst loss intuition:
+# https://ai.stackexchange.com/questions/2405/how-do-i-handle-negative-rewards-in-policy-gradients-with-the-cross-entropy-loss
 
 def scst_loss(input,
               seq,
@@ -11,43 +16,31 @@ def scst_loss(input,
               reward_greedy,
               scores_weights,
               pad_token_id):
-    N, L = input.shape[:2]
     # HuggingFace TopKLogitsWarper (if top_k > 0) puts -float('inf') for non top_k (or if we use bad_words_ids)
     # Padding can then have logits -float('inf') though we have to pad because hyp generation is finished
-    # -float('inf') * 0 masking results in NaN so that doesnt mitigate the issue. need to do:
+    # masking -float('inf') * 0 results in NaN s, therefore need to do:
     input[input == -float("Inf")] = 0.
     #####
-    delta_reward = [torch.tensor(rs).cuda() - torch.tensor(rg).cuda() for rs, rg in zip(reward_sampling, reward_greedy)]
-    reward = delta_reward[0]
 
-    # reward
-
-    def other(input, reward, mask):
-        input = input.squeeze(-1)
-        input = input * mask
-        input = input / torch.sum(mask)
-
-        loss = [scores_weights[i] * (-input * r.view(N, 1).expand_as(input)) for i, r in enumerate(reward)]
-        loss = sum([torch.sum(l) for l in loss])
-        print("here", (loss))
-
-    other(input, delta_reward, (seq > pad_token_id).float())
-    reward = reward.view(N, 1, 1).expand_as(input)
-    input = -input * reward
-
-    # masking
+    # Masked logits
     mask = (seq > pad_token_id).float()
-    output = input.view(-1) * mask.view(-1)
+    input = input.squeeze(-1)
+    input = input * mask
+    input = input / torch.sum(mask)
 
-    # mean
-    output = torch.sum(output) / torch.sum(mask)
-    print(output)
-    troll
-    #
-    # for rs, rg in zip(reward_sampling, reward_greedy):
-    #     delta_reward = torch.tensor(reward_sampling).cuda() - torch.tensor(reward_greedy).cuda()
+    # SCST Loss
+    delta_rewards = [torch.tensor(rs).cuda() - torch.tensor(rg).cuda() for rs, rg in
+                     zip(reward_sampling, reward_greedy)]
+    loss = [scores_weights[i] * (-input * r.unsqueeze(-1).expand_as(input)) for i, r in enumerate(delta_rewards)]
+    # Compute mean loss
+    #  Double sum: sum words, then sum sentences. Division is done beforehand 'input = input / torch.sum(mask)'
+    loss = sum([torch.sum(l) for l in loss])
 
-    return output, delta_rewatd
+    # Stats
+    delta_reward = torch.mean(torch.stack(delta_rewards))
+    delta_reward_per_metric = torch.mean(torch.stack(delta_rewards), dim=-1)
+
+    return loss, delta_reward, delta_reward_per_metric
 
 
 class SCST:
@@ -64,7 +57,7 @@ class SCST:
         self.scores_args = scores_args
         self.scores_weights = scores_weights
 
-        if not isinstance(scores, list):
+        if not isinstance(scores, (list, ListConfig)):
             scores = [scores]
 
         assert all([score in REWARD_COMPLIANT for score in scores]), "{} not in {}".format(scores,
@@ -72,14 +65,14 @@ class SCST:
         # Scores weights
         if len(scores) > 1:
             assert scores_weights is not None, "You need to mention scores_weights"
-            assert isinstance(scores_weights, list), "scores_weights must be a list"
+            assert isinstance(scores_weights, (list, ListConfig)), "scores_weights must be a list"
             assert len(scores_weights) == len(scores), "You need to mention as much scores_weights as scores"
         else:
             self.scores_weights = [1.0]
 
         # Scores args
         if scores_args is not None:
-            if not isinstance(scores_args, list):
+            if not isinstance(scores_args, (list, ListConfig)):
                 scores_args = [scores_args]
             assert len(scores_args) == len(scores), \
                 "You need to mention as much scores_args as scores (i.e. [{arg1:value}, {}, {arg1:value}])"
@@ -92,6 +85,8 @@ class SCST:
             scorer, scorer_index = REWARD_COMPLIANT[score]
             if self.scores_args[index] is not None:
                 scorer = scorer(**self.scores_args[index])
+            else:
+                scorer = scorer()
             self.scorers.append(scorer)
             self.scorers_index.append(scorer_index)
 
@@ -141,13 +136,13 @@ class SCST:
         sampled_logits = logits.gather(2, sampled_ids.unsqueeze(-1))
 
         reward_sampling, hyp_list, _ = self.get_reward(sampled_ids.data, input_ids)
-        loss, delta_reward = scst_loss(sampled_logits,
-                                       sampled_ids.data,
-                                       reward_sampling,
-                                       reward_greedy,
-                                       self.scores_weights,
-                                       self.pad_token_id)
-        return loss, delta_reward, reward_sampling, hyp_list
+        loss, delta_reward, delta_reward_per_metric = scst_loss(sampled_logits,
+                                                                sampled_ids.data,
+                                                                reward_sampling,
+                                                                reward_greedy,
+                                                                self.scores_weights,
+                                                                self.pad_token_id)
+        return loss, delta_reward, delta_reward_per_metric, reward_sampling, hyp_list
 
     def get_reward(self, rollout_input_ids, input_ids):
         hyp_list = []

@@ -170,11 +170,10 @@ class CheckpointSaver(object):
 
 
 class TrainingScheduler(object):
-    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "LinearWarmupCosineAnnealingLR", "CosineAnnealingLR",
-                           "CosineAnnealingWarmRestarts"}
+    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "CosineAnnealingWarmRestarts"}
     epoch_step_scheduler = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", "ConstantLR", "LinearLR",
-                            "ExponentialLR", "ChainedScheduler", "SequentialLR",
-                            }
+                            "ExponentialLR", "ChainedScheduler", "SequentialLR", "CosineAnnealingLR",
+                            "LinearWarmupCosineAnnealingLR"}
     val_step_scheduler = {"ReduceLROnPlateau"}
 
     def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, lr_decay_params):

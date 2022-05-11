@@ -52,7 +52,7 @@ class RRG_SCST(nn.Module):
         # 2. Sampling
         self.model.train()
         encoder_hidden_states, encoder_attention_mask = self.model.encode(images.cuda(), images_mask, **kwargs)
-        loss, delta_reward, reward_sampling, sampling_hyp_list = self.scst.forward_sampling(
+        loss, delta_reward, delta_reward_per_metric, reward_sampling, sampling_hyp_list = self.scst.forward_sampling(
             input_ids=input_ids,
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=encoder_attention_mask,
@@ -63,10 +63,9 @@ class RRG_SCST(nn.Module):
         return {"loss": loss,
                 "custom_print": "reward_sampling {}, "
                                 "delta_reward: {},"
-                                "sample_hyp[0]: {},".format(
-                    np.mean(reward_sampling),
-                    torch.mean(delta_reward),
-                    sampling_hyp_list[0]),
+                                "sample_hyp[0]: {},".format(torch.mean(torch.tensor(reward_sampling)),
+                                                            torch.mean(torch.tensor(delta_reward)),
+                                                            sampling_hyp_list[0]),
                 }
 
     def __repr__(self):

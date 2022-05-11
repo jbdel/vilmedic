@@ -7,7 +7,7 @@ if sys.version_info < (3, 8):
 
 setup(
     name='vilmedic',
-    version='1.2.1',
+    version='1.2.6',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -18,7 +18,7 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='medical nlp deep-learning pytorch',
-    python_requires='==3.9',
+    python_requires='>=3.8',
     setup_requires="Cython",
     install_requires=['appdirs==1.4.4',
                       'omegaconf==2.0.6',

@@ -8,6 +8,8 @@ import numpy as np
 from omegaconf import OmegaConf
 from pl_bolts.models.self_supervised.swav.swav_resnet import resnet18, resnet50
 import copy
+from torchvision.models.utils import load_state_dict_from_url
+from torchvision.models.resnet import model_urls
 
 
 def sinkhorn(Q, nmb_iters):
@@ -83,6 +85,7 @@ class SwaV(nn.Module):
             maxpool1=self.maxpool1,
         )
 
+        self.model.load_state_dict(state_dict=load_state_dict_from_url(model_urls[arch], progress=True), strict=False)
         self.softmax = nn.Softmax(dim=1)
 
         # Evaluation

@@ -8,11 +8,11 @@ from omegaconf import OmegaConf
 from . import *
 
 REWARD_COMPLIANT = {
-    "ROUGEL": [Rouge(rouges=['rougeL']), 1],
-    "ROUGE2": [Rouge(rouges=['rouge1']), 1],
-    "ROUGE1": [Rouge(rouges=['rouge2']), 1],
-    "BLEU": [Bleu(), 1],
-    "METEOR": [Meteor(), 1],
+    "ROUGEL": [RougeL, 1],
+    "ROUGE2": [Rouge2, 1],
+    "ROUGE1": [Rouge1, 1],
+    "BLEU": [Bleu, 1],
+    "METEOR": [Meteor, 1],
     "CiderDRL": [CiderDRL, 1],
     # "MAUVE": [MauveScorer, 0],
     # "radentitymatchexact": [RadEntityMatchExact(), 1],

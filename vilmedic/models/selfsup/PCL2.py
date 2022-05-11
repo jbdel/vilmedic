@@ -164,7 +164,7 @@ def evaluation(models, config, dl, **kwargs):
 class PCL2(nn.Module):
     EVAL_FEATURES = None
 
-    def __init__(self, config, clustering_epoch_start, dl, **kwargs):
+    def __init__(self, config, clustering_epoch_start, dl, gradient_accumulation=False, **kwargs):
         super().__init__()
 
         self.clustering_epoch_start = clustering_epoch_start
@@ -192,8 +192,21 @@ class PCL2(nn.Module):
 
         # Loss
         self.criterion = nn.CrossEntropyLoss()
+        self.gradient_accumulation = gradient_accumulation
 
     def forward(self, images, index, eval_mode=False, epoch=None, **kwargs):
+        if eval_mode or not self.gradient_accumulation:
+            return self.forward_accumulation(images, index, eval_mode=eval_mode, epoch=epoch, **kwargs)
+        else:
+            bs = images.shape[0]
+            images = torch.chunk(images, 2, dim=0)
+            index = [index[:bs // 2], index[bs // 2:]]
+            loss = 0
+            for image, ind in zip(images, index):
+                loss += self.forward_accumulation(image, ind, eval_mode=eval_mode, epoch=epoch, **kwargs)["loss"]
+            return {"loss": loss}
+
+    def forward_accumulation(self, images, index, eval_mode=False, epoch=None, **kwargs):
         if eval_mode:
             return {"visual": self.projection(self.visual(images.cuda()))}
 

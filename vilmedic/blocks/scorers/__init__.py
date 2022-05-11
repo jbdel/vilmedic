@@ -1,4 +1,4 @@
-from .NLG.rouge.rouge import Rouge
+from .NLG.rouge.rouge import Rouge, Rouge1, Rouge2, RougeL
 from .NLG.bleu.bleu import Bleu
 from .NLG.meteor.meteor import Meteor
 from .NLG.ciderD.ciderD import CiderD

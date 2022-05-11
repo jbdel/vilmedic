@@ -25,3 +25,18 @@ class Rouge(nn.Module):
         # print(aggregator.aggregate())
         f1_rouge = [s[self.rouges[0]].fmeasure for s in scores]
         return np.mean(f1_rouge), f1_rouge
+
+
+class Rouge1(Rouge):
+    def __init__(self):
+        super(Rouge1, self).__init__(rouges=['rouge1'])
+
+
+class Rouge2(Rouge):
+    def __init__(self):
+        super(Rouge2, self).__init__(rouges=['rouge2'])
+
+
+class RougeL(Rouge):
+    def __init__(self):
+        super(RougeL, self).__init__(rouges=['rougeL'])

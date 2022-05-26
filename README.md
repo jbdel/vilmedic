@@ -127,12 +127,24 @@ ViLMedic replicates solutions from the multimodal medical literature.
 If you use ViLMedic in your work or use any models published in ViLMedic, please cite:
 
 ```bibtex
-@misc{Delbrouck2021ViLmedic,
-  author =       {Jean-Benoit Delbrouck and Khaled Saab and Juan Manuel Zambrano Chaves and Pierre Joseph Marcel Chambon and Sabri Eyuboglu
- and Maya Varma and Jared Alexander Dunnmon and Curtis Langlotz and Akshay Chaudhari and Daniel Rubin},
-  title =        {ViLMedic: A multimodal framework for vision and language medical research},
-  howpublished = {\url{https://github.com/jbdel/vilmedic}},
-  year =         {2021}
+@inproceedings{delbrouck-etal-2022-vilmedic,
+    title = "{V}i{LM}edic: a framework for research at the intersection of vision and language in medical {AI}",
+    author = "Delbrouck, Jean-benoit  and
+      Saab, Khaled  and
+      Varma, Maya  and
+      Eyuboglu, Sabri  and
+      Chambon, Pierre  and
+      Dunnmon, Jared  and
+      Zambrano, Juan  and
+      Chaudhari, Akshay  and
+      Langlotz, Curtis",
+    booktitle = "Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+    month = may,
+    year = "2022",
+    address = "Dublin, Ireland",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.acl-demo.3",
+    pages = "23--34",
 }
 ```
 

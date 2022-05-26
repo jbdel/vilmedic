@@ -1,3 +1,6 @@
+<p align="center">
+  <a href="https://huggingface.co/spaces/StanfordAIMI/RRG_SPACE"> <b>New!🔥 </b> Checkout our live radiology report generation 📝 space on HuggingFace🤗</a>
+</p>
 
 <p align="center">
   <img src="docs/logo.png" width="190px">

@@ -25,11 +25,10 @@ class RRG(nn.Module):
         self.eval_func = evaluation
 
     def forward(self, input_ids, attention_mask, images, images_mask=None, encoder_outputs=None,
-                encoder_attention_mask=None, **kwargs):
+                encoder_attention_mask=None, epoch=None, iteration=None, **kwargs):
         if torch.cuda.is_available():
             input_ids = input_ids.cuda()
             attention_mask = attention_mask.cuda()
-            images_mask = images_mask.cuda()
 
         if encoder_outputs is None:
             encoder_outputs, encoder_attention_mask = self.encode(images, images_mask, **kwargs)
@@ -46,7 +45,6 @@ class RRG(nn.Module):
     def encode(self, images, images_mask=None, **kwargs):
         if torch.cuda.is_available():
             images = images.cuda()
-            images_mask = images_mask.cuda()
 
         # Single-image forward pass
         if len(images.shape) == 4:
@@ -55,6 +53,8 @@ class RRG(nn.Module):
             return feature, feature_mask
 
         assert len(images.shape) == 5, "wrong images shape"
+        if torch.cuda.is_available():
+            images_mask = images_mask.cuda()
 
         # Multi-image forward pass
         images = rearrange(images, 'd0 d1 d2 d3 d4 -> (d0 d1) d2 d3 d4')

@@ -7,7 +7,7 @@ if sys.version_info < (3, 8):
 
 setup(
     name='vilmedic',
-    version='1.2.6',
+    version='1.2.8',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -29,7 +29,7 @@ setup(
                       'scikit_image==0.18.2',
                       'scikit-learn==0.24.2',
                       'pydicom==2.2.0',
-                      'transformers==4.17.0',
+                      'transformers==4.18.0',
                       'seaborn==0.11.1',
                       'dalle-pytorch==1.4.2',
                       'torchxrayvision==0.0.32',
@@ -39,7 +39,7 @@ setup(
                       'pytorch-lightning==1.4.2',
                       'pytorch-metric-learning==0.9.99',
                       'torch-optimizer==0.1.0',
-                      'umap-learn==0.5.2',
+                      'umap-learn',
                       'opencv-python==4.5.4.60',
                       'mauve-text',
                       'numba==0.54.1',

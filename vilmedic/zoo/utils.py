@@ -32,21 +32,29 @@ def download_images(data_name, file_id, unzip_dir):
     print('{} already exists'.format(target_dir))
 
 
-def download_model(file_id, unzip_dir):
-    if not os.path.exists(unzip_dir):
-        os.makedirs(unzip_dir, exist_ok=True)
-    # is HuggingFace repo
-    if '/' in file_id:
-        files = list(set(list_repo_files(repo_id=file_id)).difference({'README.md', '.gitattributes'}))
+def download_model(repo_id, cache_dir, filename=None):
+    # creating cache_dir
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+
+    # is HuggingFace repo ?
+    if '/' in repo_id:
+        # Single file or whole repo?
+        if filename is not None:
+            files = [filename]
+        else:
+            files = list(set(list_repo_files(repo_id=repo_id)).difference({'README.md', '.gitattributes'}))
+
+        # Download
         for f in files:
             try:
-                hf_hub_download(file_id, filename=f, cache_dir=unzip_dir, force_filename=f)
+                hf_hub_download(repo_id=repo_id, filename=f, cache_dir=cache_dir, force_filename=f)
             except Exception as e:
                 print(e)
 
-    else:  # Otherwise gdrive
-        gdown.download_folder(id=file_id,
-                              output=unzip_dir,
+    else:  # Otherwise gdrive, full repo
+        gdown.download_folder(id=repo_id,
+                              output=cache_dir,
                               quiet=False)
 
 

@@ -36,7 +36,7 @@ class MAE(nn.Module):
         self.to_pixels = nn.Linear(decoder_dim, pixel_values_per_patch)
 
     def forward(self, img):
-        device = img.device
+        resisc45_images/test/ = img.device
 
         # get patches
 

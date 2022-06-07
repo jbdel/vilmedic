@@ -9,7 +9,7 @@ logging.getLogger("stanza").setLevel(logging.WARNING)
 
 
 class RadEntityMatchExact(nn.Module):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
         self.ner = Pipeline(lang='en', package='radiology', processors={'tokenize': 'default', 'ner': 'radiology'},
                             **{'tokenize_batch_size': 256, 'ner_batch_size': 256})

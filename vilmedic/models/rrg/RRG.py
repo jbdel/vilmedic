@@ -26,8 +26,10 @@ class RRG(nn.Module):
 
     def forward(self, input_ids, attention_mask, images, images_mask=None, encoder_outputs=None,
                 encoder_attention_mask=None, **kwargs):
-        input_ids = input_ids.cuda()
-        attention_mask = attention_mask.cuda()
+        if torch.cuda.is_available():
+            input_ids = input_ids.cuda()
+            attention_mask = attention_mask.cuda()
+            images_mask = images_mask.cuda()
 
         if encoder_outputs is None:
             encoder_outputs, encoder_attention_mask = self.encode(images, images_mask, **kwargs)
@@ -42,7 +44,10 @@ class RRG(nn.Module):
 
     # Necessary for generation
     def encode(self, images, images_mask=None, **kwargs):
-        images = images.cuda()
+        if torch.cuda.is_available():
+            images = images.cuda()
+            images_mask = images_mask.cuda()
+
         # Single-image forward pass
         if len(images.shape) == 4:
             feature = self.enc(images)
@@ -58,8 +63,9 @@ class RRG(nn.Module):
         # Masking features of empty images
         num_images = images.shape[1]
         feature = feature.view(int(feature.shape[0] / num_images), num_images, feature.shape[-2], feature.shape[-1])
-        feature = feature * images_mask.unsqueeze(-1).unsqueeze(-1).cuda()
-
+        feature = feature * images_mask.unsqueeze(-1).unsqueeze(-1)
+        if torch.cuda.is_available():
+            feature = feature.cuda()
         # Creating feature-wise attention mask
         feature = rearrange(feature, 'd0 d1 d2 d3 -> d0 (d1 d2) d3')
         feature_mask = (torch.sum(torch.abs(feature), dim=-1) != 0)

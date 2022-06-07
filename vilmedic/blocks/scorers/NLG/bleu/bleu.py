@@ -13,7 +13,7 @@ from .bleu_scorer import BleuScorer
 
 
 class Bleu(nn.Module):
-    def __init__(self, n=4):
+    def __init__(self, n=4, **kwargs):
         # default compute Blue score up to 4
         super().__init__()
         self._n = n

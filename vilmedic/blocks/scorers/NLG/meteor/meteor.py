@@ -29,7 +29,7 @@ def dec(s):
 
 class Meteor(nn.Module):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         # Used to guarantee thread safety
         super().__init__()
         self.lock = threading.Lock()

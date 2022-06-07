@@ -15,7 +15,7 @@ class CiderDRL:
 
     """
 
-    def __init__(self, n=4, sigma=6.0, df="corpus"):
+    def __init__(self, n=4, sigma=6.0, df="corpus", **kwargs):
         # set cider to sum over 1 to 4-grams
         super().__init__()
         self._n = n

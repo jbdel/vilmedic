@@ -13,7 +13,8 @@ from vilmedic.blocks.rl.SCST import SCST
 
 
 def evaluation(models, config, dl, **kwargs):
-    models = [m.model for m in models]  # Get trained RRG instance
+    models = [m.model if not isinstance(m, nn.DataParallel) else m.module.model for m in
+              models]  # Get trained RRG instance
     return evaluation_(models, config, dl, **kwargs)
 
 
@@ -59,7 +60,6 @@ class RRG_SCST(nn.Module):
             reward_greedy=reward_greedy
         )
 
-        # https://discuss.pytorch.org/t/check-gradient-flow-in-network/15063/7
         return {"loss": loss,
                 "custom_print": "reward_sampling {}, "
                                 "delta_reward: {},"

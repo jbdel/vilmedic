@@ -34,7 +34,7 @@ def exact_entity_token_match_reward(hypothesis_annotation_list,
         1 for x in reference_entity_token_list
         if x in hypothesis_entity_token_list
     ]) / len(reference_entity_token_list)
-    f1_score = 2 * precision * recall / (precision + recall)
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
@@ -54,12 +54,14 @@ def exact_entity_token_and_label_match_reward(hypothesis_annotation_list,
     precision = sum([
         1 for x in hypothesis_entity_token_and_label_list
         if x in reference_entity_token_and_label_list
-    ]) / len(hypothesis_entity_token_and_label_list)
+    ]) / len(hypothesis_entity_token_and_label_list) if len(hypothesis_entity_token_and_label_list) > 0 else 0.0
+
     recall = sum([
         1 for x in reference_entity_token_and_label_list
         if x in hypothesis_entity_token_and_label_list
-    ]) / len(reference_entity_token_and_label_list)
-    f1_score = 2 * precision * recall / (precision + recall)
+    ]) / len(reference_entity_token_and_label_list) if len(reference_entity_token_and_label_list) > 0 else 0.0
+
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
@@ -68,7 +70,6 @@ def exact_entity_token_and_label_match_reward(hypothesis_annotation_list,
 # Not to be tested
 def exact_entity_label_if_correct_token_match_reward(
         hypothesis_annotation_list, reference_annotation_list):
-
     hypothesis_entity_token_and_label_list = set(
         map(lambda x: (x['tokens'], x['label']),
             hypothesis_annotation_list['entities'].values()))
@@ -96,14 +97,14 @@ def exact_entity_label_if_correct_token_match_reward(
     precision = sum([
         1 for x in hypothesis_entity_token_and_label_list
         if x in reference_entity_token_and_label_list
-    ]) / len(hypothesis_entity_token_and_label_list)
+    ]) / len(hypothesis_entity_token_and_label_list) if len(hypothesis_entity_token_and_label_list) > 0 else 0.0
 
     recall = sum([
         1 for x in reference_entity_token_and_label_list
         if x in hypothesis_entity_token_and_label_list
-    ]) / len(reference_entity_token_and_label_list)
+    ]) / len(reference_entity_token_and_label_list) if len(reference_entity_token_and_label_list) > 0 else 0.0
 
-    f1_score = 2 * precision * recall / (precision + recall)
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
@@ -111,7 +112,6 @@ def exact_entity_label_if_correct_token_match_reward(
 # Test alone, maybe best one ?
 def partially_exact_entity_token_and_label_match_reward(
         hypothesis_annotation_list, reference_annotation_list):
-
     hypothesis_entity_token_and_label_list = set(
         map(lambda x: (x['tokens'], x['label']),
             hypothesis_annotation_list['entities'].values()))
@@ -127,24 +127,26 @@ def partially_exact_entity_token_and_label_match_reward(
             reference_annotation_list['entities'].values()))
 
     precision = sum([
-        1 for (x, y) in hypothesis_entity_token_and_label_list if
-        (x, y) in reference_entity_token_and_label_list
-    ] + [
-        0.5 for (x, y) in hypothesis_entity_token_and_label_list if (
-            ((x, y) not in reference_entity_token_and_label_list) and
-            (x in reference_entity_token_list))
-    ]) / len(hypothesis_entity_token_and_label_list)
+                        1 for (x, y) in hypothesis_entity_token_and_label_list if
+                        (x, y) in reference_entity_token_and_label_list
+                    ] + [
+                        0.5 for (x, y) in hypothesis_entity_token_and_label_list if (
+                ((x, y) not in reference_entity_token_and_label_list) and
+                (x in reference_entity_token_list))
+                    ]) / len(hypothesis_entity_token_and_label_list) if len(
+        hypothesis_entity_token_and_label_list) > 0 else 0.0
 
     recall = sum([
-        1 for (x, y) in reference_entity_token_and_label_list if
-        (x, y) in hypothesis_entity_token_and_label_list
-    ] + [
-        0.5 for (x, y) in reference_entity_token_and_label_list if (
-            ((x, y) not in hypothesis_entity_token_and_label_list) and
-            (x in hypothesis_entity_token_list))
-    ]) / len(reference_entity_token_and_label_list)
+                     1 for (x, y) in reference_entity_token_and_label_list if
+                     (x, y) in hypothesis_entity_token_and_label_list
+                 ] + [
+                     0.5 for (x, y) in reference_entity_token_and_label_list if (
+                ((x, y) not in hypothesis_entity_token_and_label_list) and
+                (x in hypothesis_entity_token_list))
+                 ]) / len(reference_entity_token_and_label_list) if len(
+        reference_entity_token_and_label_list) > 0 else 0.0
 
-    f1_score = 2 * precision * recall / (precision + recall)
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
@@ -187,21 +189,20 @@ def exact_relation_token_and_label_match_reward(hypothesis_annotation_list,
     precision = sum([
         1 for x in hypothesis_relation_token_and_label_list
         if x in reference_relation_token_and_label_list
-    ]) / len(hypothesis_relation_token_and_label_list)
+    ]) / len(hypothesis_relation_token_and_label_list) if len(hypothesis_relation_token_and_label_list) > 0 else 0.0
 
     recall = sum([
         1 for x in reference_relation_token_and_label_list
         if x in hypothesis_relation_token_and_label_list
-    ]) / len(reference_relation_token_and_label_list)
+    ]) / len(reference_relation_token_and_label_list) if len(reference_relation_token_and_label_list) > 0 else 0.0
 
-    f1_score = 2 * precision * recall / (precision + recall)
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
 
 def partially_exact_relation_token_and_label_match_reward(
         hypothesis_annotation_list, reference_annotation_list):
-
     hypothesis_relation_token_and_label_list = list(
         map(
             lambda x: [(x['tokens'], relation[0], relation[1])
@@ -241,31 +242,37 @@ def partially_exact_relation_token_and_label_match_reward(
     ])
 
     precision = sum([
-        1 for (x, y, z) in hypothesis_relation_token_and_label_list if
-        (x, y, z) in reference_relation_token_and_label_list
-    ] + [
-        0.5 for (x, y, z) in hypothesis_relation_token_and_label_list if ((
-            (x, y, z) not in reference_relation_token_and_label_list) and (
-                (x, z) in reference_relation_token_list))
-    ]) / len(hypothesis_relation_token_and_label_list)
+                        1 for (x, y, z) in hypothesis_relation_token_and_label_list if
+                        (x, y, z) in reference_relation_token_and_label_list
+                    ] + [
+                        0.5 for (x, y, z) in hypothesis_relation_token_and_label_list if ((
+                                                                                                  (x, y,
+                                                                                                   z) not in reference_relation_token_and_label_list) and (
+                                                                                                  (x,
+                                                                                                   z) in reference_relation_token_list))
+                    ]) / len(hypothesis_relation_token_and_label_list) if len(
+        hypothesis_relation_token_and_label_list) > 0 else 0.0
 
     recall = sum([
-        1 for (x, y, z) in reference_relation_token_and_label_list if
-        (x, y, z) in hypothesis_relation_token_and_label_list
-    ] + [
-        0.5 for (x, y, z) in reference_relation_token_and_label_list if ((
-            (x, y, z) not in hypothesis_relation_token_and_label_list) and (
-                (x, z) in hypothesis_relation_token_list))
-    ]) / len(reference_relation_token_and_label_list)
+                     1 for (x, y, z) in reference_relation_token_and_label_list if
+                     (x, y, z) in hypothesis_relation_token_and_label_list
+                 ] + [
+                     0.5 for (x, y, z) in reference_relation_token_and_label_list if ((
+                                                                                              (x, y,
+                                                                                               z) not in hypothesis_relation_token_and_label_list) and (
+                                                                                              (x,
+                                                                                               z) in hypothesis_relation_token_list))
+                 ]) / len(reference_relation_token_and_label_list) if len(
+        reference_relation_token_and_label_list) > 0 else 0.0
 
-    f1_score = 2 * precision * recall / (precision + recall)
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return f1_score
 
 
 hypothesis_annotations = {
     'text':
-    'FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process .',
+        'FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process .',
     'entities': {
         '1': {
             'tokens': 'lungs',
@@ -385,7 +392,7 @@ hypothesis_annotations = {
 }
 reference_annotations = {
     'text':
-    'FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process .',
+        'FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process .',
     'entities': {
         '1': {
             'tokens': 'lungs',
@@ -504,8 +511,8 @@ reference_annotations = {
     'data_split': 'inference'
 }
 
-#score = partially_exact_relation_token_and_label_match_reward(
+# score = partially_exact_relation_token_and_label_match_reward(
 #    hypothesis_annotations, reference_annotations)
 
-#print(score)
-#print(2 * (13 / 15) * (13 / 14) / (13 / 15 + 13 / 14))
+# print(score)
+# print(2 * (13 / 15) * (13 / 14) / (13 / 15 + 13 / 14))

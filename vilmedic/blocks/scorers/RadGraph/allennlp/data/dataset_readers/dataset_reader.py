@@ -353,7 +353,7 @@ class DatasetReader(Registrable):
         if ensure_lazy and isinstance(iterable, (list, tuple)):
             raise ConfigurationError("For a lazy dataset reader, _read() must return a generator")
 
-        wrap_with_tqdm = True
+        wrap_with_tqdm = False
         start_index = 0
         step_size = 1
         if not self.manual_distributed_sharding and util.is_distributed():

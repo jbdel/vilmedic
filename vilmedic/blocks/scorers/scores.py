@@ -8,17 +8,17 @@ from omegaconf import OmegaConf
 from . import *
 
 REWARD_COMPLIANT = {
-    "ROUGEL": [RougeL, 1],
-    "ROUGE2": [Rouge2, 1],
-    "ROUGE1": [Rouge1, 1],
-    "BLEU": [Bleu, 1],
-    "METEOR": [Meteor, 1],
-    "CiderDRL": [CiderDRL, 1],
+    "rougel": [RougeL, 1],
+    "rouge2": [Rouge2, 1],
+    "rouge1": [Rouge1, 1],
+    "bleu": [Bleu, 1],
+    "meteor": [Meteor, 1],
+    "ciderdrl": [CiderDRL, 1],
+    "radentitymatchexact": [RadEntityMatchExact, 1],
+    "radentitynli": [RadEntityNLI, 1],
+    "chexbert": [CheXbert, 1],
+    "radgraph": [RadGraph, 1],
     # "MAUVE": [MauveScorer, 0],
-    # "radentitymatchexact": [RadEntityMatchExact(), 1],
-    # "radentitynli": [RadEntityNLI(), 1],
-    # "CheXbert": [CheXbert(), 1],
-
 }
 
 
@@ -78,16 +78,17 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
         elif metric == 'auroc':
             scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         elif metric == 'chexbert':
-            chexbert_all, chexbert_5 = CheXbert(refs_filename=base.format('refs.chexbert.txt'),
-                                                hyps_filename=base.format('hyps.chexbert.txt'))(hyps, refs)
+            accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = CheXbert(
+                refs_filename=base.format('refs.chexbert.txt'),
+                hyps_filename=base.format('hyps.chexbert.txt'))(hyps, refs)
             scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
             scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
-            scores["radentitymatchexact"], _, _, _ = RadEntityMatchExact()(refs, hyps)
+            scores["radentitymatchexact"] = RadEntityMatchExact()(refs, hyps)[0]
         elif metric == 'radentitynli':
-            scores["radentitynli"], _ = RadEntityNLI()(refs, hyps)
+            scores["radentitynli"] = RadEntityNLI()(refs, hyps)[0]
         elif metric == 'radgraph':
-            scores["radgraph"], _ = RadGraph()(refs=refs, hyps=hyps)
+            scores["radgraph"] = RadGraph()(refs=refs, hyps=hyps)[0]
         else:
             logger.warning("Metric not implemented: {}".format(metric))
 

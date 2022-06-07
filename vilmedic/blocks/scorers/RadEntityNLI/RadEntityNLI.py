@@ -6,6 +6,7 @@ import torch.nn as nn
 from vilmedic.blocks.scorers import RadEntityMatchExact
 from vilmedic.blocks.scorers.RadEntityNLI.nli import SimpleNLI
 from vilmedic.constants import EXTRA_CACHE_DIR
+from vilmedic.zoo.utils import download_model
 
 from torchmetrics.functional.text.bert import BERTScorer
 from itertools import chain, product
@@ -13,17 +14,24 @@ from itertools import chain, product
 import logging
 
 logging.getLogger("stanza").setLevel(logging.WARNING)
+logging.getLogger("filelock").setLevel(logging.CRITICAL)
 
 
 class RadEntityNLI(nn.Module):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
         # NER types
         self.target_types = {'S-ANATOMY', 'S-OBSERVATION'}
         self.match_exact = RadEntityMatchExact()
 
+        # Downloading pretrain model from huggingface
+        checkpoint = os.path.join(EXTRA_CACHE_DIR, "model_medrad_19k.gz")
+        if not os.path.exists(checkpoint):
+            download_model(repo_id='StanfordAIMI/RRG_scorers', cache_dir=EXTRA_CACHE_DIR,
+                           filename="model_medrad_19k.gz")
+
         # NLI scorer
-        model = SimpleNLI.load_model(os.path.join(EXTRA_CACHE_DIR, "model_medrad_19k.gz"))
+        model = SimpleNLI.load_model(checkpoint)
         self.nli = SimpleNLI(model, batch=24, neutral_score=0.3333333333333333, nthreads=2, pin_memory=False,
                              bert_score='distilbert-base-uncased', cache=200000,
                              verbose=False)
@@ -137,3 +145,4 @@ if __name__ == '__main__':
         ])
 
     print(x)
+    # (0.5238658777120316, [0.5743589743589744, 0.4733727810650888])

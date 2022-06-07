@@ -64,11 +64,12 @@ def create_model(config, dl, logger, from_training=True, state_dict=None):
     else:
         logger.info(model)
 
+    model = model.cuda()
+
     if torch.cuda.device_count() > 1:
         logger.info("Using {} GPUs!".format(torch.cuda.device_count()))
         model = torch.nn.DataParallel(model)
-
-    return model.cuda()
+    return model
 
 
 def create_data_loader(config, split, logger, called_by_validator=False, called_by_ensemblor=False):

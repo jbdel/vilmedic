@@ -63,7 +63,7 @@ class AutoModel:
 
         if not os.path.exists(checkpoint_dir) or len(glob.glob(os.path.join(checkpoint_dir, '*.pth'))) == 0:
             print("Downloading in {}".format(MODEL_ZOO_CACHE_DIR))
-            download_model(file_id=file_id, unzip_dir=checkpoint_dir)
+            download_model(repo_id=file_id, cache_dir=checkpoint_dir)
 
         checkpoint = glob.glob(os.path.join(checkpoint_dir, '*.pth'))
         assert len(checkpoint) == 1, "More than one or no checkpoint found"

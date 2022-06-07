@@ -3,7 +3,7 @@ import os
 import logging
 
 from vilmedic.constants import EXTRA_CACHE_DIR
-
+from vilmedic.zoo.utils import download_model
 import torch.nn as nn
 import pandas as pd
 
@@ -11,8 +11,11 @@ from collections import OrderedDict
 
 from transformers import BertTokenizer
 from transformers import BertModel, AutoModel, AutoConfig
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics._classification import _check_targets
+
 import numpy as np
+from sklearn.utils.sparsefuncs import count_nonzero
 
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
@@ -34,7 +37,7 @@ def generate_attention_masks(batch, source_lengths):
 
 
 class bert_labeler(nn.Module):
-    def __init__(self, p=0.1, clinical=False, freeze_embeddings=False, pretrain_path=None, inference=False):
+    def __init__(self, p=0.1, clinical=False, freeze_embeddings=False, pretrain_path=None, inference=False, **kwargs):
         """ Init the labeler module
         @param p (float): p to use for dropout in the linear heads, 0.1 by default is consistant with
                           transformers.BertForSequenceClassification
@@ -105,25 +108,35 @@ def tokenize(impressions, tokenizer):
 
 
 class CheXbert(nn.Module):
-    def __init__(self, refs_filename=None, hyps_filename=None):
+    def __init__(self, refs_filename=None, hyps_filename=None, **kwargs):
         super(CheXbert, self).__init__()
         self.refs_filename = refs_filename
         self.hyps_filename = hyps_filename
 
+        # Model and tok
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.model = bert_labeler(inference=True)
-        state_dict = torch.load(os.path.join(EXTRA_CACHE_DIR, "chexbert.pth"))['model_state_dict']
+
+        # Downloading pretrain model from huggingface
+        checkpoint = os.path.join(EXTRA_CACHE_DIR, "chexbert.pth")
+        if not os.path.exists(checkpoint):
+            download_model(repo_id='StanfordAIMI/RRG_scorers', cache_dir=EXTRA_CACHE_DIR, filename="chexbert.pth")
+
+        # Load model
+        state_dict = torch.load(checkpoint)['model_state_dict']
         new_state_dict = OrderedDict()
         for k, v in state_dict.items():
             name = k.replace('module.', '')  # remove `module.`
             new_state_dict[name] = v
-        # load params
+
+        # Load params
         self.model.load_state_dict(new_state_dict, strict=False)
         self.model = self.model.cuda().eval()
 
         for name, param in self.model.named_parameters():
             param.requires_grad = False
 
+        # Defining classes
         self.target_names = [
             "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
             "Consolidation", "Pneumonia", "Atelectasis", "Pneumothorax", "Pleural Effusion", "Pleural Other",
@@ -186,11 +199,18 @@ class CheXbert(nn.Module):
         refs_chexbert_5 = [np.array(r)[self.target_names_5_index] for r in refs_chexbert]
         hyps_chexbert_5 = [np.array(h)[self.target_names_5_index] for h in hyps_chexbert]
 
+        # Accuracy
+        accuracy = accuracy_score(y_true=refs_chexbert_5, y_pred=hyps_chexbert_5)
+        # Per element accuracy
+        y_type, y_true, y_pred = _check_targets(refs_chexbert_5, hyps_chexbert_5)
+        differing_labels = count_nonzero(y_true - y_pred, axis=1)
+        pe_accuracy = (differing_labels == 0).astype(np.float32)
+
         cr = classification_report(refs_chexbert, hyps_chexbert, target_names=self.target_names, output_dict=True)
         cr_5 = classification_report(refs_chexbert_5, hyps_chexbert_5, target_names=self.target_names_5,
                                      output_dict=True)
 
-        return cr, cr_5
+        return accuracy, pe_accuracy, cr, cr_5,
 
     def train(self, mode: bool = True):
         mode = False  # force False
@@ -201,6 +221,15 @@ class CheXbert(nn.Module):
 
 
 if __name__ == '__main__':
-    print("hello")
-    # print(CheXbert()(hyps=['No pleural effusion. Normal heart size.', 'Normal heart size.'] * 1,
-    #                  refs=['No pleural effusions.', 'Enlarged heart.'] * 1))
+    import json
+    import time
+
+    m = CheXbert()
+
+    t = time.time()
+    one, two, three, four = m(hyps=['No pleural effusion. Normal heart size.', 'Normal heart size.'] * 1,
+                              refs=['No pleural effusions.', 'Enlarged heart.'] * 1)
+    print(time.time() - t)
+    print(json.dumps(four, indent=4))
+    print(one)
+    print(two)

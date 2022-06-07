@@ -2,8 +2,17 @@ import os
 import torch.nn as nn
 import numpy as np
 import sys
+import logging
+
+from vilmedic.constants import EXTRA_CACHE_DIR
+from vilmedic.zoo.utils import download_model
+from vilmedic.blocks.scorers.RadGraph.utils import preprocess_reports, postprocess_reports, compute_reward
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+logging.getLogger("allennlp").setLevel(logging.CRITICAL)
+logging.getLogger("tqdm").setLevel(logging.CRITICAL)
+logging.getLogger("filelock").setLevel(logging.CRITICAL)
 
 from allennlp.commands.predict import _predict, _PredictManager
 from allennlp.common.plugins import import_plugins
@@ -11,13 +20,6 @@ from allennlp.common.util import import_module_and_submodules
 from allennlp.predictors.predictor import Predictor
 from allennlp.models.archival import load_archive
 from allennlp.common.checks import check_for_gpu
-from .utils import preprocess_reports, postprocess_reports, compute_reward
-
-from vilmedic.constants import EXTRA_CACHE_DIR
-
-import logging
-logging.getLogger("allennlp").setLevel(logging.CRITICAL)
-logging.getLogger("tqdm").setLevel(logging.CRITICAL)
 
 
 class RadGraph(nn.Module):
@@ -26,7 +28,8 @@ class RadGraph(nn.Module):
                  lambda_r=0.5,
                  reward_level="partial",
                  batch_size=1,
-                 cuda=0):
+                 cuda=0,
+                 **kwargs):
 
         super().__init__()
         self.lambda_e = lambda_e
@@ -34,7 +37,11 @@ class RadGraph(nn.Module):
         self.reward_level = reward_level
         self.cuda = cuda
         self.batch_size = batch_size
+
         self.model_path = os.path.join(EXTRA_CACHE_DIR, "radgraph.tar.gz")
+
+        if not os.path.exists(self.model_path):
+            download_model(repo_id='StanfordAIMI/RRG_scorers', cache_dir=EXTRA_CACHE_DIR, filename="radgraph.tar.gz")
 
         # Model
         import_plugins()
@@ -113,7 +120,7 @@ class RadGraph(nn.Module):
 
 
 if __name__ == '__main__':
-    m = RadGraph()
+    m = RadGraph(cuda=-1, reward_level="complete")
     report = "FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process ."
     hypothesis_report_list = [report, "", "a", report]
 

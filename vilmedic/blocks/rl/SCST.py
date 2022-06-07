@@ -5,6 +5,7 @@ import inspect
 import torch.nn.functional as F
 import json
 import numpy as np
+import torch.nn as nn
 
 
 # scst loss intuition:
@@ -31,6 +32,7 @@ def scst_loss(input,
     # SCST Loss
     delta_rewards = [torch.tensor(rs).cuda() - torch.tensor(rg).cuda() for rs, rg in
                      zip(reward_sampling, reward_greedy)]
+
     loss = [scores_weights[i] * (-input * r.unsqueeze(-1).expand_as(input)) for i, r in enumerate(delta_rewards)]
     # Compute mean loss
     #  Double sum: sum words, then sum sentences. Division is done beforehand 'input = input / torch.sum(mask)'
@@ -43,9 +45,9 @@ def scst_loss(input,
     return loss, delta_reward, delta_reward_per_metric
 
 
-class SCST:
+class SCST(nn.Module):
     def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None):
-
+        super().__init__()
         self.tokenizer = dl.dataset.tokenizer
         self.decoder = decoder
         self.top_k = top_k
@@ -60,6 +62,7 @@ class SCST:
         if not isinstance(scores, (list, ListConfig)):
             scores = [scores]
 
+        scores = list((map(lambda x: x.lower(), scores)))
         assert all([score in REWARD_COMPLIANT for score in scores]), "{} not in {}".format(scores,
                                                                                            REWARD_COMPLIANT.keys())
         # Scores weights
@@ -93,7 +96,6 @@ class SCST:
     def forward_greedy(self, input_ids, encoder_hidden_states, encoder_attention_mask):
         assert not torch.is_grad_enabled(), "Please add torch.no_grad() decorator"
         batch_size = input_ids.shape[0]
-
         out = self.decoder.generate(
             input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
             max_length=self.max_length,

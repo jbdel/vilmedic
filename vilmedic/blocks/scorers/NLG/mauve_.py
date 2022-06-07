@@ -47,7 +47,7 @@ def compute_mauve(
 
 
 class MauveScorer(nn.Module):
-    def __init__(self, model):
+    def __init__(self, model, **kwargs):
         super().__init__()
         self.model = model
         self.tokenizer = get_tokenizer(self.model)

@@ -18,7 +18,7 @@ class CiderD(nn.Module):
 
     """
 
-    def __init__(self, test=None, refs=None, n=4, sigma=6.0):
+    def __init__(self, test=None, refs=None, n=4, sigma=6.0, **kwargs):
         # set cider to sum over 1 to 4-grams
         super().__init__()
         self._n = n

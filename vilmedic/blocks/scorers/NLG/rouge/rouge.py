@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Rouge(nn.Module):
-    def __init__(self, rouges):
+    def __init__(self, rouges, **kwargs):
         super().__init__()
         rouges = [r.replace('rougel', 'rougeL') for r in rouges]
         self.scorer = rouge_scorer.RougeScorer(rouges, use_stemmer=True)
@@ -28,15 +28,15 @@ class Rouge(nn.Module):
 
 
 class Rouge1(Rouge):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(Rouge1, self).__init__(rouges=['rouge1'])
 
 
 class Rouge2(Rouge):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(Rouge2, self).__init__(rouges=['rouge2'])
 
 
 class RougeL(Rouge):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(RougeL, self).__init__(rouges=['rougeL'])

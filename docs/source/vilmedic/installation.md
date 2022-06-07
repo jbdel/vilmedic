@@ -25,14 +25,6 @@ git clone https://github.com/jbdel/vilmedic
 python setup.py develop
 ```
 
-
-<div class="warning_box">
-	<b>In any case</b>, please download the extra resources (required for scoring and more) by typing this command
-	in the terminal:
-	<div class="highlight">
-<pre>vilmedic-install-extra</pre></div>	
-</div>
-
 ViLMedic is structured as follows:
 ```
 |-- vilmedic

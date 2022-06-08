@@ -71,6 +71,9 @@ class RadGraph(nn.Module):
     def forward(self, refs, hyps):
         # Preprocessing
         number_of_reports = len(hyps)
+
+        assert len(refs) == len(hyps)
+
         empty_report_index_list = [
             i
             for i in range(number_of_reports)
@@ -88,6 +91,8 @@ class RadGraph(nn.Module):
             for i, reference_report in enumerate(refs)
             if i not in empty_report_index_list
         ]
+
+        assert len(report_list) == 2 * number_of_non_empty_reports
 
         model_input = preprocess_reports(report_list)
         # AllenNLP
@@ -134,6 +139,8 @@ class RadGraph(nn.Module):
             reference_annotation_lists.append(reference_annotation_list)
             hypothesis_annotation_lists.append(hypothesis_annotation_list)
             non_empty_report_index += 1
+
+        assert non_empty_report_index == number_of_non_empty_reports
 
         return (
             np.mean(reward_list),

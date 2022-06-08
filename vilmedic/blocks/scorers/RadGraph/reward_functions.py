@@ -15,24 +15,53 @@
 # Compares important clinical tokens of both texts
 # Ex: is "pleural effusion" in both texts ?
 
+# Liste de nos modifications
+# 1. on met des lower partout, just in case
+# 2. on met des return 0 si aucune entité ou relation n'est detectée
+# 3. enlever les prints
+
 
 # To be tested alone
 def exact_entity_token_match_reward(
     hypothesis_annotation_list, reference_annotation_list
 ):
     hypothesis_entity_token_list = set(
-        map(lambda x: x["tokens"], hypothesis_annotation_list["entities"].values())
+        map(
+            lambda x: x["tokens"].lower(),
+            hypothesis_annotation_list["entities"].values(),
+        )
     )
     reference_entity_token_list = set(
-        map(lambda x: x["tokens"], reference_annotation_list["entities"].values())
+        map(
+            lambda x: x["tokens"].lower(),
+            reference_annotation_list["entities"].values(),
+        )
     )
 
-    precision = sum(
-        [1 for x in hypothesis_entity_token_list if x in reference_entity_token_list]
-    ) / len(hypothesis_entity_token_list)
-    recall = sum(
-        [1 for x in reference_entity_token_list if x in hypothesis_entity_token_list]
-    ) / len(reference_entity_token_list)
+    precision = (
+        sum(
+            [
+                1
+                for x in hypothesis_entity_token_list
+                if x in reference_entity_token_list
+            ]
+        )
+        / len(hypothesis_entity_token_list)
+        if len(hypothesis_entity_token_list) > 0
+        else 0.0
+    )
+    recall = (
+        sum(
+            [
+                1
+                for x in reference_entity_token_list
+                if x in hypothesis_entity_token_list
+            ]
+        )
+        / len(reference_entity_token_list)
+        if len(reference_entity_token_list) > 0
+        else 0.0
+    )
     f1_score = (
         2 * precision * recall / (precision + recall)
         if (precision + recall) > 0
@@ -50,13 +79,13 @@ def exact_entity_token_and_label_match_reward(
 ):
     hypothesis_entity_token_and_label_list = set(
         map(
-            lambda x: (x["tokens"], x["label"]),
+            lambda x: (x["tokens"].lower(), x["label"]),
             hypothesis_annotation_list["entities"].values(),
         )
     )
     reference_entity_token_and_label_list = set(
         map(
-            lambda x: (x["tokens"], x["label"]),
+            lambda x: (x["tokens"].lower(), x["label"]),
             reference_annotation_list["entities"].values(),
         )
     )
@@ -101,6 +130,7 @@ def exact_entity_token_and_label_match_reward(
 def exact_entity_label_if_correct_token_match_reward(
     hypothesis_annotation_list, reference_annotation_list
 ):
+    raise Exception("not supposed to be used")
     hypothesis_entity_token_and_label_list = set(
         map(
             lambda x: (x["tokens"], x["label"]),
@@ -173,22 +203,28 @@ def partially_exact_entity_token_and_label_match_reward(
 ):
     hypothesis_entity_token_and_label_list = set(
         map(
-            lambda x: (x["tokens"], x["label"]),
+            lambda x: (x["tokens"].lower(), x["label"]),
             hypothesis_annotation_list["entities"].values(),
         )
     )
     reference_entity_token_and_label_list = set(
         map(
-            lambda x: (x["tokens"], x["label"]),
+            lambda x: (x["tokens"].lower(), x["label"]),
             reference_annotation_list["entities"].values(),
         )
     )
 
     hypothesis_entity_token_list = set(
-        map(lambda x: x["tokens"], hypothesis_annotation_list["entities"].values())
+        map(
+            lambda x: x["tokens"].lower(),
+            hypothesis_annotation_list["entities"].values(),
+        )
     )
     reference_entity_token_list = set(
-        map(lambda x: x["tokens"], reference_annotation_list["entities"].values())
+        map(
+            lambda x: x["tokens"].lower(),
+            reference_annotation_list["entities"].values(),
+        )
     )
 
     precision = (
@@ -247,6 +283,7 @@ def partially_exact_entity_token_and_label_match_reward(
 
 # Compares the relations, directly both the start and end tokens AS WELL AS the label
 # Because a relation without the label does not really make sense
+# keep a list or a set ?
 
 
 def exact_relation_token_and_label_match_reward(
@@ -255,7 +292,8 @@ def exact_relation_token_and_label_match_reward(
     hypothesis_relation_token_and_label_list = list(
         map(
             lambda x: [
-                (x["tokens"], relation[0], relation[1]) for relation in x["relations"]
+                (x["tokens"].lower(), relation[0], relation[1])
+                for relation in x["relations"]
             ],
             hypothesis_annotation_list["entities"].values(),
         )
@@ -266,7 +304,7 @@ def exact_relation_token_and_label_match_reward(
             (
                 tokens_1,
                 label,
-                hypothesis_annotation_list["entities"][tokens_2]["tokens"],
+                hypothesis_annotation_list["entities"][tokens_2]["tokens"].lower(),
             )
             for relations in hypothesis_relation_token_and_label_list
             for (tokens_1, label, tokens_2) in relations
@@ -276,7 +314,8 @@ def exact_relation_token_and_label_match_reward(
     reference_relation_token_and_label_list = list(
         map(
             lambda x: [
-                (x["tokens"], relation[0], relation[1]) for relation in x["relations"]
+                (x["tokens"].lower(), relation[0], relation[1])
+                for relation in x["relations"]
             ],
             reference_annotation_list["entities"].values(),
         )
@@ -284,7 +323,11 @@ def exact_relation_token_and_label_match_reward(
 
     reference_relation_token_and_label_list = set(
         [
-            (tokens_1, label, reference_annotation_list["entities"][tokens_2]["tokens"])
+            (
+                tokens_1,
+                label,
+                reference_annotation_list["entities"][tokens_2]["tokens"].lower(),
+            )
             for relations in reference_relation_token_and_label_list
             for (tokens_1, label, tokens_2) in relations
         ]
@@ -331,7 +374,8 @@ def partially_exact_relation_token_and_label_match_reward(
     hypothesis_relation_token_and_label_list = list(
         map(
             lambda x: [
-                (x["tokens"], relation[0], relation[1]) for relation in x["relations"]
+                (x["tokens"].lower(), relation[0], relation[1])
+                for relation in x["relations"]
             ],
             hypothesis_annotation_list["entities"].values(),
         )
@@ -342,7 +386,7 @@ def partially_exact_relation_token_and_label_match_reward(
             (
                 tokens_1,
                 label,
-                hypothesis_annotation_list["entities"][tokens_2]["tokens"],
+                hypothesis_annotation_list["entities"][tokens_2]["tokens"].lower(),
             )
             for relations in hypothesis_relation_token_and_label_list
             for (tokens_1, label, tokens_2) in relations
@@ -359,7 +403,8 @@ def partially_exact_relation_token_and_label_match_reward(
     reference_relation_token_and_label_list = list(
         map(
             lambda x: [
-                (x["tokens"], relation[0], relation[1]) for relation in x["relations"]
+                (x["tokens"].lower(), relation[0], relation[1])
+                for relation in x["relations"]
             ],
             reference_annotation_list["entities"].values(),
         )
@@ -367,7 +412,11 @@ def partially_exact_relation_token_and_label_match_reward(
 
     reference_relation_token_and_label_list = set(
         [
-            (tokens_1, label, reference_annotation_list["entities"][tokens_2]["tokens"])
+            (
+                tokens_1,
+                label,
+                reference_annotation_list["entities"][tokens_2]["tokens"].lower(),
+            )
             for relations in reference_relation_token_and_label_list
             for (tokens_1, label, tokens_2) in relations
         ]
@@ -392,7 +441,10 @@ def partially_exact_relation_token_and_label_match_reward(
                 for (x, y, z) in hypothesis_relation_token_and_label_list
                 if (
                     ((x, y, z) not in reference_relation_token_and_label_list)
-                    and ((x, z) in reference_relation_token_list)
+                    and (
+                        ((x, z) in reference_relation_token_list)
+                        or ((z, x) in reference_relation_token_list)
+                    )
                 )
             ]
         )
@@ -413,7 +465,10 @@ def partially_exact_relation_token_and_label_match_reward(
                 for (x, y, z) in reference_relation_token_and_label_list
                 if (
                     ((x, y, z) not in hypothesis_relation_token_and_label_list)
-                    and ((x, z) in hypothesis_relation_token_list)
+                    and (
+                        ((x, z) in hypothesis_relation_token_list)
+                        or ((z, x) in hypothesis_relation_token_list)
+                    )
                 )
             ]
         )
@@ -656,14 +711,14 @@ reference_annotations = {
             "label": "ANAT-DP",
             "start_ix": 56,
             "end_ix": 56,
-            "relations": [],
+            "relations": [["located_at", "16"]],
         },
         "16": {
             "tokens": "process",
             "label": "OBS-DA",
             "start_ix": 57,
             "end_ix": 57,
-            "relations": [["located_at", "15"]],
+            "relations": [],
         },
     },
     "data_source": None,
@@ -671,7 +726,9 @@ reference_annotations = {
 }
 
 # score = partially_exact_relation_token_and_label_match_reward(
-#    hypothesis_annotations, reference_annotations)
+#    hypothesis_annotations, reference_annotations
+# )
 
 # print(score)
+# print(2 * (9.5 / 10) * (9.5 / 10) / (9.5 / 10 + 9.5 / 10))
 # print(2 * (13 / 15) * (13 / 14) / (13 / 15 + 13 / 14))

@@ -6,6 +6,8 @@ import pickle
 from torch.utils.data import Dataset, DataLoader
 from eeg_dataloader_utils import *
 
+from vilmedic.blocks.vision.eeg_modeling.dense_inception import DenseInception
+
 
 class EegTextDataset(Dataset):
     """
@@ -65,7 +67,7 @@ class EegTextDataset(Dataset):
         return eeg_clip, eeg_text
 
 
-def test_dataloader():
+def test_dataloader_and_encoder():
     stanford_dataset_dir = "/media/4tb_hdd/eeg_data/stanford/stanford_mini"
     lpch_dataset_dir = "/media/4tb_hdd/eeg_data/lpch/lpch"
     reports_dict_pth = "/media/nvme_data/eeg_reports/findings_5k_reports_dict.pkl"
@@ -75,8 +77,14 @@ def test_dataloader():
     )
 
     eeg_clip, eeg_text = eeg_ds[0]
+
+    model = DenseInception(data_shape=eeg_clip.shape)
+
+    x = torch.Tensor(eeg_clip.T).unsqueeze(0)
+    y = model(x)  ## KS: NOT WORKING RIGHT NOW, WILL FIX
+
     breakpoint()
 
 
 if __name__ == "__main__":
-    test_dataloader()
+    test_dataloader_and_encoder()

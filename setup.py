@@ -29,7 +29,7 @@ setup(
                       'scikit_image==0.18.2',
                       'scikit-learn==0.24.2',
                       'pydicom==2.2.0',
-                      'transformers==4.18.0',
+                      'transformers==4.19.3',
                       'seaborn==0.11.1',
                       'dalle-pytorch==1.4.2',
                       'torchxrayvision==0.0.32',

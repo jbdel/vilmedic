@@ -1,10 +1,14 @@
 import torch.nn as nn
 import copy
-
+import functools
 
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
-from transformers import EncoderDecoderModel as HFEncoderDecoderModel
+from transformers.models.encoder_decoder.modeling_encoder_decoder import EncoderDecoderModel as HFEncoderDecoderModel
+from transformers.models.encoder_decoder.configuration_encoder_decoder import EncoderDecoderConfig
+from transformers import RobertaConfig, RobertaModel, RobertaForCausalLM, BertLMHeadModel, BertModel, BertConfig
 from vilmedic.models.utils import get_n_params
+from vilmedic.blocks.huggingface.decoder.beam_search import beam_search
+from vilmedic.blocks.huggingface.decoder.beam_search import prepare_inputs_for_generation
 
 
 class EncoderDecoderModel(nn.Module):
@@ -15,28 +19,33 @@ class EncoderDecoderModel(nn.Module):
 
     def __init__(self, encoder, decoder, **kwargs):
         super().__init__()
-        if 'proto' in decoder and 'proto' in encoder:
+        if encoder.proto is not None and decoder.proto is not None:
             self.enc_dec = HFEncoderDecoderModel.from_encoder_decoder_pretrained(encoder.pop('proto'),
                                                                                  decoder.pop('proto'))
         else:
             # Encoder
-            enc_config = BertGenerationConfig(**encoder)
+            enc_config = BertConfig(**encoder,
+                                    is_decoder=False,
+                                    add_cross_attention=False)
             enc = BertGenerationEncoder(enc_config)
 
             # Decoder
-            dec_config = copy.deepcopy(enc_config)
-            dec_config.update(decoder)
+            dec_config = BertConfig(**decoder)
             dec_config.is_decoder = True
             dec_config.add_cross_attention = True
-            dec = BertGenerationDecoder(dec_config)
+            # dec = BertGenerationDecoder(dec_config)
+            dec = BertLMHeadModel(dec_config)
 
             # Encdec
-            self.enc_dec = HFEncoderDecoderModel(encoder=enc, decoder=dec)
+            config = EncoderDecoderConfig.from_encoder_decoder_configs(enc.config, dec.config, **kwargs)
+            self.enc_dec = HFEncoderDecoderModel(config=config)
+
+        self.enc_dec.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation,
+                                                                               self.enc_dec.decoder)
 
         assert self.enc_dec.config.is_encoder_decoder == True
 
         # Inference
-        self.generate = self.enc_dec.generate
         self.config = self.enc_dec.config
 
     def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask):

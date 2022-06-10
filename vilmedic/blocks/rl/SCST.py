@@ -48,13 +48,22 @@ def scst_loss(input,
 class SCST(nn.Module):
     def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None):
         super().__init__()
-        self.tokenizer = dl.dataset.tokenizer
+
+        dataset = dl.dataset
+        if hasattr(dataset, "tokenizer"):
+            self.tokenizer = dataset.tokenizer
+            self.max_length = dataset.tokenizer_max_len
+        elif hasattr(dataset, "tgt_tokenizer"):
+            self.tokenizer = dataset.tgt_tokenizer
+            self.max_length = dataset.tgt_tokenizer_max_len
+        else:
+            raise NotImplementedError("Where is tokenizer in dataset?")
+
         self.decoder = decoder
         self.top_k = top_k
         self.bos_token_id = self.decoder.config.bos_token_id
         self.eos_token_id = self.decoder.config.eos_token_id
         self.pad_token_id = self.decoder.config.pad_token_id
-        self.max_length = dl.dataset.tokenizer_max_len
         self.scores = scores
         self.scores_args = scores_args
         self.scores_weights = scores_weights

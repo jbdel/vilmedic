@@ -12,7 +12,7 @@ class Seq2Seq(Dataset):
         self.tgt_tokenizer = self.tgt.tokenizer
         self.tgt_tokenizer_max_len = self.tgt.tokenizer_max_len
 
-        assert len(self.src) == len(self.tgt)
+        assert len(self.src) == len(self.tgt), (len(self.src), len(self.tgt))
 
     def __getitem__(self, index):
         return {**self.src.__getitem__(index), **self.tgt.__getitem__(index)}

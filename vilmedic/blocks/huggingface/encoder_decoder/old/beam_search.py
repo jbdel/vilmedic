@@ -207,7 +207,7 @@ def beam_search(
     beam_scores = beam_scores.view((batch_size * num_beams,))
     # Added by JB
     hf_models = model_kwargs.pop("hf_models")
-    model_kwargs_list = model_kwargs.pop("encoders_outputs")
+    model_kwargs_list = model_kwargs.pop("model_kwargs_list")
     ###
     this_peer_finished = False  # used by synced_gpus only
     while True:

@@ -1,0 +1,96 @@
+name: rrs_baseline
+ckpt_dir: ckpt
+
+dataset:
+  proto: Seq2Seq
+  src:
+    root: data/RRS/mimic-cxr/
+    file: findings.tok
+    tokenizer: null
+    tokenizer_max_len: 128
+    processing: rouge
+  tgt:
+    root: data/RRS/mimic-cxr/
+    file: impression.tok
+    tokenizer: null
+    tokenizer_max_len: 80
+    processing: rouge
+
+model:
+  proto: RRS
+  encoder:
+    proto: null
+    attention_probs_dropout_prob: 0.1
+    bos_token_id: 0
+    eos_token_id: 2
+    gradient_checkpointing: false
+    hidden_act: gelu
+    hidden_dropout_prob: 0.1
+    hidden_size: 768
+    initializer_range: 0.02
+    intermediate_size: 3072
+    layer_norm_eps: 1e-05
+    max_position_embeddings: 514
+    num_attention_heads: 12
+    num_hidden_layers: 1
+    pad_token_id: 1
+    position_embedding_type: absolute
+    transformers_version: 4.5.1
+    type_vocab_size: 1
+    use_cache: true
+    vocab_size: 8832
+
+  decoder:
+    proto: null
+    add_cross_attention: true
+    attention_probs_dropout_prob: 0.1
+    bos_token_id: 0
+    eos_token_id: 2
+    gradient_checkpointing: false
+    hidden_act: gelu
+    hidden_dropout_prob: 0.1
+    hidden_size: 768
+    initializer_range: 0.02
+    intermediate_size: 3072
+    is_decoder: true
+    layer_norm_eps: 1e-05
+    max_position_embeddings: 514
+    num_attention_heads: 12
+    num_hidden_layers: 1
+    pad_token_id: 1
+    position_embedding_type: absolute
+    transformers_version: 4.5.1
+    type_vocab_size: 1
+    use_cache: true
+    vocab_size: 6867
+
+trainor:
+  batch_size: 128
+  optimizer: RAdam
+  optim_params:
+    lr: 5e-5
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGEL
+
+validator:
+  batch_size: 4
+  beam_width: 8
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert, radentitynli, radgraph]
+  splits: [validate]
+
+
+ensemblor:
+  batch_size: 4
+  beam_width: 8
+  metrics: [ROUGEL, ROUGE2, BLEU, METEOR, chexbert, radentitynli, radgraph]
+  splits: [validate, test]
+  mode: best-1

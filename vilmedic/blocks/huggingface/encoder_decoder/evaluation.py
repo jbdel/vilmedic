@@ -1,15 +1,19 @@
 import tqdm
 import torch
-from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 import functools
-from .beam_search import beam_search
+from vilmedic.blocks.huggingface.decoder.beam_search import beam_search
+from vilmedic.blocks.huggingface.decoder.beam_search import prepare_inputs_for_generation
 
 
 def evaluation(models, config, dl, **kwargs):
-    hf_models = [model.enc_dec.enc_dec for model in models]
+    hf_dec = [model.dec.decoder for model in models]
+    hf_enc = [model.enc for model in models]
 
-    hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
+    # We are in an ensembling scenario, we override huggingface beam-search function
+    hf_dec[0].beam_search = functools.partial(beam_search, hf_dec[0])
 
+    # Get tokenizer and reference sentences from dataloader
+    ref_str = 'decoder_input_ids'
     tokenizer = dl.dataset.tgt_tokenizer
     max_len = dl.dataset.tgt_tokenizer_max_len
     ref_list = []
@@ -18,45 +22,54 @@ def evaluation(models, config, dl, **kwargs):
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() for k, v in batch.items()}
-            encoder_batch = {k: v.cuda() for k, v in batch.items() if not k.startswith("decoder_")}
-
+            # if len(enc_dec) == 1:
+            #     hyps = enc_dec[0].generate(
+            #         input_ids=batch["input_ids"],
+            #     )
+            #
+            # else:
+            # Expanding inputs
+            batch_size = batch['input_ids'].shape[0]
             expanded_return_idx = (
-                torch.arange(batch['input_ids'].shape[0]).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
+                torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
+            )
+            # Getting encoder infos
+            encoder_outputs = []
+            encoder_attention_masks = []
+            encoder_batch = {k: v.cuda() for k, v in batch.items() if not k.startswith("decoder_")}
+            for encoder in hf_enc:
+                encoder_output = encoder(**encoder_batch, return_dict=True)
+                encoder_outputs.append(encoder_output.last_hidden_state)
+                encoder_attention_masks.append(batch["attention_mask"])
+
+            # Registering models and encoder outputs
+            model_kwargs = {
+                "encoders_outputs":
+                    [
+                        {"encoder_hidden_states": output.index_select(0, expanded_return_idx),
+                         "encoder_attention_mask": mask.index_select(0, expanded_return_idx)
+                         } for output, mask in zip(encoder_outputs, encoder_attention_masks)
+                    ],
+                "hf_models": hf_dec
+            }
+
+            # lets gooooo
+            hyps = hf_dec[0].generate(
+                inputs=torch.ones((batch_size, 1), dtype=torch.long).cuda() * hf_dec[0].config.bos_token_id,
+                num_return_sequences=1,
+                max_length=max_len,
+                num_beams=config.beam_width,
+                length_penalty=config.length_penalty,
+                bos_token_id=hf_dec[0].config.bos_token_id,
+                eos_token_id=hf_dec[0].config.eos_token_id,
+                pad_token_id=hf_dec[0].config.pad_token_id,
+                use_cache=True,
+                **model_kwargs
             )
 
-            # Run encoder ourselves
-            encoders_outputs = [hf.encoder(**encoder_batch, return_dict=True) for hf in hf_models]
-
-            # Tile representations
-            expanded_model_outputs = [BaseModelOutputWithPoolingAndCrossAttentions(
-                last_hidden_state=h.last_hidden_state.index_select(0, expanded_return_idx)) for h in
-                encoders_outputs]
-            attention_masks = [batch["attention_mask"].index_select(0, expanded_return_idx) for _ in hf_models]
-
-            # Create model kwargs
-            model_kwargs = {"encoder_outputs": encoders_outputs[0],  # Dummy encoder output
-                            "model_kwargs_list": [{"encoder_outputs": e,
-                                                   "attention_mask": m,
-                                                   } for e, m in zip(expanded_model_outputs, attention_masks)
-                                                  ],
-                            "hf_models": hf_models
-                            }
-
-            # Lets go
-            hyps = hf_models[0].generate(input_ids=batch["input_ids"],
-                                         num_return_sequences=1,
-                                         max_length=max_len,
-                                         num_beams=config.beam_width,
-                                         length_penalty=config.length_penalty,
-                                         bos_token_id=hf_models[0].decoder.config.bos_token_id,
-                                         eos_token_id=hf_models[0].decoder.config.eos_token_id,
-                                         pad_token_id=hf_models[0].decoder.config.pad_token_id,
-                                         **model_kwargs
-                                         )
-
-            refs = batch["decoder_input_ids"]
+            refs = batch[ref_str]
             for h, r in zip(hyps, refs):
                 hyp_list.append(tokenizer.decode(h, skip_special_tokens=True, clean_up_tokenization_spaces=False))
                 ref_list.append(tokenizer.decode(r, skip_special_tokens=True, clean_up_tokenization_spaces=False))
-
+            # break
         return {'refs': ref_list, 'hyps': hyp_list}

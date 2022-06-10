@@ -73,15 +73,28 @@ def test_dataloader_and_encoder():
     reports_dict_pth = "/media/nvme_data/eeg_reports/findings_5k_reports_dict.pkl"
 
     eeg_ds = EegTextDataset(
-        stanford_dataset_dir, lpch_dataset_dir, reports_dict_pth, split_type="train"
+        stanford_dataset_dir,
+        lpch_dataset_dir,
+        reports_dict_pth,
+        split_type="train",
+        clip_len=12,
     )
 
+    eeg_model = DenseInception(data_shape=(2400, 19))
+
     eeg_clip, eeg_text = eeg_ds[0]
+    eeg_clip2, _ = eeg_ds[10]
+    eeg_clip3, _ = eeg_ds[20]
 
-    model = DenseInception(data_shape=eeg_clip.shape)
+    x = torch.Tensor(np.stack([eeg_clip, eeg_clip2, eeg_clip3]))
 
-    x = torch.Tensor(eeg_clip.T).unsqueeze(0)
-    y = model(x)  ## KS: NOT WORKING RIGHT NOW, WILL FIX
+    y = eeg_model(x)
+
+    ## for eeg encoder only, set fc2 to Identity
+    eeg_encoder = DenseInception(data_shape=(2400, 19))
+    eeg_encoder.fc2 = torch.nn.Identity()
+
+    x_embs = eeg_encoder(x)
 
     breakpoint()
 

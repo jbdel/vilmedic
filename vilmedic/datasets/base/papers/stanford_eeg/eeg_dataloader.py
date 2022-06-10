@@ -96,6 +96,25 @@ def test_dataloader_and_encoder():
 
     x_embs = eeg_encoder(x)
 
+    ## use pretrained model
+    pretrained_pth = "/home/ksaab/Documents/eeg_fully_supervised/results/lpch_mini2/scale_1/cv_3/best.pth.tar"
+    state_dict = torch.load(pretrained_pth)["state_dict"]
+    og_state_dict = eeg_model.state_dict()
+    # clean up state dict keys
+    state_dict_ = {}
+    for key in state_dict:
+        if "fc2" not in key:
+            state_dict_[key.split("dense_inception.")[-1]] = state_dict[key]
+        else:
+            state_dict_[key.split("dense_inception.")[-1]] = og_state_dict[
+                key.split("dense_inception.")[-1]
+            ]
+
+    eeg_model.load_state_dict(state_dict_)
+    eeg_encoder.fc2 = torch.nn.Identity()
+
+    x_embs = eeg_encoder(x)
+
     breakpoint()
 
 

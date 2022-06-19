@@ -93,14 +93,13 @@ class RadEntityNLI(nn.Module):
                         continue
                     sim_index = torch.argmax(hyp_f_score)
                     nli_label = self.nli.predict([hyp_sentence], [ref_report[sim_index]])[1][0]
+                    if nli_label == 'entailment':
+                        match_p += 1
                     for entity in hyp_sentence_entities:
                         total_p += 1
                         if nli_label == 'contradiction':
                             continue
-                        if nli_label == 'entailment':
-                            match_p += 1
-                            continue
-                        if nli_label == 'neutral' and entity in entity_ner_r:
+                        if entity in entity_ner_r:
                             match_p += 1
 
                 match_r = 0
@@ -112,14 +111,13 @@ class RadEntityNLI(nn.Module):
                         continue
                     sim_index = torch.argmax(ref_f_score)
                     nli_label = self.nli.predict([ref_sentence], [hyp_report[sim_index]])[1][0]
+                    if nli_label == 'entailment':
+                        match_r += 1
                     for entity in ref_sentence_entities:
                         total_r += 1
                         if nli_label == 'contradiction':
                             continue
-                        if nli_label == 'entailment':
-                            match_r += 1
-                            continue
-                        if nli_label == 'neutral' and entity in entity_ner_h:
+                        if entity in entity_ner_h:
                             match_r += 1
 
                 pr_e = match_p / total_p if total_p > 0 else 0.0
@@ -134,15 +132,31 @@ class RadEntityNLI(nn.Module):
 
 
 if __name__ == '__main__':
-    x = RadEntityNLI()(
-        refs=[
-            'no evidence of consolidation to suggest pneumonia is seen. there  is some retrocardiac atelectasis. a small left pleural effusion may be  present. no pneumothorax is seen. no pulmonary edema. a right granuloma is  unchanged. the heart is mildly enlarged, unchanged. there is tortuosity of  the aorta.',
-            'there are moderate bilateral pleural effusions with overlying atelectasis,  underlying consolidation not excluded. mild prominence of the interstitial  markings suggests mild pulmonary edema. the cardiac silhouette is mildly  enlarged. the mediastinal contours are unremarkable. there is no evidence of  pneumothorax.'
-        ],
-        hyps=[
-            'heart size is moderately enlarged. the mediastinal and hilar contours are unchanged. there is no pulmonary edema. small left pleural effusion is present. patchy opacities in the lung bases likely reflect atelectasis. no pneumothorax is seen. there are no acute osseous abnormalities.',
-            'heart size is mildly enlarged. the mediastinal and hilar contours are normal. there is mild pulmonary edema. moderate bilateral pleural effusions are present, left greater than right. bibasilar airspace opacities likely reflect atelectasis. no pneumothorax is seen. there are no acute osseous abnormalities.'
-        ])
 
-    print(x)
+    num = str(776414)
+
+    l1 = open("test_best-1_" + num + "_hyps.txt").readlines()
+    # l1 = [l.strip() for l in l1][:10]
+    l1 = [l.strip() for l in l1]
+    l2 = open("test_best-1_" + num + "_refs.txt").readlines()
+    # l2 = [l.strip() for l in l2][:10]
+    l2 = [l.strip() for l in l2]
+
+
+    # x = RadEntityNLI()(
+    #     refs=[
+    #         'no evidence of consolidation to suggest pneumonia is seen. there  is some retrocardiac atelectasis. a small left pleural effusion may be  present. no pneumothorax is seen. no pulmonary edema. a right granuloma is  unchanged. the heart is mildly enlarged, unchanged. there is tortuosity of  the aorta.',
+    #         'there are moderate bilateral pleural effusions with overlying atelectasis,  underlying consolidation not excluded. mild prominence of the interstitial  markings suggests mild pulmonary edema. the cardiac silhouette is mildly  enlarged. the mediastinal contours are unremarkable. there is no evidence of  pneumothorax.'
+    #     ],
+    #     hyps=[
+    #         'heart size is moderately enlarged. the mediastinal and hilar contours are unchanged. there is no pulmonary edema. small left pleural effusion is present. patchy opacities in the lung bases likely reflect atelectasis. no pneumothorax is seen. there are no acute osseous abnormalities.',
+    #         'heart size is mildly enlarged. the mediastinal and hilar contours are normal. there is mild pulmonary edema. moderate bilateral pleural effusions are present, left greater than right. bibasilar airspace opacities likely reflect atelectasis. no pneumothorax is seen. there are no acute osseous abnormalities.'
+    #     ])
+
+    x = RadEntityNLI()(
+        refs=l2,
+        hyps=l1)
+
+    #0.3200814901900191,
+    print(x[0])
     # (0.5238658777120316, [0.5743589743589744, 0.4733727810650888])

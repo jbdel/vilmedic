@@ -1,9 +1,10 @@
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 import functools
-
+import os
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.huggingface.decoder.evaluation import evaluation as evaluation_
+import glob
 
 from .RRG import RRG
 import numpy as np
@@ -18,6 +19,17 @@ def evaluation(models, config, dl, **kwargs):
     return evaluation_(models, config, dl, **kwargs)
 
 
+def get_ckpt(ckpt):
+    if ".pth" in ckpt:
+        return ckpt
+    elif os.path.isdir(ckpt):
+        ckpt = glob.glob(os.path.join(ckpt, "*.pth"))
+        assert len(ckpt) == 1
+        return ckpt
+    else:
+        raise FileNotFoundError(ckpt)
+
+
 class RRG_SCST(nn.Module):
 
     def __init__(self, decoder, cnn, ckpt, dl, scores="ROUGEL", scores_args=None, scores_weights=None, top_k=None,
@@ -25,7 +37,7 @@ class RRG_SCST(nn.Module):
         super().__init__()
 
         # Models
-        state_dict = torch.load(ckpt)["model"]
+        state_dict = torch.load(get_ckpt(ckpt))["model"]
         self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), **kwargs)
         self.model.load_state_dict(state_dict, strict=True)
 

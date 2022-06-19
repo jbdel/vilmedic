@@ -6,38 +6,56 @@ from .reward_functions import (
     partially_exact_entity_token_and_label_match_reward,
     exact_entity_token_and_label_match_reward,
     exact_relation_token_and_label_match_reward,
+    exact_entity_token_if_rel_match_reward,
+    exact_entity_token_if_all_match_reward,
+    exact_entity_token_if_rel_exists_reward
 )
 
 
 def compute_reward(
-    hypothesis_annotation_list,
-    reference_annotation_list,
-    lambda_e,
-    lambda_r,
-    reward_level,
+        hypothesis_annotation_list,
+        reference_annotation_list,
+        lambda_e,
+        lambda_r,
+        reward_level,
 ):
     if (
-        len(hypothesis_annotation_list["entities"].keys()) == 0
-        or len(reference_annotation_list["entities"].keys()) == 0
+            len(hypothesis_annotation_list["entities"].keys()) == 0
+            or len(reference_annotation_list["entities"].keys()) == 0
     ):
-        return 0
+        return (0., 0., 0.) if reward_level == "full" else 0.
 
-    if reward_level == "simple":
-        return lambda_e * exact_entity_token_match_reward(
-            hypothesis_annotation_list, reference_annotation_list
-        )
-    elif reward_level == "partial":
-        return lambda_e * partially_exact_entity_token_and_label_match_reward(
-            hypothesis_annotation_list, reference_annotation_list
-        ) + lambda_r * partially_exact_relation_token_and_label_match_reward(
-            hypothesis_annotation_list, reference_annotation_list
-        )
-    elif reward_level == "complete":
-        return lambda_e * exact_entity_token_and_label_match_reward(
-            hypothesis_annotation_list, reference_annotation_list
-        ) + lambda_r * exact_relation_token_and_label_match_reward(
-            hypothesis_annotation_list, reference_annotation_list
-        )
+    simple = exact_entity_token_match_reward(
+        hypothesis_annotation_list, reference_annotation_list
+    )
+
+    # partial = lambda_e * partially_exact_entity_token_and_label_match_reward(
+    #     hypothesis_annotation_list, reference_annotation_list
+    # ) + lambda_r * partially_exact_relation_token_and_label_match_reward(
+    #     hypothesis_annotation_list, reference_annotation_list
+    # )
+
+    # complete = lambda_e * exact_entity_token_and_label_match_reward(
+    #     hypothesis_annotation_list, reference_annotation_list
+    # ) + lambda_r * exact_relation_token_and_label_match_reward(
+    #     hypothesis_annotation_list, reference_annotation_list
+    # )
+
+    # partial = exact_entity_token_if_rel_match_reward(hypothesis_annotation_list,
+    #                                                  reference_annotation_list
+    #                                                  )
+
+    partial = exact_entity_token_if_rel_exists_reward(hypothesis_annotation_list,
+                                                      reference_annotation_list
+                                                      )
+
+    complete = exact_entity_token_if_all_match_reward(hypothesis_annotation_list,
+                                                      reference_annotation_list
+                                                      )
+
+    full = (simple, partial, complete)
+
+    return eval(reward_level)
 
 
 def preprocess_reports(report_list):
@@ -120,7 +138,7 @@ def get_entity(n, r, s):
     for idx, item in enumerate(n):
         temp_dict = {}
         start_idx, end_idx, label = item[0], item[1], item[2]
-        temp_dict["tokens"] = " ".join(s[start_idx : end_idx + 1])
+        temp_dict["tokens"] = " ".join(s[start_idx: end_idx + 1])
         temp_dict["label"] = label
         temp_dict["start_ix"] = start_idx
         temp_dict["end_ix"] = end_idx

@@ -2,9 +2,11 @@ import tqdm
 import torch
 import functools
 from .beam_search import beam_search
+import torch.nn as nn
 
 
 def evaluation(models, config, dl, **kwargs):
+    models = [m if not isinstance(m, nn.DataParallel) else m.module for m in models]
     hf_models = [model.dec.decoder for model in models]
 
     # We are in an ensembling scenario, we override huggingface beam-search function

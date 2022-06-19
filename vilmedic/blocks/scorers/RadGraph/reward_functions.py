@@ -1,3 +1,6 @@
+import json
+
+
 # We have four types of outputs to leverage from radgraph
 # 1. Entity token
 # 2. Entity label
@@ -21,9 +24,213 @@
 # 3. enlever les prints
 
 
-# To be tested alone
+def exact_entity_token_if_all_match_reward(
+        hypothesis_annotation_list, reference_annotation_list
+):
+    candidates = []
+    for annotation_list in [hypothesis_annotation_list, reference_annotation_list]:
+        candidate = []
+        for entity in annotation_list["entities"].values():
+            if not entity["relations"]:
+                candidate.append((entity["tokens"], entity["label"]))
+            if entity["relations"]:
+                candidate.extend([(entity["tokens"].lower(),
+                                   entity["label"],
+                                   r[0],
+                                   annotation_list["entities"][r[1]]["tokens"].lower())
+                                  for r in entity["relations"]]
+                                 )
+               
+        candidate = set(candidate)
+        candidates.append(candidate)
+
+    hypothesis_relation_token_list, reference_relation_token_list = candidates
+    precision = (
+        sum(
+            [
+                1
+                for x in hypothesis_relation_token_list
+                if (x in reference_relation_token_list)
+            ]
+        )
+        / len(hypothesis_relation_token_list)
+        if len(hypothesis_relation_token_list) > 0
+        else 0.0
+    )
+    recall = (
+        sum(
+            [
+                1
+                for x in reference_relation_token_list
+                if (x in hypothesis_relation_token_list)
+            ]
+        )
+        / len(reference_relation_token_list)
+        if len(reference_relation_token_list) > 0
+        else 0.0
+    )
+    f1_score = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    return f1_score
+
+
+def exact_entity_token_if_rel_match_reward(
+        hypothesis_annotation_list, reference_annotation_list
+):
+    candidates = []
+    for annotation_list in [hypothesis_annotation_list, reference_annotation_list]:
+        candidate = []
+        for entity in annotation_list["entities"].values():
+            if not entity["relations"]:
+                candidate.append((entity["tokens"], entity["label"]))
+            if entity["relations"]:
+                candidate.append(tuple((entity["tokens"].lower(),
+                                        annotation_list["entities"][r[1]]["tokens"].lower())
+                                       for r in entity["relations"])
+                                 )
+        candidate = set(candidate)
+        candidates.append(candidate)
+
+    hypothesis_relation_token_list, reference_relation_token_list = candidates
+
+    precision = (
+        sum(
+            [
+                1
+                for x in hypothesis_relation_token_list
+                if (x in reference_relation_token_list)
+            ]
+        )
+        / len(hypothesis_relation_token_list)
+        if len(hypothesis_relation_token_list) > 0
+        else 0.0
+    )
+    recall = (
+        sum(
+            [
+                1
+                for x in reference_relation_token_list
+                if (x in hypothesis_relation_token_list)
+            ]
+        )
+        / len(reference_relation_token_list)
+        if len(reference_relation_token_list) > 0
+        else 0.0
+    )
+    f1_score = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    return f1_score
+
+
+def exact_entity_token_if_rel_exists_reward(
+        hypothesis_annotation_list, reference_annotation_list
+):
+    candidates = []
+    for annotation_list in [hypothesis_annotation_list, reference_annotation_list]:
+        candidate = []
+        for entity in annotation_list["entities"].values():
+            if not entity["relations"]:
+                candidate.append((entity["tokens"], entity["label"]))
+            if entity["relations"]:
+                candidate.append((entity["tokens"], entity["label"], True))
+
+        candidate = set(candidate)
+        candidates.append(candidate)
+
+    hypothesis_relation_token_list, reference_relation_token_list = candidates
+
+    precision = (
+        sum(
+            [
+                1
+                for x in hypothesis_relation_token_list
+                if (x in reference_relation_token_list)
+            ]
+        )
+        / len(hypothesis_relation_token_list)
+        if len(hypothesis_relation_token_list) > 0
+        else 0.0
+    )
+    recall = (
+        sum(
+            [
+                1
+                for x in reference_relation_token_list
+                if (x in hypothesis_relation_token_list)
+            ]
+        )
+        / len(reference_relation_token_list)
+        if len(reference_relation_token_list) > 0
+        else 0.0
+    )
+    f1_score = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    return f1_score
+
+
 def exact_entity_token_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
+):
+    candidates = []
+    for annotation_list in [hypothesis_annotation_list, reference_annotation_list]:
+        candidate = []
+        for entity in annotation_list["entities"].values():
+            candidate.append((entity["tokens"], entity["label"]))
+
+        candidate = set(candidate)
+        candidates.append(candidate)
+
+    hypothesis_relation_token_list, reference_relation_token_list = candidates
+
+    precision = (
+        sum(
+            [
+                1
+                for x in hypothesis_relation_token_list
+                if (x in reference_relation_token_list)
+            ]
+        )
+        / len(hypothesis_relation_token_list)
+        if len(hypothesis_relation_token_list) > 0
+        else 0.0
+    )
+    recall = (
+        sum(
+            [
+                1
+                for x in reference_relation_token_list
+                if (x in hypothesis_relation_token_list)
+            ]
+        )
+        / len(reference_relation_token_list)
+        if len(reference_relation_token_list) > 0
+        else 0.0
+    )
+
+    f1_score = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
+
+    return f1_score
+
+
+# To be tested alone
+def exact_entity_token_match_reward_old(
+        hypothesis_annotation_list, reference_annotation_list
 ):
     hypothesis_entity_token_list = set(
         map(
@@ -67,7 +274,6 @@ def exact_entity_token_match_reward(
         if (precision + recall) > 0
         else 0.0
     )
-
     return f1_score
 
 
@@ -75,7 +281,7 @@ def exact_entity_token_match_reward(
 # Ex: is "pleural effusion" as a Definitively Absent Observation in both texts ?
 # To be tested alone
 def exact_entity_token_and_label_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
 ):
     hypothesis_entity_token_and_label_list = set(
         map(
@@ -128,7 +334,7 @@ def exact_entity_token_and_label_match_reward(
 # Ex: if "pleural effusion" is in both texts, is it as a Definitively Absent Observation in both texts?
 # Not to be tested
 def exact_entity_label_if_correct_token_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
 ):
     raise Exception("not supposed to be used")
     hypothesis_entity_token_and_label_list = set(
@@ -199,7 +405,7 @@ def exact_entity_label_if_correct_token_match_reward(
 
 # Test alone, maybe best one ?
 def partially_exact_entity_token_and_label_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
 ):
     hypothesis_entity_token_and_label_list = set(
         map(
@@ -238,8 +444,8 @@ def partially_exact_entity_token_and_label_match_reward(
                 0.5
                 for (x, y) in hypothesis_entity_token_and_label_list
                 if (
-                    ((x, y) not in reference_entity_token_and_label_list)
-                    and (x in reference_entity_token_list)
+                        ((x, y) not in reference_entity_token_and_label_list)
+                        and (x in reference_entity_token_list)
                 )
             ]
         )
@@ -259,8 +465,8 @@ def partially_exact_entity_token_and_label_match_reward(
                 0.5
                 for (x, y) in reference_entity_token_and_label_list
                 if (
-                    ((x, y) not in hypothesis_entity_token_and_label_list)
-                    and (x in hypothesis_entity_token_list)
+                        ((x, y) not in hypothesis_entity_token_and_label_list)
+                        and (x in hypothesis_entity_token_list)
                 )
             ]
         )
@@ -287,8 +493,9 @@ def partially_exact_entity_token_and_label_match_reward(
 
 
 def exact_relation_token_and_label_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
 ):
+    # print(json.dumps(hypothesis_annotation_list, indent=4))
     hypothesis_relation_token_and_label_list = list(
         map(
             lambda x: [
@@ -298,6 +505,8 @@ def exact_relation_token_and_label_match_reward(
             hypothesis_annotation_list["entities"].values(),
         )
     )
+    # print(hypothesis_relation_token_and_label_list)
+    # troll
 
     hypothesis_relation_token_and_label_list = set(
         [
@@ -369,7 +578,7 @@ def exact_relation_token_and_label_match_reward(
 
 
 def partially_exact_relation_token_and_label_match_reward(
-    hypothesis_annotation_list, reference_annotation_list
+        hypothesis_annotation_list, reference_annotation_list
 ):
     hypothesis_relation_token_and_label_list = list(
         map(
@@ -440,11 +649,11 @@ def partially_exact_relation_token_and_label_match_reward(
                 0.5
                 for (x, y, z) in hypothesis_relation_token_and_label_list
                 if (
-                    ((x, y, z) not in reference_relation_token_and_label_list)
-                    and (
-                        ((x, z) in reference_relation_token_list)
-                        or ((z, x) in reference_relation_token_list)
-                    )
+                        ((x, y, z) not in reference_relation_token_and_label_list)
+                        and (
+                                ((x, z) in reference_relation_token_list)
+                                or ((z, x) in reference_relation_token_list)
+                        )
                 )
             ]
         )
@@ -464,11 +673,11 @@ def partially_exact_relation_token_and_label_match_reward(
                 0.5
                 for (x, y, z) in reference_relation_token_and_label_list
                 if (
-                    ((x, y, z) not in hypothesis_relation_token_and_label_list)
-                    and (
-                        ((x, z) in hypothesis_relation_token_list)
-                        or ((z, x) in hypothesis_relation_token_list)
-                    )
+                        ((x, y, z) not in hypothesis_relation_token_and_label_list)
+                        and (
+                                ((x, z) in hypothesis_relation_token_list)
+                                or ((z, x) in hypothesis_relation_token_list)
+                        )
                 )
             ]
         )

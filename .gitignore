@@ -1,0 +1,8 @@
+**/*.pyc
+data/*
+!data/download.py
+cmd/*
+vilmedic/blocks/scorers/radgraph/model_checkpoint/*
+vilmedic/idea/*
+gradio/*
+**/*.txt

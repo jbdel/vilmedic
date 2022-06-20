@@ -23,6 +23,7 @@ setup(
     install_requires=['appdirs==1.4.4',
                       'omegaconf==2.0.6',
                       'torchvision==0.9.1',
+                      'protobuf==3.19',
                       'rouge_score',
                       'youtokentome==1.0.3',
                       'tokenizers==0.11.6',

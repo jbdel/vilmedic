@@ -18,6 +18,7 @@ REWARD_COMPLIANT = {
     "radentitynli": [RadEntityNLI, 1],
     "chexbert": [CheXbert, 1],
     "radgraph": [RadGraph, 1],
+    "bertscore": [BertScore, 1],
     # "MAUVE": [MauveScorer, 0],
 }
 
@@ -66,6 +67,8 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
             scores["METEOR"] = Meteor()(refs, hyps)[0]
         elif metric == 'CIDERD':
             scores["CIDERD"] = CiderD()(refs, hyps)[0]
+        elif metric == 'bertscore':
+            scores["bertscore"] = BertScore()(refs, hyps)[0]
         elif metric in ['ROUGE1', 'ROUGE2', 'ROUGEL']:
             scores[metric] = Rouge(rouges=[metric.lower()])(refs, hyps)[0]
         elif metric == 'MAUVE':
@@ -89,7 +92,7 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
             scores["radentitynli"] = RadEntityNLI()(refs, hyps)[0]
         elif metric == 'radgraph':
             scores["radgraph_simple"], scores["radgraph_partial"], scores["radgraph_complete"] = \
-            RadGraph(reward_level="full")(refs=refs, hyps=hyps)[0]
+                RadGraph(reward_level="full")(refs=refs, hyps=hyps)[0]
         else:
             logger.warning("Metric not implemented: {}".format(metric))
 

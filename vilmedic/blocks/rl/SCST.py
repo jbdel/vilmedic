@@ -46,7 +46,7 @@ def scst_loss(input,
 
 
 class SCST(nn.Module):
-    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None):
+    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False):
         super().__init__()
 
         dataset = dl.dataset
@@ -61,6 +61,7 @@ class SCST(nn.Module):
 
         self.decoder = decoder
         self.top_k = top_k
+        self.use_nll = use_nll
         self.bos_token_id = self.decoder.config.bos_token_id
         self.eos_token_id = self.decoder.config.eos_token_id
         self.pad_token_id = self.decoder.config.pad_token_id
@@ -78,7 +79,11 @@ class SCST(nn.Module):
         if len(scores) > 1:
             assert scores_weights is not None, "You need to mention scores_weights"
             assert isinstance(scores_weights, (list, ListConfig)), "scores_weights must be a list"
-            assert len(scores_weights) == len(scores), "You need to mention as much scores_weights as scores"
+            if self.use_nll:
+                assert len(scores_weights) == len(scores) + 1, "Mention nll_weight + as much scores_weights as scores"
+            else:
+                assert len(scores_weights) == len(scores), "Mention as much scores_weights as scores"
+
         else:
             self.scores_weights = [1.0]
 
@@ -121,9 +126,16 @@ class SCST(nn.Module):
         reward_greedy, hyp_list, ref_list = self.get_reward(greedy_input_ids.detach().data, input_ids)
         return reward_greedy, hyp_list, ref_list
 
-    def forward_sampling(self, input_ids, encoder_hidden_states, encoder_attention_mask, reward_greedy):
+    def forward_sampling(self, input_ids, attention_mask, encoder_hidden_states, encoder_attention_mask, reward_greedy):
         assert torch.is_grad_enabled()
         batch_size = input_ids.shape[0]
+        if self.use_nll:
+            nll_loss = self.decoder(input_ids=input_ids.cuda(),
+                                    attention_mask=attention_mask.cuda(),
+                                    encoder_hidden_states=encoder_hidden_states,
+                                    encoder_attention_mask=encoder_attention_mask,
+                                    labels=input_ids.cuda(),
+                                    )["loss"]
 
         out = inspect.unwrap(self.decoder.generate)(  # inspect.unwrap removes the torch.no_grad() decorator
             self=self.decoder,
@@ -151,8 +163,11 @@ class SCST(nn.Module):
                                                                 sampled_ids.data,
                                                                 reward_sampling,
                                                                 reward_greedy,
-                                                                self.scores_weights,
+                                                                # avoid nll_weight if present
+                                                                self.scores_weights[-len(self.scores):],
                                                                 self.pad_token_id)
+        if self.use_nll:
+            loss += self.scores_weights[0] * nll_loss
         return loss, delta_reward, delta_reward_per_metric, reward_sampling, hyp_list
 
     def get_reward(self, rollout_input_ids, input_ids):

@@ -17,7 +17,7 @@ def evaluation(models, config, dl, **kwargs):
 class RRS_SCST(nn.Module):
 
     def __init__(self, encoder, decoder, ckpt, dl, scores="ROUGEL", scores_args=None, scores_weights=None, top_k=None,
-                 **kwargs):
+                 use_nll=False, **kwargs):
         super().__init__()
 
         # Models
@@ -34,6 +34,7 @@ class RRS_SCST(nn.Module):
                          scores=scores,
                          scores_args=scores_args,
                          scores_weights=scores_weights,
+                         use_nll=use_nll,
                          top_k=top_k)
 
         self.eval_func = evaluation
@@ -59,6 +60,7 @@ class RRS_SCST(nn.Module):
         encoder_hidden_states = encoder_outputs[0]
         loss, delta_reward, delta_reward_per_metric, reward_sampling, sampling_hyp_list = self.scst.forward_sampling(
             input_ids=decoder_input_ids,
+            attention_mask=decoder_attention_mask,
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=attention_mask,
             reward_greedy=reward_greedy

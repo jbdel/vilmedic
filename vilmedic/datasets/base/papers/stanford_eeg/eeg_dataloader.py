@@ -64,7 +64,9 @@ class EegTextDataset(Dataset):
         file_path, clip_idx, split = self.eeg_file_tuple_dict[file_name]
         eeg_clip = stanford_eeg_loader(file_path, clip_idx, split, self.clip_len)
 
-        return eeg_clip, eeg_text
+        sz_label = clip_idx != -1
+
+        return eeg_clip, eeg_text, sz_label
 
 
 class TuhEegTextDataset(Dataset):
@@ -90,7 +92,7 @@ class TuhEegTextDataset(Dataset):
         """
 
         # TODO: load text reports
-        # retrieve paths of all edf files in the raw_dataset_dir
+        # # retrieve paths of all edf files in the raw_dataset_dir
         # self.edf_files = []
         # for path, subdirs, files in os.walk(raw_dataset_dir):
         #     for name in files:
@@ -122,7 +124,7 @@ class TuhEegTextDataset(Dataset):
         # TODO: load text reports
         # eeg_text = self.reports_dict[file_name]
 
-        edf_fn, clip_idx, split = self.eeg_file_tuples[idx]
+        edf_fn, clip_idx, is_seizure = self.eeg_file_tuples[idx]
         h5_fn = os.path.join(self.dataset_dir, edf_fn.split(".edf")[0] + ".h5")
 
         eeg_clip = tuh_eeg_loader(
@@ -131,8 +133,19 @@ class TuhEegTextDataset(Dataset):
 
         eeg_clip = eeg_clip.swapaxes(0, 1).reshape(19, -1).T
 
+        # # get sz label
+        # filepath = [file for file in self.edf_files if edf_fn in file]
+        # filepath = filepath[0]
+        # _, binary_sz = get_sz_labels(
+        #     edf_fn=filepath,
+        #     clip_idx=int(clip_idx),
+        #     time_step_size=1,
+        #     clip_len=self.clip_len,
+        #     stride=self.clip_len,
+        # )
+
         # return eeg_clip, eeg_text
-        return eeg_clip, None
+        return eeg_clip, None, is_seizure
 
 
 def test_dataloader_and_encoder():
@@ -148,7 +161,7 @@ def test_dataloader_and_encoder():
             dataset_dir,
             reports_dict_pth="TODO",
             split_type="train",
-            clip_len=12,
+            clip_len=60,
         )
 
     else:
@@ -167,9 +180,9 @@ def test_dataloader_and_encoder():
 
     eeg_model = DenseInception(data_shape=(2400, 19))
 
-    eeg_clip, eeg_text = eeg_ds[0]
-    eeg_clip2, _ = eeg_ds[10]
-    eeg_clip3, _ = eeg_ds[20]
+    eeg_clip, eeg_text, sz_label = eeg_ds[0]
+    eeg_clip2, _, _ = eeg_ds[10]
+    eeg_clip3, _, _ = eeg_ds[20]
 
     x = torch.Tensor(np.stack([eeg_clip, eeg_clip2, eeg_clip3]))
 

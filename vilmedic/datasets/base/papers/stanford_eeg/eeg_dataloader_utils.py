@@ -2,6 +2,7 @@ import numpy as np
 import eeghdf
 import h5py
 import os
+from scipy.signal import resample
 
 STANFORD_INCLUDED_CHANNELS = [
     "EEG Fp1",
@@ -23,6 +24,29 @@ STANFORD_INCLUDED_CHANNELS = [
     "EEG Fz",
     "EEG Cz",
     "EEG Pz",
+]
+
+
+TUH_INCLUDED_CHANNELS = [
+    "EEG FP1",
+    "EEG FP2",
+    "EEG F3",
+    "EEG F4",
+    "EEG C3",
+    "EEG C4",
+    "EEG P3",
+    "EEG P4",
+    "EEG O1",
+    "EEG O2",
+    "EEG F7",
+    "EEG F8",
+    "EEG T3",
+    "EEG T4",
+    "EEG T5",
+    "EEG T6",
+    "EEG FZ",
+    "EEG CZ",
+    "EEG PZ",
 ]
 
 FREQUENCY = 200
@@ -120,6 +144,40 @@ def get_seizure_times(file_name):
                     ]
                 )
     return seizure_times
+
+
+def get_edf_signals(edf):
+    """
+    Get EEG signal in edf file
+    Args:
+        edf: edf object
+    Returns:
+        signals: shape (num_channels, num_data_points)
+    """
+    n = edf.signals_in_file
+    samples = edf.getNSamples()[0]
+    signals = np.zeros((n, samples))
+    for i in range(n):
+        try:
+            signals[i, :] = edf.readSignal(i)
+        except:
+            pass
+    return signals
+
+
+def resample_data(signals, to_freq=200, window_size=4):
+    """
+    Resample signals from its original sampling freq to another freq
+    Args:
+        signals: EEG signal slice, (num_channels, num_data_points)
+        to_freq: Re-sampled frequency in Hz
+        window_size: time window in seconds
+    Returns:
+        resampled: (num_channels, resampled_data_points)
+    """
+    num = int(to_freq * window_size)
+    resampled = resample(signals, num=num, axis=1)
+    return resampled
 
 
 def tuh_eeg_loader(

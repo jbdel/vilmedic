@@ -17,10 +17,15 @@ class RRS(nn.Module):
     def __init__(self, encoder, decoder, dl, **kwargs):
         super().__init__()
 
+        # Encoder
+        encoder.vocab_size = dl.dataset.src.tokenizer.vocab_size
         enc_config = BertGenerationConfig(**encoder,
                                           is_decoder=False,
                                           add_cross_attention=False)
         self.enc = BertGenerationEncoder(enc_config)
+
+        # Decoder
+        decoder.vocab_size = dl.dataset.tgt.tokenizer.vocab_size
         self.dec = DecoderModel(decoder)
 
         # Evaluation

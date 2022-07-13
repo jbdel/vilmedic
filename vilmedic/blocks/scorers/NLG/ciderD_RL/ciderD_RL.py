@@ -7,6 +7,7 @@
 #
 # Authors: Ramakrishna Vedantam <vrama91@vt.edu> and Tsung-Yi Lin <tl483@cornell.edu>
 from .ciderD_RL_scorer import CiderScorer
+from vilmedic.datasets.base.papers.report_preprocessing import *
 
 
 class CiderDRL:
@@ -15,14 +16,14 @@ class CiderDRL:
 
     """
 
-    def __init__(self, n=4, sigma=6.0, df="corpus", **kwargs):
+    def __init__(self, n=4, sigma=6.0, df="corpus", processing=None, **kwargs):
         # set cider to sum over 1 to 4-grams
         super().__init__()
         self._n = n
         # set the standard deviation parameter for gaussian penalty
         self._sigma = sigma
         # set which where to compute document frequencies from
-        refs = [ref.strip() for ref in open(df).readlines()]
+        refs = [eval(processing or 'lambda x: x')(ref.strip()) for ref in open(df).readlines()]
         scorer = CiderScorer(refs=refs)
         scorer.compute_doc_freq()
         self._df = scorer.document_frequency

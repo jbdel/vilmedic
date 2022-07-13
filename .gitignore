@@ -1,2 +1,8 @@
+**/*.pyc
 data/*
-**/**/*pyc
+!data/make_datasets
+cmd/*
+vilmedic/blocks/scorers/radgraph/model_checkpoint/*
+vilmedic/idea/*
+gradio/*
+**/*.txt

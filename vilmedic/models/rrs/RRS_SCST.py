@@ -17,7 +17,7 @@ def evaluation(models, config, dl, **kwargs):
 class RRS_SCST(nn.Module):
 
     def __init__(self, encoder, decoder, ckpt, dl, scores="ROUGEL", scores_args=None, scores_weights=None, top_k=None,
-                 **kwargs):
+                 use_nll=False, **kwargs):
         super().__init__()
 
         # Models
@@ -34,6 +34,7 @@ class RRS_SCST(nn.Module):
                          scores=scores,
                          scores_args=scores_args,
                          scores_weights=scores_weights,
+                         use_nll=use_nll,
                          top_k=top_k)
 
         self.eval_func = evaluation
@@ -44,32 +45,30 @@ class RRS_SCST(nn.Module):
             self.model.eval()
             input_ids = input_ids.cuda()
             attention_mask = attention_mask.cuda()
-            encoder_outputs = self.encoder(input_ids, attention_mask)
-            encoder_hidden_states = encoder_outputs[0]
+            encoder_outputs = self.encoder(input_ids, attention_mask, return_dict=True)
 
             reward_greedy, greedy_hyp_list, ref_list = self.scst.forward_greedy(
                 input_ids=decoder_input_ids,
-                encoder_hidden_states=encoder_hidden_states,
+                encoder_hidden_states=encoder_outputs.last_hidden_state,
                 encoder_attention_mask=attention_mask
             )
 
         # 2. Sampling
         self.model.train()
-        encoder_outputs = self.encoder(input_ids, attention_mask)
-        encoder_hidden_states = encoder_outputs[0]
+        encoder_outputs = self.encoder(input_ids, attention_mask, return_dict=True)
         loss, delta_reward, delta_reward_per_metric, reward_sampling, sampling_hyp_list = self.scst.forward_sampling(
             input_ids=decoder_input_ids,
-            encoder_hidden_states=encoder_hidden_states,
+            attention_mask=decoder_attention_mask,
+            encoder_hidden_states=encoder_outputs.last_hidden_state,
             encoder_attention_mask=attention_mask,
             reward_greedy=reward_greedy
         )
 
         return {"loss": loss,
                 "custom_print": "reward_sampling {}, "
-                                "delta_reward: {},"
-                                "sample_hyp[0]: {},".format(torch.mean(torch.tensor(reward_sampling)),
-                                                            torch.mean(torch.tensor(delta_reward)),
-                                                            sampling_hyp_list[0]),
+                                "delta_reward: {},".format(torch.mean(torch.tensor(reward_sampling)),
+                                                           torch.mean(torch.tensor(delta_reward))
+                                                           ),
                 }
 
     def __repr__(self):

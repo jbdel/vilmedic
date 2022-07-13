@@ -69,6 +69,8 @@ class SCST(nn.Module):
         self.scores_args = scores_args
         self.scores_weights = scores_weights
 
+        assert self.scores is not None
+
         if not isinstance(scores, (list, ListConfig)):
             scores = [scores]
 
@@ -76,7 +78,7 @@ class SCST(nn.Module):
         assert all([score in REWARD_COMPLIANT for score in scores]), "{} not in {}".format(scores,
                                                                                            REWARD_COMPLIANT.keys())
         # Scores weights
-        if len(scores) > 1:
+        if len(scores) > 1 or use_nll:
             assert scores_weights is not None, "You need to mention scores_weights"
             assert isinstance(scores_weights, (list, ListConfig)), "scores_weights must be a list"
             if self.use_nll:
@@ -168,6 +170,7 @@ class SCST(nn.Module):
                                                                 self.pad_token_id)
         if self.use_nll:
             loss += self.scores_weights[0] * nll_loss
+
         return loss, delta_reward, delta_reward_per_metric, reward_sampling, hyp_list
 
     def get_reward(self, rollout_input_ids, input_ids):

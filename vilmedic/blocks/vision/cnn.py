@@ -5,6 +5,7 @@ from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
 from .vgg_hgap import *
 from transformers import DeiTModel, DeiTConfig
 from transformers import ViTModel, ViTConfig
+from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
@@ -48,7 +49,7 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
 
 
 class CNN(nn.Module):
-    def __init__(self, backbone, dropout_out, permute, freeze=True, output_layer=None, pretrained=True,
+    def __init__(self, backbone, permute, dropout_out=0.0, freeze=True, output_layer=None, pretrained=True,
                  visual_embedding_dim=None, **kwargs):
         super(CNN, self).__init__()
         self.backbone = backbone
@@ -68,6 +69,12 @@ class CNN(nn.Module):
 
     def forward(self, images, **kwargs):
         out = self.cnn(images)
+
+        # Deit or vit
+        if isinstance(out, BaseModelOutputWithPooling):
+            out = self.dropout_out(out.last_hidden_state)
+            return out
+
         out = self.dropout_out(out)
         if self.permute == "no_permute":
             out = out
@@ -91,7 +98,13 @@ class CNN(nn.Module):
         return self
 
     def __repr__(self):
-        s = str(self.backbone) + '(output_layer=' + self.output_layer + ', dropout_out=' + str(
-            self.dropout_out.p) + ', freeze=' + str(self.freeze) + ', pretrained=' + str(self.pretrained) + \
+        s = str(self.backbone) + \
+            '(' + \
+            (str(type(self.cnn).__name__) + '(' + str(self.cnn.config) + '), ' if self.backbone.lower() in ['deit',
+                                                                                                            'vit'] else '') + \
+            'dropout_out=' + str(self.dropout_out.p) + \
+            ', freeze=' + str(self.freeze) + \
+            (', output_layer=' + str(self.output_layer) if self.output_layer is not None else '') + \
+            (', pretrained=' + str(self.pretrained) if self.backbone.lower() not in ['deit', 'vit'] else '') + \
             ('\n classifier= {}'.format(self.cnn.classifier) if self.output_layer == 'classifier' else '' + ')')
         return s

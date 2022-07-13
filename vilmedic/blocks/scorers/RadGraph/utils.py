@@ -1,5 +1,7 @@
 import json
 import re
+import traceback
+
 from .reward_functions import (
     exact_entity_token_match_reward,
     partially_exact_relation_token_and_label_match_reward,
@@ -115,7 +117,8 @@ def postprocess_individual_report(file, final_dict, data_source=None):
 
         final_dict[file["doc_key"]] = temp_dict
 
-    except:
+    except Exception:
+        traceback.print_exc()
         print(f"Error in doc key: {file['doc_key']}. Skipping inference on this file")
 
 

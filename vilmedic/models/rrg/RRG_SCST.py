@@ -78,10 +78,8 @@ class RRG_SCST(nn.Module):
 
         return {"loss": loss,
                 "custom_print": "reward_sampling {}, "
-                                "delta_reward: {},"
-                                "sample_hyp[0]: {},".format(torch.mean(torch.tensor(reward_sampling)),
-                                                            torch.mean(torch.tensor(delta_reward)),
-                                                            sampling_hyp_list[0]),
+                                "delta_reward: {}".format(torch.mean(torch.tensor(reward_sampling)),
+                                                          torch.mean(torch.tensor(delta_reward))),
                 }
 
     def __repr__(self):

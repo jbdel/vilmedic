@@ -167,7 +167,7 @@ class RadGraph(nn.Module):
 if __name__ == "__main__":
     import time
 
-    m = RadGraph(cuda=0, reward_level="full", batch_size=1)
+    m = RadGraph(cuda=0, reward_level="partial", batch_size=1)
     # report = "FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process ."
     # hypothesis_report_list = [report, "", "a", report]
     #
@@ -176,11 +176,11 @@ if __name__ == "__main__":
     #
     # reward_list = m(hyps=hypothesis_report_list, refs=reference_report_list)
     t = time.time()
-    num = str(390511)
-    l1 = open("validate_" + num + "_hyps.txt").readlines()
+    num = str(103276)
+    l1 = open("test_best-1_881942_hyps.txt").readlines()
     # l1 = [l.strip() for l in l1][:10]
     l1 = [l.strip() for l in l1]
-    l2 = open("validate_" + num + "_refs.txt").readlines()
+    l2 = open("test_best-1_103276_refs.txt").readlines()
     # l2 = [l.strip() for l in l2][:10]
     l2 = [l.strip() for l in l2]
     mean_reward, reward_list, hypothesis_annotation_lists, reference_annotation_lists = m(hyps=l1, refs=l2)

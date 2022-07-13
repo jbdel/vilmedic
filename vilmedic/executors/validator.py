@@ -5,6 +5,7 @@ import logging
 from .utils import create_data_loader, get_eval_func
 from vilmedic.blocks.scorers.scores import compute_scores
 from vilmedic.blocks.scorers.post_processing import post_processing
+from omegaconf.listconfig import ListConfig
 
 
 class InitValidator(object):
@@ -17,9 +18,18 @@ class InitValidator(object):
         # Logger
         self.logger = logging.getLogger(str(seed))
 
+        # Models
         self.models = models
+
+        # Metrics
         self.metrics = config.metrics
+        if not isinstance(self.metrics, (list, ListConfig)):
+            self.metrics = [self.metrics]
+
         self.post_processing = config.post_processing
+        if not isinstance(self.post_processing, (list, ListConfig)):
+            self.post_processing = [self.post_processing]
+
         self.epoch = 0
 
         # Evaluation splits

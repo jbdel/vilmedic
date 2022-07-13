@@ -1,0 +1,61 @@
+name: rrg_eeg_biomed
+ckpt_dir: ckpt
+dataset:
+  proto: ImSeq
+  image:
+    root: data/EEG/
+    file: eeg.npy
+    image_path: null
+    ext: .npy
+  seq:
+    root: data/EEG/
+    file: report.tok
+    tokenizer: allenai/biomed_roberta_base
+    tokenizer_max_len: 256
+    processing: r2gen_clean_report
+    source: tgt
+
+model:
+  proto: RRG_EEG
+  decoder:
+    proto: allenai/biomed_roberta_base
+
+trainor:
+  batch_size: 16
+  optimizer: RAdam
+  optim_params:
+    lr: 5e-5
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: ROUGEL
+
+validator:
+  batch_size: 4
+  beam_width: 8
+  metrics:
+    - ROUGEL
+    - BLEU
+    - CIDERD
+    - radentitymatchexact
+    - radentitynli
+  splits: [ validate ]
+
+ensemblor:
+  batch_size: 4
+  beam_width: 8
+  metrics:
+    - ROUGEL
+    - BLEU
+    - CIDERD
+    - radentitymatchexact
+    - radentitynli
+  splits: [ validate, test ]
+  mode: best-1

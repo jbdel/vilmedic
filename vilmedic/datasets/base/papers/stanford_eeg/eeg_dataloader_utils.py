@@ -1,6 +1,7 @@
 import numpy as np
 import eeghdf
 import os
+from vilmedic.constants import DATA_DIR
 
 STANFORD_INCLUDED_CHANNELS = [
     "EEG Fp1",
@@ -45,7 +46,7 @@ def compute_stanford_file_tuples(stanford_dataset_dir, lpch_dataset_dir, splits)
             )
             for sz_type in ["non_sz", "sz"]:
                 filemarker_dir = (
-                    f"{curr_dir}/file_markers/"
+                    f"{DATA_DIR}/EEG/file_markers/"
                     + f"file_markers_{hospital}/{sz_type}_{split}.txt"
                 )
                 filemarker_contents = open(filemarker_dir, "r").readlines()
@@ -61,12 +62,7 @@ def compute_stanford_file_tuples(stanford_dataset_dir, lpch_dataset_dir, splits)
 def get_stanford_sz_times(eegf):
     df = eegf.edf_annotations_df
     seizure_df = df[df.text.str.contains("|".join(SEIZURE_STRINGS), case=False)]
-    seizure_df = seizure_df[
-        seizure_df.text.str.contains("|".join(FILTER_SZ_STRINGS), case=False) is False
-    ]
-
-    seizure_times = seizure_df["starts_sec"].tolist()
-    return seizure_times
+    return seizure_df["starts_sec"].tolist()
 
 
 def is_increasing(channel_indices):
@@ -130,6 +126,7 @@ def stanford_eeg_loader(filepath, sz_start_idx, split, clip_len):
     phys_signals = eegf.phys_signals
 
     # get seizure time
+
     if sz_start_idx == -1 or split != "train":
         sz_start = sz_start_idx
     else:

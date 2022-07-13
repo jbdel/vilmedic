@@ -58,7 +58,11 @@ def default_collate(batch):
 
 
 def read_images(root, image_path, split, file):
-    lines = load_file(os.path.join(root, split + '.' + file))
+    file_path = os.path.join(root, split + '.' + file)
+    if '.npy' in file_path:
+        return [[x] for x in np.load(file_path)]
+
+    lines = load_file(file_path)
     return [[os.path.join(image_path, image) for image in line.split(',')] for line in lines]
 
 
@@ -119,7 +123,11 @@ def open_image(image, ext):
         return Image.fromarray(np.uint8(img)).convert('RGB')
 
     if ext in ['.npy', '.npz']:
-        return torch.from_numpy(np.load(image))
+        if type(image) == str:
+            image = np.load(image)
+        if type(image) == np.ndarray:
+            image = torch.from_numpy(image)
+        return image
 
     # Special cases
     if ext in PAPER_EXT.keys():

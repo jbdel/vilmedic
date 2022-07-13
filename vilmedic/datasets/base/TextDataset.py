@@ -145,3 +145,4 @@ class TextDataset(Dataset):
         ax[0].set_title("tokenizer_len")
         ax[1].set_title("sentence_len")
         plt.show()
+        plt.savefig(os.path.join(self.ckpt_dir, 'length.{}.png'.format(self.source)))

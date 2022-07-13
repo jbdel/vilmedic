@@ -52,7 +52,7 @@ setup(
                       'boto3==1.21.13',
                       'jsonpickle==2.1.0',
                       'h5py==3.6.0',
-                      'tensorboardX==2.5',
+                      'tensorboard',
                       ##
                       'psutil==5.9.0',
                       'lightning-bolts==0.5.0',

@@ -162,6 +162,11 @@ class DenseInception(nn.Module):
             * int(self.data_shape[0] / (7 * 5 * 5 * 4)),
             128,
         )
+        # print(self.data_shape[1]
+        #     * self.num_channels
+        #     * 36
+        #     * int(self.data_shape[0] / (7 * 5 * 5 * 4)))
+
         self.fcbn1 = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, num_classes)
         self.dropout_rate = dropout_rate
@@ -211,13 +216,25 @@ class DenseInception(nn.Module):
         s = self.conv1x1_76(s_cat_10)
         #         print(s.size())
         s = F.max_pool2d(s, (4, 1))
+        # print(s.view(*s.size()[:2], -1).permute(0, 2, 1).shape)
+        # torch.Size([16, 57, 360])
+        # without max pool : torch.Size([16, 247, 360])
+        return s.view(*s.size()[:2], -1).permute(0, 2, 1)
 
-        #         print(s.size())
+        s = F.max_pool2d(s, (4, 1))
         s = s.contiguous()
         s = s.view(s.size()[0], -1)
+
         s = F.dropout(
             F.relu(self.fcbn1(self.fc1(s))), p=self.dropout_rate, training=self.training
         )
         s = self.fc2(s)
 
         return s  # F.sigmoid(s)
+
+    def __repr__(self):
+        s = "model: DenseInception\n"
+        s += "(data_shape):" + str(self.data_shape) + '\n'
+        s += "(num_inception_layers):" + str(self.num_inception_layers) + '\n'
+        s += "(num_channels):" + str(self.num_channels) + '\n'
+        return s

@@ -21,7 +21,7 @@ def evaluation(models, config, dl, **kwargs):
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() for k, v in batch.items()}
             # Expanding inputs
-            batch_size = batch['images'].shape[0]
+            batch_size = batch['input_ids'].shape[0]
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )

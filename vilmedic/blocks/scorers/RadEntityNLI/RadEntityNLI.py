@@ -132,7 +132,6 @@ class RadEntityNLI(nn.Module):
 
 
 if __name__ == '__main__':
-
     num = str(776414)
 
     l1 = open("test_best-1_" + num + "_hyps.txt").readlines()
@@ -141,7 +140,6 @@ if __name__ == '__main__':
     l2 = open("test_best-1_" + num + "_refs.txt").readlines()
     # l2 = [l.strip() for l in l2][:10]
     l2 = [l.strip() for l in l2]
-
 
     # x = RadEntityNLI()(
     #     refs=[
@@ -157,6 +155,6 @@ if __name__ == '__main__':
         refs=l2,
         hyps=l1)
 
-    #0.3200814901900191,
+    # 0.3200814901900191,
     print(x[0])
     # (0.5238658777120316, [0.5743589743589744, 0.4733727810650888])

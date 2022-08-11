@@ -32,7 +32,6 @@ model:
     transformers_version: 4.5.1
     type_vocab_size: 1
     use_cache: true
-    vocab_size: 12700
 
 trainor:
   batch_size: 128

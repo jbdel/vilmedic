@@ -1,5 +1,7 @@
 import os
 import pydicom
+from pydicom.pixel_data_handlers.util import apply_voi_lut
+
 import numpy as np
 import json
 import PIL
@@ -102,7 +104,7 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
 
 
 def open_image(image, ext):
-    if ext == '.jpg':
+    if ext == '.jpg' or ext == '.jpeg':
         return Image.open(image).convert('RGB')
 
     if ext == '.xrv':
@@ -119,8 +121,13 @@ def open_image(image, ext):
 
     if ext == '.dcm':
         ds = pydicom.dcmread(image)
-        img = ds.pixel_array
-        return Image.fromarray(np.uint8(img)).convert('RGB')
+        if 'WindowWidth' in ds:
+            img = apply_voi_lut(ds.pixel_array, ds).astype(float)
+        else:
+            img = ds.pixel_array.astype(float)
+        img = (np.maximum(img, 0) / img.max()) * 255.0
+        img = np.uint8(img)
+        return Image.fromarray(img).convert('RGB')
 
     if ext in ['.npy', '.npz']:
         if type(image) == str:

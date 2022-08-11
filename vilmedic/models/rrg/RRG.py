@@ -10,9 +10,10 @@ from einops import rearrange
 
 class RRG(nn.Module):
 
-    def __init__(self, decoder, cnn, **kwargs):
+    def __init__(self, decoder, cnn, dl, **kwargs):
         super().__init__()
         # Decoder
+        decoder.vocab_size = dl.dataset.seq.tokenizer.vocab_size
         self.dec = DecoderModel(decoder)
 
         # Encoder

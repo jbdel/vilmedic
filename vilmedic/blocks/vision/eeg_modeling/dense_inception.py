@@ -10,12 +10,12 @@ from .inceptions import Inception4
 
 class DenseInception(nn.Module):
     def __init__(
-        self,
-        num_classes=2,
-        num_channels=10,
-        data_shape=(12000, 19),
-        num_inception_layers=5,
-        dropout_rate=0.3,
+            self,
+            num_classes=2,
+            num_channels=10,
+            data_shape=(12000, 19),
+            num_inception_layers=5,
+            dropout_rate=0.3,
     ):
         super(DenseInception, self).__init__()
         self.num_channels = num_channels
@@ -216,12 +216,8 @@ class DenseInception(nn.Module):
         s = self.conv1x1_76(s_cat_10)
         #         print(s.size())
         s = F.max_pool2d(s, (4, 1))
-        # print(s.view(*s.size()[:2], -1).permute(0, 2, 1).shape)
-        # torch.Size([16, 57, 360])
-        # without max pool : torch.Size([16, 247, 360])
-        return s.view(*s.size()[:2], -1).permute(0, 2, 1)
+        # return s.view(*s.size()[:2], -1).permute(0, 2, 1)
 
-        s = F.max_pool2d(s, (4, 1))
         s = s.contiguous()
         s = s.view(s.size()[0], -1)
 
@@ -238,3 +234,9 @@ class DenseInception(nn.Module):
         s += "(num_inception_layers):" + str(self.num_inception_layers) + '\n'
         s += "(num_channels):" + str(self.num_channels) + '\n'
         return s
+
+
+if __name__ == '__main__':
+    m = DenseInception()
+    x = torch.zeros((2, 12000, 19))
+    print(m(x).shape)

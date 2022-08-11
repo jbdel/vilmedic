@@ -38,7 +38,7 @@ class RRG_SCST(nn.Module):
 
         # Models
 
-        self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), **kwargs)
+        self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), dl=dl, **kwargs)
         state_dict = torch.load(get_ckpt(ckpt))["model"]
         state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
         self.model.load_state_dict(state_dict, strict=True)

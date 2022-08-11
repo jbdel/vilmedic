@@ -27,8 +27,6 @@ class InitValidator(object):
             self.metrics = [self.metrics]
 
         self.post_processing = config.post_processing
-        if not isinstance(self.post_processing, (list, ListConfig)):
-            self.post_processing = [self.post_processing]
 
         self.epoch = 0
 

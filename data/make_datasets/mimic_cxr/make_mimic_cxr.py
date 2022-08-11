@@ -7,6 +7,8 @@ from tqdm import tqdm
 
 DATA_PATH = os.path.join(__file__.split('vilmedic/data/')[0], 'vilmedic/data/')
 
+DICOM_VIEWS = {row["dicom_id"]: row["ViewPosition"] for row in csv.DictReader(open("mimic-cxr-2.0.0-metadata.csv"))}
+
 RULES = {
     'rrg': ['findings', 'impression'],
     'rrs': ['impression_and_findings'],
@@ -16,6 +18,19 @@ RULES = {
 parser = argparse.ArgumentParser()
 parser.add_argument('--task', required=True)
 args = parser.parse_args()
+
+
+def reorder_images(im_paths):
+    dicoms = [os.path.basename(im).replace('.jpg', '') for im in im_paths]
+    views = [DICOM_VIEWS[d] for d in dicoms]
+    ranked_views = ['PA', 'AP', 'LATERAL', 'LL', 'AP AXIAL', 'AP LLD', 'AP RLD', 'PA RLD', 'PA LLD', 'LAO', 'RAO',
+                    'LPO', 'XTABLE LATERAL', 'SWIMMERS', '']
+    reorder_path = []
+    for r in ranked_views:
+        for i, v in enumerate(views):
+            if r == v:
+                reorder_path.append(im_paths[i])
+    return reorder_path
 
 
 def _open(str, mode):
@@ -160,6 +175,7 @@ def main():
                         files[split + '_report'].write(
                             reports["impression"][study_id] + ' ' + reports["findings"][study_id] + '\n')
 
+                im_paths = reorder_images(im_paths)
                 if "one_image_per_study" in rules:
                     files[split + '_image'].write(im_paths[0] + '\n')
                 else:

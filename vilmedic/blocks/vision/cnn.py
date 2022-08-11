@@ -86,7 +86,6 @@ class CNN(nn.Module):
             out = out.view(*out.size()[:2], -1).permute(2, 0, 1)
         else:
             raise NotImplementedError()
-
         return out
 
     def train(self, mode: bool = True):

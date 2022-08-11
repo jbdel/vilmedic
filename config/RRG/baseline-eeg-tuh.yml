@@ -1,13 +1,22 @@
 includes:
   - config/RRG/biomed-roberta-baseline-eeg.yml
 
-name: rrg_eeg_baseline
+name: rrg_mimic
 ckpt_dir: ckpt
-
 dataset:
+  proto: TUHDataset
+  eeg:
+    root: data/RRG/TUH/
+    file: impression.eeg.tok
+    eeg_path: data/RRG/TUH/
+    clip_len: 60
   seq:
+    root: data/RRG/TUH/
+    file: impression.tok
     tokenizer: null
     tokenizer_max_len: 100
+    processing: ifcc_clean_report
+    source: tgt
 
 model:
   decoder:

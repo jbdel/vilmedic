@@ -54,10 +54,12 @@ setup(
                       'jsonpickle==2.1.0',
                       'h5py==3.6.0',
                       'tensorboard',
+                      'tensorboardX==2.5',
                       ##
                       'psutil==5.9.0',
                       'lightning-bolts==0.5.0',
                       'faiss-gpu',
+                      'pyedflib'
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

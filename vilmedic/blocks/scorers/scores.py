@@ -23,7 +23,7 @@ REWARD_COMPLIANT = {
 }
 
 
-def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
+def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump=True):
     scores = dict()
     # If metric is None or empty list
     if metrics is None or not metrics:
@@ -35,19 +35,20 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
     assert len(refs) == len(hyps), 'refs and hyps must have same length : {} vs {}'.format(len(refs), len(hyps))
 
     # Dump
-    ckpt_dir = config.ckpt_dir
-    base = os.path.join(ckpt_dir, '{}_{}_{}'.format(split, seed, '{}'))
-    refs_file = base.format('refs.txt')
-    hyps_file = base.format('hyps.txt')
-    metrics_file = base.format('metrics.txt')
+    if dump:
+        ckpt_dir = config.ckpt_dir
+        base = os.path.join(ckpt_dir, '{}_{}_{}'.format(split, seed, '{}'))
+        refs_file = base.format('refs.txt')
+        hyps_file = base.format('hyps.txt')
+        metrics_file = base.format('metrics.txt')
 
-    with open(refs_file, 'w') as f:
-        f.write('\n'.join(map(str, refs)))
-        f.close()
+        with open(refs_file, 'w') as f:
+            f.write('\n'.join(map(str, refs)))
+            f.close()
 
-    with open(hyps_file, 'w') as f:
-        f.write('\n'.join(map(str, hyps)))
-        f.close()
+        with open(hyps_file, 'w') as f:
+            f.write('\n'.join(map(str, hyps)))
+            f.close()
 
     for metric in metrics:
         # metric_args = dict()
@@ -82,8 +83,9 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
             scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         elif metric == 'chexbert':
             accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = CheXbert(
-                refs_filename=base.format('refs.chexbert.txt'),
-                hyps_filename=base.format('hyps.chexbert.txt'))(hyps, refs)
+                refs_filename=base.format('refs.chexbert.txt') if dump else None,
+                hyps_filename=base.format('hyps.chexbert.txt') if dump else None) \
+                (hyps, refs)
             scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
             scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
@@ -96,10 +98,15 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger):
         else:
             logger.warning("Metric not implemented: {}".format(metric))
 
-    with open(metrics_file, 'a+') as f:
-        f.write(json.dumps({
-            'split': split,
-            'epoch': epoch,
-            'scores': scores
-        }, indent=4, sort_keys=False))
+    if dump:
+        with open(metrics_file, 'a+') as f:
+            f.write(json.dumps({
+                'split': split,
+                'epoch': epoch,
+                'scores': scores
+            }, indent=4, sort_keys=False))
     return scores
+
+
+if __name__ == '__main__':
+    pass

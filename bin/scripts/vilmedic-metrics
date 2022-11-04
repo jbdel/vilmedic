@@ -9,7 +9,7 @@ def main():
         hyps_file = sys.argv[1]
         refs_file = sys.argv[2]
         print("Hyp file is", hyps_file)
-        print("Hyp file is", refs_file)
+        print("Ref file is", refs_file)
     except IndexError:
         print("Usage vilmedic-metrics hyps_file refs_file")
         return

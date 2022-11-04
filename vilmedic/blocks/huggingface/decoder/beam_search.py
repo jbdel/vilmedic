@@ -42,6 +42,9 @@ from transformers.generation_utils import BeamSearchEncoderDecoderOutput
 from transformers.generation_utils import BeamSearchDecoderOnlyOutput
 
 
+def _validate_model_kwargs(self, model_kwargs):
+    return
+
 
 def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **model_kwargs):
     input_shape = input_ids.shape
@@ -56,20 +59,20 @@ def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=Non
 
 
 def beam_search(
-    self,
-    input_ids: torch.LongTensor,
-    beam_scorer: BeamScorer,
-    logits_processor: Optional[LogitsProcessorList] = None,
-    stopping_criteria: Optional[StoppingCriteriaList] = None,
-    max_length: Optional[int] = None,
-    pad_token_id: Optional[int] = None,
-    eos_token_id: Optional[int] = None,
-    output_attentions: Optional[bool] = None,
-    output_hidden_states: Optional[bool] = None,
-    output_scores: Optional[bool] = None,
-    return_dict_in_generate: Optional[bool] = None,
-    synced_gpus: Optional[bool] = False,
-    **model_kwargs,
+        self,
+        input_ids: torch.LongTensor,
+        beam_scorer: BeamScorer,
+        logits_processor: Optional[LogitsProcessorList] = None,
+        stopping_criteria: Optional[StoppingCriteriaList] = None,
+        max_length: Optional[int] = None,
+        pad_token_id: Optional[int] = None,
+        eos_token_id: Optional[int] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        output_scores: Optional[bool] = None,
+        return_dict_in_generate: Optional[bool] = None,
+        synced_gpus: Optional[bool] = False,
+        **model_kwargs,
 ) -> Union[BeamSearchOutput, torch.LongTensor]:
     r"""
     Generates sequences for models with a language modeling head using beam search decoding.
@@ -251,7 +254,6 @@ def beam_search(
         next_token_logits = sum(o.logits[:, -1, :] for o in outputs)
         ######
 
-
         # hack: adjust tokens for Marian. For Marian we have to make sure that the `pad_token_id`
         # cannot be generated both before and after the `nn.functional.log_softmax` operation.
         next_token_logits = self.adjust_logits_during_generation(next_token_logits, cur_len=cur_len)
@@ -323,7 +325,6 @@ def beam_search(
         # increase cur_len
         cur_len = cur_len + 1
 
-
         if beam_scorer.is_done or stopping_criteria(input_ids, scores):
             if not synced_gpus:
                 break
@@ -347,7 +348,7 @@ def beam_search(
             num_return_sequences = beam_scorer.num_beam_hyps_to_keep
             # return only as many indices as sequences
             beam_indices = tuple(
-                (beam_indices[i * num_beams : i * num_beams + num_return_sequences] for i in range(batch_size))
+                (beam_indices[i * num_beams: i * num_beams + num_return_sequences] for i in range(batch_size))
             )
             beam_indices = sum(beam_indices, ())
 
@@ -374,5 +375,3 @@ def beam_search(
             )
     else:
         return sequence_outputs["sequences"]
-
-

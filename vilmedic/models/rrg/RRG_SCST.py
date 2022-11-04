@@ -32,16 +32,17 @@ def get_ckpt(ckpt):
 
 class RRG_SCST(nn.Module):
 
-    def __init__(self, decoder, cnn, ckpt, dl, scores="ROUGEL", scores_args=None, scores_weights=None, top_k=None,
+    def __init__(self, decoder, cnn, dl, scores="ROUGEL", ckpt=None, scores_args=None, scores_weights=None, top_k=None,
                  use_nll=False, **kwargs):
         super().__init__()
 
         # Models
 
         self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), dl=dl, **kwargs)
-        state_dict = torch.load(get_ckpt(ckpt))["model"]
-        state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
-        self.model.load_state_dict(state_dict, strict=True)
+        if ckpt:
+            state_dict = torch.load(get_ckpt(ckpt))["model"]
+            state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+            self.model.load_state_dict(state_dict, strict=True)
 
         # SCST
         self.scst = SCST(decoder=self.model.dec.decoder,
@@ -83,7 +84,7 @@ class RRG_SCST(nn.Module):
                 }
 
     def __repr__(self):
-        s = "RRG_PPO\n"
+        s = "RRG_SCST\n"
         s += str(self.scst) + '\n'
         s += "{}\n".format(get_n_params(self))
         return s

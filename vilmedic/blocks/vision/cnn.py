@@ -3,9 +3,12 @@ import torch.nn as nn
 from torchvision.models import *
 from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
 from .vgg_hgap import *
-from transformers import DeiTModel, DeiTConfig
-from transformers import ViTModel, ViTConfig
-from transformers.modeling_outputs import BaseModelOutputWithPooling
+from transformers import DeiTConfig, ViTConfig
+from transformers.models.vit.modeling_vit import ViTModel
+from transformers.models.deit.modeling_deit import DeiTModel
+from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention
+from transformers import ResNetConfig
+from transformers.models.resnet.modeling_resnet import ResNetModel as HFResNetModel
 
 
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
@@ -20,11 +23,16 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
         sub_network.add_module('flatten', nn.Flatten(1))
         return sub_network
 
-    # Vision transformer
+    # HuggingFace Vision transformer
     if "vit" in backbone.lower():
-        return ViTModel(ViTConfig(**kwargs))
+        model = ViTModel(ViTConfig(return_dict=True, **kwargs), add_pooling_layer=False)
+        model.layernorm = nn.Identity()
+        return model
     if "deit" in backbone.lower():
-        return DeiTModel(DeiTConfig(**kwargs))
+        return DeiTModel(DeiTConfig(return_dict=True, **kwargs), add_pooling_layer=False)
+    # HuggingFace ResNet
+    if "hfresnet" in backbone.lower():
+        return HFResNetModel(ResNetConfig(return_dict=True, **kwargs))
 
     # Torchxrayvision
     if "xrv" in backbone.lower():
@@ -69,11 +77,14 @@ class CNN(nn.Module):
 
     def forward(self, images, **kwargs):
         out = self.cnn(images)
-
-        # Deit or vit
-        if isinstance(out, BaseModelOutputWithPooling):
+        if isinstance(self.cnn, ViTModel) or isinstance(self.cnn, DeiTModel):
+            assert isinstance(out, BaseModelOutputWithPooling)
             out = self.dropout_out(out.last_hidden_state)
             return out
+
+        if isinstance(self.cnn, HFResNetModel):
+            assert isinstance(out, BaseModelOutputWithPoolingAndNoAttention)
+            out = out.last_hidden_state
 
         out = self.dropout_out(out)
         if self.permute == "no_permute":

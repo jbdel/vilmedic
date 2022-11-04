@@ -72,7 +72,7 @@ class RRS_SCST(nn.Module):
                 }
 
     def __repr__(self):
-        s = "RRG_PPO\n"
+        s = "RRS_SCST\n"
         s += str(self.scst) + '\n'
         s += "{}\n".format(get_n_params(self))
         return s

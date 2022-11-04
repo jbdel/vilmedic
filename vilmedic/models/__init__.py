@@ -15,7 +15,6 @@ from vilmedic.models.selfsup.clip.CLIP import CLIP
 from vilmedic.models.rrg.RRG import RRG
 from vilmedic.models.rrg.RRG_EEG import RRG_EEG
 from vilmedic.models.rrg.RRG_PPO import RRG_PPO
-from vilmedic.models.rrg.RRG_PPO_x import RRG_PPO_x
 from vilmedic.models.rrg.RRG_SCST import RRG_SCST
 
 from vilmedic.models.selfsup.conVIRT import ConVIRT

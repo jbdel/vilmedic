@@ -17,9 +17,13 @@ class RRG(nn.Module):
         self.dec = DecoderModel(decoder)
 
         # Encoder
-        visual_embedding_dim = cnn.pop("visual_embedding_dim")
+        visual_embedding_dim = cnn.pop("visual_embedding_dim", None)
         cnn = eval(cnn.pop('proto'))(**cnn)
-        visual_projection = nn.Linear(visual_embedding_dim, self.dec.decoder.config.hidden_size)
+        if visual_embedding_dim:
+            visual_projection = nn.Linear(visual_embedding_dim, self.dec.decoder.config.hidden_size)
+        else:
+            visual_projection = nn.Identity()
+
         self.enc = nn.Sequential(cnn, visual_projection)
 
         # Evaluation

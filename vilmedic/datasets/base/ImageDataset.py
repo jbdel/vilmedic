@@ -97,7 +97,7 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
                                  (0.229, 0.224, 0.225))])
     else:
         return transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((crop, crop)),
             transforms.ToTensor(),
             transforms.Normalize((0.485, 0.456, 0.406),
                                  (0.229, 0.224, 0.225))])
@@ -143,8 +143,8 @@ def open_image(image, ext):
     raise NotImplementedError("Image extension {} not implemented".format(ext))
 
 
-def do_image(image, transform, ext):
-    opened_images = [open_image(im, ext) for im in image]
+def do_images(images, transform, ext):
+    opened_images = [open_image(im, ext) for im in images]
     transformed_images = [transform(im) for im in opened_images]
     return transformed_images
 
@@ -193,12 +193,22 @@ class ImageDataset(Dataset):
         return len(self.images or [])
 
     def __getitem__(self, index):
-        return {'image': do_image(self.images[index], self.transform, self.ext)}
+        return {'image': do_images(self.images[index], self.transform, self.ext)}
 
     def inference(self, image):
-        if not isinstance(image, list):
-            image = [image]
-        batch = [{'image': do_image(i, self.transform, self.ext)} for i in image]
+        if not isinstance(image, (list, str)):
+            raise TypeError("Input for image must be str or list")
+
+        if isinstance(image, str):
+            image = [[image]]
+
+        if isinstance(image, list):
+            for i, im in enumerate(image):
+                if isinstance(im, str):
+                    image[i] = [im]
+
+        # Image is a list of example, an example a list of images.
+        batch = [{'image': do_images(i, self.transform, self.ext)} for i in image]
         return self.get_collate_fn()(batch)
 
     def get_collate_fn(self):

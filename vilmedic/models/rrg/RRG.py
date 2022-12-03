@@ -31,6 +31,7 @@ class RRG(nn.Module):
 
     def forward(self, input_ids, attention_mask, images, images_mask=None, encoder_outputs=None,
                 encoder_attention_mask=None, epoch=None, iteration=None, **kwargs):
+
         if torch.cuda.is_available():
             input_ids = input_ids.cuda()
             attention_mask = attention_mask.cuda()

@@ -49,7 +49,7 @@ class AutoModel:
 
     @staticmethod
     def from_config(config):
-        return None
+        raise NotImplementedError()
 
     @staticmethod
     def from_pretrained(pretrained_model_name):

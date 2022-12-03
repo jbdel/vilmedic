@@ -3,13 +3,9 @@ import torch
 from collections import OrderedDict
 from vilmedic.models.utils import get_n_params
 
-from vilmedic.blocks.huggingface.encoder_decoder.evaluation import evaluation
-from vilmedic.blocks.huggingface.encoder_decoder.encoder_decoder_model import EncoderDecoderModel
 from vilmedic.blocks.huggingface.decoder.decoder_model import DecoderModel
-from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig, BertGenerationDecoder
-from transformers.models.encoder_decoder.modeling_encoder_decoder import EncoderDecoderModel as HFEncoderDecoderModel
-from transformers.models.encoder_decoder.configuration_encoder_decoder import EncoderDecoderConfig
-from transformers import RobertaConfig, RobertaModel, RobertaForCausalLM, BertLMHeadModel, BertModel, BertConfig
+from vilmedic.blocks.huggingface.encoder.encoder_model import EncoderModel
+from vilmedic.blocks.huggingface.decoder.evaluation import evaluation
 
 
 class RRS(nn.Module):
@@ -19,10 +15,7 @@ class RRS(nn.Module):
 
         # Encoder
         encoder.vocab_size = dl.dataset.src.tokenizer.vocab_size
-        enc_config = BertGenerationConfig(**encoder,
-                                          is_decoder=False,
-                                          add_cross_attention=False)
-        self.enc = BertGenerationEncoder(enc_config)
+        self.enc = EncoderModel(encoder)
 
         # Decoder
         decoder.vocab_size = dl.dataset.tgt.tokenizer.vocab_size
@@ -34,17 +27,29 @@ class RRS(nn.Module):
         # Tokenizer
         self.tokenizer = dl.dataset.tgt_tokenizer
 
-    def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, epoch=None, iteration=None,
+    def forward(self, input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, encoder_outputs=None,
+                encoder_attention_mask=None,
+                epoch=None, iteration=None,
                 **kwargs):
-        input_ids = input_ids.cuda()
-        attention_mask = attention_mask.cuda()
-        encoder_outputs = self.enc(input_ids, attention_mask, return_dict=True)
+
+        if torch.cuda.is_available():
+            input_ids = input_ids.cuda()
+            attention_mask = attention_mask.cuda()
+
+        if encoder_outputs is None:
+            encoder_outputs, encoder_attention_mask = self.encode(input_ids, attention_mask, **kwargs)
+
         out = self.dec(input_ids=decoder_input_ids,
                        attention_mask=decoder_attention_mask,
-                       encoder_outputs=encoder_outputs.last_hidden_state,
-                       encoder_attention_mask=attention_mask,
+                       encoder_outputs=encoder_outputs,
+                       encoder_attention_mask=encoder_attention_mask,
                        **kwargs)
+
         return out
+
+    def encode(self, input_ids, attention_mask, **kwargs):
+        encoder_outputs = self.enc(input_ids, attention_mask, return_dict=True)
+        return encoder_outputs.last_hidden_state, attention_mask
 
     def __repr__(self):
         s = "model: RRS\n"

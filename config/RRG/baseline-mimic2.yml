@@ -7,7 +7,19 @@ dataset:
     tokenizer: null
     tokenizer_max_len: 100
 
+
 model:
+  cnn:
+    proto: CNN
+    backbone: deit
+    num_hidden_layers: 12
+    hidden_size: 768
+    intermediate_size: 3072
+    image_size: 224
+    permute: batch_first
+    visual_embedding_dim: 768
+    freeze: False
+
   decoder:
     proto: null
     add_cross_attention: true

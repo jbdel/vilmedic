@@ -13,9 +13,15 @@ def evaluation(models, config, dl, **kwargs):
     hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
 
     # Get tokenizer and reference sentences from dataloader
-    ref_str = 'input_ids'
-    tokenizer = dl.dataset.tokenizer
-    max_len = dl.dataset.tokenizer_max_len
+    try:
+        ref_str = 'input_ids'
+        tokenizer = dl.dataset.tokenizer
+        max_len = dl.dataset.tokenizer_max_len
+    except AttributeError:
+        ref_str = 'decoder_input_ids'
+        tokenizer = dl.dataset.tgt_tokenizer
+        max_len = dl.dataset.tgt_tokenizer_max_len
+
     ref_list = []
     hyp_list = []
 
@@ -23,7 +29,7 @@ def evaluation(models, config, dl, **kwargs):
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() for k, v in batch.items()}
             # Expanding inputs
-            batch_size = batch['input_ids'].shape[0]
+            batch_size = batch[ref_str].shape[0]
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )

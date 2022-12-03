@@ -1,6 +1,5 @@
 import torch.nn as nn
 
-
 from transformers.models.auto import AutoModel, AutoConfig
 from transformers.models.bert_generation import BertGenerationEncoder, BertGenerationConfig
 
@@ -21,7 +20,9 @@ class EncoderModel(nn.Module):
             enc_config = AutoConfig.from_pretrained(path)
             self.encoder = AutoModel.from_pretrained(path, config=enc_config)
         else:
-            enc_config = BertGenerationConfig(**encoder)
+            enc_config = BertGenerationConfig(**encoder,
+                                              is_decoder=False,
+                                              add_cross_attention=False)
             self.encoder = BertGenerationEncoder(enc_config)
 
         if encoder.add_pooling_layer:  # 4 info: roberta already has a pooler layer
@@ -58,7 +59,7 @@ class EncoderModel(nn.Module):
             pooled_output = self.pooler(hidden_states=out.last_hidden_state)
             setattr(out, "pooler_output", pooled_output)
 
-        out = vars(out)
+        # out = vars(out)
         return out
 
     def __repr__(self):

@@ -26,6 +26,7 @@ mimic_cxr
 │       └── p19
 ├── create_section_files.py
 ├── make_mimic_cxr.py
+├── get_chexbert_label.py
 ├── section_parser.py
 ├── mimic-cxr-2.0.0-split.csv
 ├── mimic-cxr-2.0.0-metadata.csv

@@ -5,12 +5,13 @@ from tqdm import tqdm
 from huggingface_hub import hf_hub_download, list_repo_files
 
 
-def edit_vocab_path_in_dict(obj, key, replace_value):
+def edit_vocab_path_in_dict(obj, keys, replace_value):
     for k, v in obj.items():
         if isinstance(v, dict):
-            obj[k] = edit_vocab_path_in_dict(v, key, replace_value)
-    if key in obj:
-        obj[key] = os.path.join(replace_value, obj[key])
+            obj[k] = edit_vocab_path_in_dict(v, keys, replace_value)
+    for key in keys:
+        if key in obj:
+            obj[key] = os.path.join(replace_value, obj[key])
     return obj
 
 

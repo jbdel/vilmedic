@@ -85,8 +85,9 @@ class AutoModel:
         try:
             classname = dataset_config.pop("proto")
             dataset_config = edit_vocab_path_in_dict(OmegaConf.to_container(dataset_config),
-                                                     "vocab_file",
+                                                     ["vocab_file", "label_file"],
                                                      os.path.join(MODEL_ZOO_CACHE_DIR, pretrained_model_name))
+
             dataset = eval(classname)(split='test', ckpt_dir=None, **dataset_config)
         except NameError:
             raise NameError(

@@ -7,7 +7,7 @@ if sys.version_info < (3, 8):
 
 setup(
     name='vilmedic',
-    version='1.2.9',
+    version='1.3.0',
     description='ViLMedic is a modular framework for multimodal research at the intersection of vision and language in the medical field.',
     author='Jean-Benoit Delbrouck',
     license='MIT',
@@ -23,7 +23,7 @@ setup(
     install_requires=['appdirs==1.4.4',
                       'omegaconf==2.0.6',
                       'torchvision==0.9.1',
-                      'protobuf==3.19',
+                      'protobuf==3.19.3',
                       'rouge_score',
                       'youtokentome==1.0.3',
                       'tokenizers==0.11.6',
@@ -46,7 +46,7 @@ setup(
                       'numba==0.54.1',
                       'torchmetrics==0.5.0',
                       'numpy==1.20.3',
-                      'gdown==4.3.1',
+                      'gdown==4.6.0',
                       'spacy===3.2.3',
                       # radgraph / allennlp dependencies
                       'overrides==3.1.0',

@@ -5,8 +5,7 @@ import csv
 from collections import defaultdict
 from tqdm import tqdm
 
-DATA_PATH = os.path.join(__file__.split('vilmedic/data/')[0], 'vilmedic/data/')
-
+DATA_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)).split('vilmedic/data/')[0], 'vilmedic/data/')
 DICOM_VIEWS = {row["dicom_id"]: row["ViewPosition"] for row in csv.DictReader(open("mimic-cxr-2.0.0-metadata.csv"))}
 
 RULES = {
@@ -157,14 +156,14 @@ def main():
                     files[split + '_findings'].write(reports["findings"][study_id] + '\n')
 
                 if r == "impression_and_findings":
-                    if study_id not in reports["impression"] and study_id not in reports["findings"]:
+                    if not (study_id in reports["impression"] and study_id in reports["findings"]):
                         skipped_study += 1
                         continue
                     files[split + '_impression'].write(reports["impression"][study_id] + '\n')
                     files[split + '_findings'].write(reports["findings"][study_id] + '\n')
 
                 if r == "impression_and_or_findings":
-                    if study_id not in reports["impression"] or study_id not in reports["findings"]:
+                    if study_id not in reports["impression"] and study_id not in reports["findings"]:
                         skipped_study += 1
                         continue
                     if study_id not in reports["impression"]:

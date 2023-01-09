@@ -1,0 +1,79 @@
+includes:
+  - config/RRG/biomed-roberta-baseline-mimic.yml
+name: rrg_mimic_baseline
+
+dataset:
+  proto: ImSeq2Seq
+  src:
+    root: data/RRG/mimic-cxr/PE/cxr-repair/
+    file: repair.top1.impression.tok
+    tokenizer: null
+    tokenizer_max_len: 100
+    processing: r2gen_clean_report
+  tgt:
+    root: data/RRG/mimic-cxr/impression/
+    file: impression.tok
+    tokenizer: null
+    tokenizer_max_len: 100
+    processing: r2gen_clean_report
+  image:
+    root: data/RRG/mimic-cxr/impression/
+    file: image.tok
+    image_path: data/images/
+    load_memory: False
+    resize: 256
+    crop: 224
+    ext: .jpg
+
+
+model:
+  proto: RRG_MULTI
+  decoder:
+    proto: null
+    add_cross_attention: true
+    attention_probs_dropout_prob: 0.1
+    bos_token_id: 0
+    eos_token_id: 2
+    gradient_checkpointing: false
+    hidden_act: gelu
+    hidden_dropout_prob: 0.1
+    hidden_size: 768
+    initializer_range: 0.02
+    intermediate_size: 3072
+    is_decoder: true
+    layer_norm_eps: 1e-05
+    max_position_embeddings: 514
+    num_attention_heads: 12
+    num_hidden_layers: 1
+    pad_token_id: 1
+    position_embedding_type: absolute
+    transformers_version: 4.5.1
+    type_vocab_size: 1
+    use_cache: true
+
+  encoder:
+    proto: null
+    attention_probs_dropout_prob: 0.1
+    bos_token_id: 0
+    eos_token_id: 2
+    gradient_checkpointing: false
+    hidden_act: gelu
+    hidden_dropout_prob: 0.1
+    hidden_size: 768
+    initializer_range: 0.02
+    intermediate_size: 3072
+    layer_norm_eps: 1e-05
+    max_position_embeddings: 514
+    num_attention_heads: 12
+    num_hidden_layers: 1
+    pad_token_id: 1
+    position_embedding_type: absolute
+    transformers_version: 4.5.1
+    type_vocab_size: 1
+    use_cache: true
+
+trainor:
+  batch_size: 128
+  optim_params:
+    lr: 0.001
+

@@ -43,7 +43,7 @@ setup(
                       'umap-learn',
                       'opencv-python==4.5.4.60',
                       'mauve-text',
-                      'numba==0.54.1',
+                      'numba',
                       'torchmetrics==0.5.0',
                       'numpy==1.20.3',
                       'gdown==4.6.0',

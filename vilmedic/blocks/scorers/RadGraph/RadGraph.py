@@ -165,28 +165,14 @@ class RadGraph(nn.Module):
 
 
 if __name__ == "__main__":
-    import time
+    # reward_level="partial" is RG_ER in https://arxiv.org/abs/2210.12186
+    # reward_level="partial" is F1-RadGraph for biolnlp shared task in https://vilmedic.app/misc/bionlp23/sharedtask
 
     m = RadGraph(cuda=0, reward_level="partial", batch_size=1)
-    # report = "FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process ."
-    # hypothesis_report_list = [report, "", "a", report]
-    #
-    # report_2 = "FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The heart is clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process ."
-    # reference_report_list = [report_2, report_2, report_2, report_2]
-    #
-    # reward_list = m(hyps=hypothesis_report_list, refs=reference_report_list)
-    t = time.time()
-    num = str(103276)
-    l1 = open("test_best-1_881942_hyps.txt").readlines()
-    # l1 = [l.strip() for l in l1][:10]
-    l1 = [l.strip() for l in l1]
-    l2 = open("test_best-1_103276_refs.txt").readlines()
-    # l2 = [l.strip() for l in l2][:10]
-    l2 = [l.strip() for l in l2]
-    mean_reward, reward_list, hypothesis_annotation_lists, reference_annotation_lists = m(hyps=l1, refs=l2)
-    # print(time.time() - t)
-    print(mean_reward)  # [0.8666666666666667, 0, 0, 0.8666666666666667]
-
-
-# ^[(0.353946348023485, 0.32697070866071776, 0.25986992412367665)
-
+    report = "FINAL REPORT INDICATION : ___ F with cough / / Cough TECHNIQUE : PA and lateral views of the chest . COMPARISON : None . FINDINGS : The lungs are clear without focal consolidation , , or edema . The cardiomediastinal silhouette is within normal limits . No acute osseous abnormalities . IMPRESSION : No acute cardiopulmonary process ."
+    hypothesis_report_list = [report, "", "a", report]
+    reference_report_list = [report, report, report, report]
+    mean_reward, reward_list, hypothesis_annotation_lists, reference_annotation_lists = m(hyps=hypothesis_report_list,
+                                                                                          refs=reference_report_list)
+    print(mean_reward)
+    print(reward_list)

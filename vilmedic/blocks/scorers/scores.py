@@ -84,19 +84,12 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
         elif metric == 'auroc':
             scores["auroc"] = roc_auc_score(refs, F.softmax(torch.from_numpy(hyps), dim=-1).numpy(), multi_class="ovr")
         elif metric == 'chexbert':
-            accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = CheXbert(
+            accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = F1CheXbert(
                 refs_filename=base.format('refs.chexbert.txt') if dump else None,
                 hyps_filename=base.format('hyps.chexbert.txt') if dump else None) \
                 (hyps, refs)
             scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
             scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
-        elif metric == 'chexbert2':
-            accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = F1CheXbert(
-                refs_filename=base.format('refs.chexbert2.txt') if dump else None,
-                hyps_filename=base.format('hyps.chexbert2.txt') if dump else None) \
-                (hyps, refs)
-            scores["chexbert2-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
-            scores["chexbert2-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
             scores["radentitymatchexact"] = RadEntityMatchExact()(refs, hyps)[0]
         elif metric == 'radentitynli':

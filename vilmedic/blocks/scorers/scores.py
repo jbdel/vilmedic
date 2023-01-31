@@ -3,6 +3,8 @@ import numpy as np
 import json
 import torch.nn.functional as F
 import torch
+from radgraph import F1RadGraph
+from f1chexbert import F1CheXbert
 from sklearn.metrics import classification_report, roc_auc_score
 from omegaconf import OmegaConf
 from . import *
@@ -17,7 +19,7 @@ REWARD_COMPLIANT = {
     "radentitymatchexact": [RadEntityMatchExact, 1],
     "radentitynli": [RadEntityNLI, 1],
     "chexbert": [CheXbert, 1],
-    "radgraph": [RadGraph, 1],
+    "radgraph": [F1RadGraph, 1],
     "bertscore": [BertScore, 1],
     # "MAUVE": [MauveScorer, 0],
 }
@@ -88,13 +90,20 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
                 (hyps, refs)
             scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
             scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
+        elif metric == 'chexbert2':
+            accuracy, accuracy_per_sample, chexbert_all, chexbert_5 = F1CheXbert(
+                refs_filename=base.format('refs.chexbert2.txt') if dump else None,
+                hyps_filename=base.format('hyps.chexbert2.txt') if dump else None) \
+                (hyps, refs)
+            scores["chexbert2-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
+            scores["chexbert2-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
             scores["radentitymatchexact"] = RadEntityMatchExact()(refs, hyps)[0]
         elif metric == 'radentitynli':
             scores["radentitynli"] = RadEntityNLI()(refs, hyps)[0]
         elif metric == 'radgraph':
             scores["radgraph_simple"], scores["radgraph_partial"], scores["radgraph_complete"] = \
-                RadGraph(reward_level="full")(refs=refs, hyps=hyps)[0]
+                F1RadGraph(reward_level="all")(refs=refs, hyps=hyps)[0]
         else:
             logger.warning("Metric not implemented: {}".format(metric))
 

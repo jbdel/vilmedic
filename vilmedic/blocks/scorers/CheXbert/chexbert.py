@@ -210,7 +210,7 @@ class CheXbert(nn.Module):
         cr_5 = classification_report(refs_chexbert_5, hyps_chexbert_5, target_names=self.target_names_5,
                                      output_dict=True)
 
-        return accuracy, pe_accuracy, cr, cr_5,
+        return accuracy, pe_accuracy, cr, cr_5
 
     def train(self, mode: bool = True):
         mode = False  # force False

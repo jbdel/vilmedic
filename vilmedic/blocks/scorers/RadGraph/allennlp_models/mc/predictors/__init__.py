@@ -1,1 +1,0 @@
-from allennlp_models.mc.predictors.transformer_mc import TransformerMCPredictor

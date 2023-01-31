@@ -8,4 +8,3 @@ from .NLG.ciderD_RL.ciderD_RL import CiderDRL
 from .CheXbert.chexbert import CheXbert
 from .RadEntityMatchExact.RadEntityMatchExact import RadEntityMatchExact
 from .RadEntityNLI.RadEntityNLI import RadEntityNLI
-from .RadGraph.RadGraph import RadGraph

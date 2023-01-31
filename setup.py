@@ -20,7 +20,7 @@ setup(
     keywords='medical nlp deep-learning pytorch',
     python_requires='>=3.8',
     setup_requires="Cython",
-    install_requires=['appdirs==1.4.4',
+    install_requires=['appdirs',
                       'omegaconf==2.0.6',
                       'torchvision==0.9.1',
                       'protobuf==3.19.3',
@@ -48,14 +48,9 @@ setup(
                       'numpy==1.20.3',
                       'gdown==4.6.0',
                       'spacy===3.2.3',
-                      # radgraph / allennlp dependencies
-                      'overrides==3.1.0',
-                      'boto3==1.21.13',
-                      'jsonpickle==2.1.0',
-                      'h5py==3.6.0',
-                      'tensorboard',
-                      'tensorboardX==2.5',
-                      ##
+                      'sentencepiece',
+                      'radgraph==0.0.5',
+                      'f1chexbert==0.0.1',
                       'psutil==5.9.0',
                       'lightning-bolts==0.5.0',
                       'faiss-gpu',
@@ -64,6 +59,5 @@ setup(
     include_package_data=True,
     exclude_package_data={'': ['.git']},
     packages=find_packages(exclude=["bin"]),
-    scripts=[str(p) for p in pathlib.Path(
-        'bin/scripts').glob('*')],
+    scripts=[str(p) for p in pathlib.Path('bin/scripts').glob('*')],
     zip_safe=False)

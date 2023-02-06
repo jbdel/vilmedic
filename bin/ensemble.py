@@ -34,7 +34,7 @@ def get_ckpts(path, mode):
 def main():
     config, override = get_args()
     config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
-
+    os.makedirs(config.ckpt_dir, exist_ok=True)
     ensemble_config = get(config, 'ensemblor')
     seed = '{}_{}'.format(ensemble_config.mode, get_seed())
 

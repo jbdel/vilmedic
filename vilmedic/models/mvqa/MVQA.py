@@ -36,7 +36,7 @@ class MVQA(nn.Module):
         # Evaluation
         self.eval_func = evaluation
 
-    def forward(self, images, labels=None, from_training=True, **kwargs):
+    def forward(self, images, labels=None, from_training=True, iteration=None, epoch=None, **kwargs):
         out = self.cnn(images.cuda())
         out = self.adapter(out)
         out = self.transformer(out, output_attentions=True)

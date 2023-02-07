@@ -1,5 +1,7 @@
+### ViLMedic: a framework for research at the intersection of vision and language in medical AI
+
 <p align="center">
-  <a href="https://huggingface.co/spaces/StanfordAIMI/RRG_SPACE"> <b>New!🔥 </b> Checkout our live radiology report generation 📝 space on HuggingFace🤗</a>
+  <img src="https://vilmedic.app/favicon/favicon-64x64.png" alt="" style="width: 14px;"> ViLMedic has a dedicated website at: <a href="https://vilmedic.app/">https://vilmedic.app/</a>
 </p>
 
 <p align="center">
@@ -15,11 +17,49 @@
 
 ---
 
-ViLMedic: a framework for research at the intersection of vision and language in medical AI
+
+<p align="center">
+  <a href="https://vilmedic.app/papers/emnlp2022"> <b>New!🔥 </b> Code for Improving the Factual Correctness of Radiology Report Generation with Semantic Rewards</a>
+</p>
+
+<p align="center">
+  <a href="https://huggingface.co/spaces/StanfordAIMI/RRG_SPACE"> <b>New!🔥 </b> Checkout our live radiology report generation 📝 space on HuggingFace🤗</a>
+</p>
+
+
+```bibtex
+@inproceedings{delbrouck-etal-2022-vilmedic,
+    title = "{V}i{LM}edic: a framework for research at the intersection of vision and language in medical {AI}",
+    author = "Delbrouck, Jean-benoit  and
+      Saab, Khaled  and
+      Varma, Maya  and
+      Eyuboglu, Sabri  and
+      Chambon, Pierre  and
+      Dunnmon, Jared  and
+      Zambrano, Juan  and
+      Chaudhari, Akshay  and
+      Langlotz, Curtis",
+    booktitle = "Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
+    month = may,
+    year = "2022",
+    address = "Dublin, Ireland",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2022.acl-demo.3",
+    pages = "23--34",
+}
+```
+
+
+# Quickstart
+
+<p align="center">
+More at: <a href="https://vilmedic.app/">https://vilmedic.app/</a>
+</p>
+
 
 ## Installation
 ```
-conda create --name vilmedic python==3.9 -y
+conda create --name vilmedic python==3.8 -y
 git clone https://github.com/jbdel/vilmedic
 python setup.py develop
 ```
@@ -126,27 +166,7 @@ ViLMedic replicates solutions from the multimodal medical literature.
 
 If you use ViLMedic in your work or use any models published in ViLMedic, please cite:
 
-```bibtex
-@inproceedings{delbrouck-etal-2022-vilmedic,
-    title = "{V}i{LM}edic: a framework for research at the intersection of vision and language in medical {AI}",
-    author = "Delbrouck, Jean-benoit  and
-      Saab, Khaled  and
-      Varma, Maya  and
-      Eyuboglu, Sabri  and
-      Chambon, Pierre  and
-      Dunnmon, Jared  and
-      Zambrano, Juan  and
-      Chaudhari, Akshay  and
-      Langlotz, Curtis",
-    booktitle = "Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics: System Demonstrations",
-    month = may,
-    year = "2022",
-    address = "Dublin, Ireland",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2022.acl-demo.3",
-    pages = "23--34",
-}
-```
+
 
 ## License
 ViLMedic is MIT-licensed. The license applies to the pre-trained models as well.

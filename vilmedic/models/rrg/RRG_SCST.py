@@ -33,7 +33,7 @@ def get_ckpt(ckpt):
 class RRG_SCST(nn.Module):
 
     def __init__(self, decoder, cnn, dl, scores="ROUGEL", ckpt=None, scores_args=None, scores_weights=None, top_k=None,
-                 use_nll=False, **kwargs):
+                 use_nll=False, use_forcing=False, num_beams=1, **kwargs):
         super().__init__()
 
         # Models
@@ -51,17 +51,20 @@ class RRG_SCST(nn.Module):
                          scores_args=scores_args,
                          scores_weights=scores_weights,
                          use_nll=use_nll,
-                         top_k=top_k)
+                         use_forcing=use_forcing,
+                         top_k=top_k,
+                         num_beams=num_beams)
 
         self.eval_func = evaluation
 
-    def forward(self, input_ids, attention_mask, images, images_mask=None, encoder_outputs=None, **kwargs):
+    def forward(self, input_ids, force_input_ids, attention_mask, images, images_mask=None, encoder_outputs=None, **kwargs):
         # 1 Greedy
         with torch.no_grad():
             self.model.eval()
             encoder_hidden_states, encoder_attention_mask = self.model.encode(images.cuda(), images_mask, **kwargs)
             reward_greedy, greedy_hyp_list, ref_list = self.scst.forward_greedy(
                 input_ids=input_ids,
+                force_input_ids=force_input_ids,
                 encoder_hidden_states=encoder_hidden_states,
                 encoder_attention_mask=encoder_attention_mask
             )

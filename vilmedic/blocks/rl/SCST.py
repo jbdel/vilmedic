@@ -46,7 +46,7 @@ def scst_loss(input,
 
 
 class SCST(nn.Module):
-    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False):
+    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False, use_forcing=False, num_beams=1):
         super().__init__()
 
         dataset = dl.dataset
@@ -62,12 +62,14 @@ class SCST(nn.Module):
         self.decoder = decoder
         self.top_k = top_k
         self.use_nll = use_nll
+        self.use_forcing = use_forcing
         self.bos_token_id = self.decoder.config.bos_token_id
         self.eos_token_id = self.decoder.config.eos_token_id
         self.pad_token_id = self.decoder.config.pad_token_id
         self.scores = scores
         self.scores_args = scores_args
         self.scores_weights = scores_weights
+        self.num_beams = num_beams
 
         assert self.scores is not None
 
@@ -109,13 +111,14 @@ class SCST(nn.Module):
             self.scorers.append(scorer)
             self.scorers_index.append(scorer_index)
 
-    def forward_greedy(self, input_ids, encoder_hidden_states, encoder_attention_mask):
+    def forward_greedy(self, input_ids, force_input_ids, encoder_hidden_states, encoder_attention_mask):
         assert not torch.is_grad_enabled(), "Please add torch.no_grad() decorator"
         batch_size = input_ids.shape[0]
         out = self.decoder.generate(
             input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
             max_length=self.max_length,
-            num_beams=1,
+            force_words_ids=force_input_ids,
+            num_beams=self.num_beams,
             num_return_sequences=1,
             return_dict_in_generate=True,
             output_scores=True,

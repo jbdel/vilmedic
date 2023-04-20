@@ -5,7 +5,6 @@ from vilmedic.models.rrs.SumHugMulti import SumHugMulti
 # from vilmedic.models.rrs.RRS_obsolete import RRS
 from vilmedic.models.rrs.RRS import RRS
 from vilmedic.models.rrs.RRS_SCST import RRS_SCST
-from vilmedic.models.rrs.RRS_SCST import RRS_SCST
 from vilmedic.models.rrs.SumHugMono_SCST import SumHugMono_SCST
 
 from vilmedic.models.selfsup.clip.VAE import VAE

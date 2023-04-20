@@ -1,0 +1,19 @@
+includes:
+  - config/RRG/baseline-mimic.yml
+name: rrg_mimic_force
+
+dataset:
+  proto: ImForceSeq
+  force_seq:
+    root: data/RRG/mimic-cxr/concepts/
+    file: concepts.tok
+    tokenizer: allenai/biomed_roberta_base
+    tokenizer: null
+    tokenizer_max_len: 100
+    processing: r2gen_clean_report
+    source: tgt
+
+model:
+  proto: RRG_SCST
+  use_forcing: True
+  num_beams: 4

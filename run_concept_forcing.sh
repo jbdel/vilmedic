@@ -1,13 +1,10 @@
-python bin/train.py config/RRG/baseline-mimic-force.yml \
+# regular NLL, only do concept forcing for RL
+python bin/train.py config/RRG/baseline-mimic.yml \
     dataset.seq.processing=ifcc_clean_report \
+    dataset.image.root=data/RRG/mimic-cxr/findings/ \
     dataset.seq.root=data/RRG/mimic-cxr/findings/ \
     dataset.seq.file=findings.tok \
     dataset.seq.tokenizer_max_len=128 \
-    dataset.force_seq.processing=ifcc_clean_report \
-    dataset.force_seq.root=data/RRG/mimic-cxr/concepts/ \
-    dataset.force_seq.file=all_concepts.tok \
-    dataset.force_seq.tokenizer_max_len=128 \
-    dataset.image.root=data/RRG/mimic-cxr/findings/ \
     dataset.image.file=image.tok \
     dataset.image.image_path=data/images/ \
     dataset.image.multi_image=3 \
@@ -24,7 +21,7 @@ python bin/train.py config/RRG/baseline-mimic-force.yml \
     validator.metrics='[bertscore]' \
     validator.splits='[validate]' \
     ckpt_dir=ckpt \
-    name=nll_findings_force_concepts_bertscore_128
+    name=nll_findings_bertscore_128
 
 # nll_checkpoint=ckpt/nll_findings_bertscore_128/FILENAME.pth
 # python bin/train.py config/RRG/baseline-mimic.yml \

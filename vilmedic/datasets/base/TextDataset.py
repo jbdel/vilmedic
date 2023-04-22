@@ -35,7 +35,7 @@ class TextDataset(Dataset):
                  tokenizer=None,
                  tokenizer_max_len=None,
                  separate_tokenizer_per_phrase=False,
-                 separate_tokenizer_per_phrase_delimiter="|",
+                 separate_tokenizer_per_phrase_delimiter=",",
                  vocab_file=None,
                  source='src',
                  show_length=False,
@@ -63,6 +63,8 @@ class TextDataset(Dataset):
 
         # Create tokenizer from pretrained or vocabulary file
         self.separate_tokenizer_per_phrase = separate_tokenizer_per_phrase
+        self.separate_tokenizer_per_phrase_delimiter = separate_tokenizer_per_phrase_delimiter
+
         if tokenizer is not None:
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         else:
@@ -106,11 +108,13 @@ class TextDataset(Dataset):
                 'input_ids': [],
             }
 
-            for phrase_str in batch:
+            phrase_seqs = [s['{}_seq'.format(self.source)] for s in batch]
+            for phrase_str in phrase_seqs:
                 phrase_list = phrase_str.split(self.separate_tokenizer_per_phrase_delimiter)
+                phrase_list = [phrase.strip() for phrase in phrase_list]
                 for phrase in phrase_list:
                     # TODO: do we need add_prefix_space=True?
-                    phrase_input_ids = tokenizer([phrase], **self.tokenizer_args).input_ids
+                    phrase_input_ids = self.tokenizer([phrase], **self.tokenizer_args).input_ids
                     collated['input_ids'].append(phrase_input_ids)
 
             return collated

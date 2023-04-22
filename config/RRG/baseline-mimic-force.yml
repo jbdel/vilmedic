@@ -7,7 +7,6 @@ dataset:
   force_seq:
     root: data/RRG/mimic-cxr/concepts/
     file: concepts.tok
-    tokenizer: allenai/biomed_roberta_base
     tokenizer: null
     tokenizer_max_len: 100
     processing: r2gen_clean_report
@@ -17,3 +16,21 @@ model:
   proto: RRG_SCST
   use_forcing: True
   num_beams: 4
+  cnn:
+    proto: CNN
+    permute: batch_first
+
+trainor:
+  batch_size: 128
+  optim_params:
+    lr: 0.001
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: chexbert-5_micro avg_f1-score

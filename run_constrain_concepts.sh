@@ -21,9 +21,9 @@ python bin/train.py config/RRG/baseline-mimic.yml \
     validator.metrics='[bertscore]' \
     validator.splits='[validate]' \
     ckpt_dir=ckpt \
-    name=nll_findings_bertscore_128
+    name=nll_findings_bioclinical_bertscore_128
 
-# nll_checkpoint=ckpt/nll_findings_bertscore_128/FILENAME.pth
+# nll_checkpoint=ckpt/nll_findings_bertscore_128/0.554715_6_736581.pth
 # python bin/train.py config/RRG/baseline-mimic.yml \
 #     dataset.seq.processing=ifcc_clean_report \
 #     dataset.seq.root=data/RRG/mimic-cxr/findings/ \
@@ -58,7 +58,7 @@ python bin/train.py config/RRG/baseline-mimic.yml \
 #     validator.beam_width=2 \
 #     validator.metrics='[bertscore,radgraph]' \
 #     ckpt_dir=ckpt \
-#     name=rl_findings_force_concepts_bertscore_128
+#     name=rl_findings_constrain_concepts_bertscore_128
 
 # python bin/ensemble.py config/RRG/baseline-mimic.yml \
 #     dataset.seq.processing=ifcc_clean_report \
@@ -85,4 +85,4 @@ python bin/train.py config/RRG/baseline-mimic.yml \
 #     ensemblor.beam_width=2 \
 #     ensemblor.metrics='[bertscore,radgraph]' \
 #     ckpt_dir=ckpt \
-#     name=rl_findings_force_concepts_bertscore_128
+#     name=rl_findings_constrain_concepts_bertscore_128

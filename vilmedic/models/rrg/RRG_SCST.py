@@ -58,22 +58,22 @@ class RRG_SCST(nn.Module):
         self.eval_func = evaluation
 
     def forward(self, input_ids, force_input_ids, attention_mask, images, images_mask=None, encoder_outputs=None, **kwargs):
-        # 1 Greedy
+        # 1. Greedy to establish baseline
         with torch.no_grad():
             self.model.eval()
             encoder_hidden_states, encoder_attention_mask = self.model.encode(images.cuda(), images_mask, **kwargs)
             reward_greedy, greedy_hyp_list, ref_list = self.scst.forward_greedy(
                 input_ids=input_ids,
-                force_input_ids=force_input_ids,
                 encoder_hidden_states=encoder_hidden_states,
                 encoder_attention_mask=encoder_attention_mask
             )
 
-        # 2. Sampling
+        # 2. Sampling; if forcing input_ids, do it at this step
         self.model.train()
         encoder_hidden_states, encoder_attention_mask = self.model.encode(images.cuda(), images_mask, **kwargs)
         loss, delta_reward, delta_reward_per_metric, reward_sampling, sampling_hyp_list = self.scst.forward_sampling(
             input_ids=input_ids,
+            force_input_ids=force_input_ids,
             attention_mask=attention_mask,
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=encoder_attention_mask,

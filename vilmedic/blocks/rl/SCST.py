@@ -111,14 +111,13 @@ class SCST(nn.Module):
             self.scorers.append(scorer)
             self.scorers_index.append(scorer_index)
 
-    def forward_greedy(self, input_ids, force_input_ids, encoder_hidden_states, encoder_attention_mask):
+    def forward_greedy(self, input_ids, encoder_hidden_states, encoder_attention_mask):
         assert not torch.is_grad_enabled(), "Please add torch.no_grad() decorator"
         batch_size = input_ids.shape[0]
         out = self.decoder.generate(
             input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
             max_length=self.max_length,
-            force_words_ids=force_input_ids,
-            num_beams=self.num_beams,
+            num_beams=1,
             num_return_sequences=1,
             return_dict_in_generate=True,
             output_scores=True,
@@ -131,7 +130,7 @@ class SCST(nn.Module):
         reward_greedy, hyp_list, ref_list = self.get_reward(greedy_input_ids.detach().data, input_ids)
         return reward_greedy, hyp_list, ref_list
 
-    def forward_sampling(self, input_ids, attention_mask, encoder_hidden_states, encoder_attention_mask, reward_greedy):
+    def forward_sampling(self, input_ids, force_input_ids, attention_mask, encoder_hidden_states, encoder_attention_mask, reward_greedy):
         assert torch.is_grad_enabled()
         batch_size = input_ids.shape[0]
         if self.use_nll:
@@ -146,7 +145,8 @@ class SCST(nn.Module):
             self=self.decoder,
             input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
             max_length=self.max_length,
-            num_beams=1,
+            force_words_ids=force_input_ids,
+            num_beams=self.num_beams,
             num_return_sequences=1,
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=encoder_attention_mask,

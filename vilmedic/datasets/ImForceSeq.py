@@ -9,8 +9,8 @@ class ImForceSeq(Dataset):
     def __init__(self, seq, force_seq, image, split, ckpt_dir, **kwargs):
         self.split = split
 
-        self.seq = TextDataset(**seq, split=split, ckpt_dir=ckpt_dir)
-        self.force_seq = TextDataset(**force_seq, split=split, ckpt_dir=ckpt_dir, separate_tokenizer_per_phrase=True)
+        self.seq = TextDataset(**seq, split=split, ckpt_dir=ckpt_dir, name='seq')
+        self.force_seq = TextDataset(**force_seq, split=split, ckpt_dir=ckpt_dir, separate_tokenizer_per_phrase=True, name='force_seq')
         self.image = ImageDataset(**image, split=split)
 
         assert len(self.image) == len(self.seq) == len(self.force_seq)

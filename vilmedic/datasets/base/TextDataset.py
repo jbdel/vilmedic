@@ -39,6 +39,7 @@ class TextDataset(Dataset):
                  vocab_file=None,
                  source='src',
                  show_length=False,
+                 name=None,
                  **kwargs):
 
         assert source in ["src", "tgt"]
@@ -52,6 +53,7 @@ class TextDataset(Dataset):
         self.file = file
         self.split = split
         self.source = source
+        self.name = name if name else self.source
         self.ckpt_dir = ckpt_dir
         self.processing = eval(processing or 'lambda x: x')
         self.tokenizer_max_len = tokenizer_max_len
@@ -92,11 +94,11 @@ class TextDataset(Dataset):
             sys.exit()
 
     def __getitem__(self, index):
-        return {'{}_seq'.format(self.source): ' '.join(self.sentences[index])}
+        return {'{}_seq'.format(self.name): ' '.join(self.sentences[index])}
 
     def get_collate_fn(self):
         def collate_fn(batch):
-            seq = self.tokenizer([s['{}_seq'.format(self.source)] for s in batch], **self.tokenizer_args)
+            seq = self.tokenizer([s['{}_seq'.format(self.name)] for s in batch], **self.tokenizer_args)
             collated = {
                 'input_ids': seq.input_ids,
                 'attention_mask': seq.attention_mask
@@ -108,15 +110,16 @@ class TextDataset(Dataset):
                 'input_ids': [],
             }
 
-            phrase_seqs = [s['{}_seq'.format(self.source)] for s in batch]
+            phrase_seqs = [s['{}_seq'.format(self.name)] for s in batch]
             for phrase_str in phrase_seqs:
                 phrase_list = phrase_str.split(self.separate_tokenizer_per_phrase_delimiter)
                 phrase_list = [phrase.strip() for phrase in phrase_list]
+                input_ids_for_example = []
                 for phrase in phrase_list:
                     # TODO: do we need add_prefix_space=True?
-                    phrase_input_ids = self.tokenizer([phrase], **self.tokenizer_args).input_ids
-                    collated['input_ids'].append(phrase_input_ids)
-
+                    phrase_input_ids = self.tokenizer([phrase], add_prefix_space=True, **self.tokenizer_args).input_ids
+                    input_ids_for_example.append(phrase_input_ids)
+                collated['input_ids'].append(input_ids_for_example)
             return collated
 
         return separate_tokenizer_per_phrase_collate_fn if self.separate_tokenizer_per_phrase else collate_fn
@@ -136,6 +139,8 @@ class TextDataset(Dataset):
                            "root": self.root,
                            "file": self.file,
                            "processing": self.processing,
+                           "separate_tokenizer_per_phrase": self.separate_tokenizer_per_phrase,
+                           "separate_tokenizer_per_phrase_delimiter": self.separate_tokenizer_per_phrase_delimiter,
                            "Tokenizer": {
                                "name_or_path": self.tokenizer.name_or_path,
                                "vocab_size": self.tokenizer.vocab_size,

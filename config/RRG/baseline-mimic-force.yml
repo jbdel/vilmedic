@@ -7,9 +7,11 @@ dataset:
   seq:
     tokenizer: null
     tokenizer_max_len: 100
+    source: tgt
   force_seq:
     tokenizer: null
     tokenizer_max_len: 100
+    source: tgt
 
 model:
   use_forcing: True

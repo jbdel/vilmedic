@@ -1,6 +1,9 @@
+import copy
+from weakref import ref
 import tqdm
 import torch
 import functools
+# from .beam_search import beam_search, constrained_beam_search
 from .beam_search import beam_search
 import torch.nn as nn
 
@@ -23,6 +26,7 @@ def evaluation(models, config, dl, **kwargs):
 
     # We are in an ensembling scenario, we override huggingface beam-search function
     hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
+    # hf_models[0].constrained_beam_search = functools.partial(constrained_beam_search, hf_models[0])
 
     # Get tokenizer and reference sentences from dataloader
     try:
@@ -42,9 +46,12 @@ def evaluation(models, config, dl, **kwargs):
 
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
+            force_input_ids = batch.pop('force_input_ids', [])
             batch = {k: v.cuda() for k, v in batch.items()}
+
             # Expanding inputs
             batch_size = batch[ref_str].shape[0]
+
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
@@ -67,19 +74,49 @@ def evaluation(models, config, dl, **kwargs):
                 "hf_models": hf_models
             }
 
-            # lets gooooo
-            hyps = hf_models[0].generate(
-                input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
-                num_return_sequences=1,
-                max_length=max_len,
-                num_beams=config.beam_width,
-                length_penalty=config.length_penalty,
-                bos_token_id=bos_token_id,
-                eos_token_id=eos_token_id,
-                pad_token_id=pad_token_id,
-                use_cache=True,
-                **model_kwargs
-            )
+            # let's gooooo
+            if force_input_ids:
+                assert batch_size == len(force_input_ids) == 1, "To use constraint forcing, batch_size must be 1"
+
+                # TODO: called force_words_ids in transformers 4.23.1, and force_input_ids in transformers 4.28.1
+                # have to change up the format of force_input_ids to make it work with transformers 4.23.1
+                # currently getting `ValueError: `force_words_ids` has to either be a `List[List[List[int]]]` or `List[List[int]]`of positive integers, but is [tensor([[ ...`
+
+                force_words_ids = force_input_ids[0]
+                force_words_ids = [ids.squeeze().tolist() for ids in force_words_ids]
+
+                # force_input_ids = force_input_ids[0]
+                # force_input_ids = [ids.squeeze().tolist() for ids in force_input_ids]
+
+                # print("using constraints, should call constrained_beam_search")
+                # print(config.beam_width, len(force_input_ids[0]), force_input_ids[0][0].shape)
+                hyps = hf_models[0].generate(
+                    input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
+                    force_words_ids=force_words_ids,
+                    # force_input_ids=force_input_ids,
+                    num_return_sequences=1,
+                    max_length=max_len,
+                    num_beams=config.beam_width,
+                    length_penalty=config.length_penalty,
+                    bos_token_id=bos_token_id,
+                    eos_token_id=eos_token_id,
+                    pad_token_id=pad_token_id,
+                    use_cache=True,
+                    **model_kwargs
+                )
+            else:
+                hyps = hf_models[0].generate(
+                    input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
+                    num_return_sequences=1,
+                    max_length=max_len,
+                    num_beams=config.beam_width,
+                    length_penalty=config.length_penalty,
+                    bos_token_id=bos_token_id,
+                    eos_token_id=eos_token_id,
+                    pad_token_id=pad_token_id,
+                    use_cache=True,
+                    **model_kwargs
+                )
 
             refs = batch[ref_str]
             for h, r in zip(hyps, refs):

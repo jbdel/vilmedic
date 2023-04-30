@@ -3,9 +3,9 @@ from weakref import ref
 import tqdm
 import torch
 import functools
-# from .beam_search import beam_search, constrained_beam_search
-from .beam_search import beam_search
+from .beam_search import beam_search, constrained_beam_search
 import torch.nn as nn
+from transformers import PhrasalConstraint
 
 
 def get_special_token_ids(model, tokenizer):
@@ -24,9 +24,9 @@ def evaluation(models, config, dl, **kwargs):
     models = [m if not isinstance(m, nn.DataParallel) else m.module for m in models]
     hf_models = [model.dec.decoder for model in models]
 
-    # We are in an ensembling scenario, we override huggingface beam-search function
+    # We are in an ensembling scenario, we override huggingface beam-search functions
     hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
-    # hf_models[0].constrained_beam_search = functools.partial(constrained_beam_search, hf_models[0])
+    hf_models[0].constrained_beam_search = functools.partial(constrained_beam_search, hf_models[0])
 
     # Get tokenizer and reference sentences from dataloader
     try:
@@ -81,20 +81,20 @@ def evaluation(models, config, dl, **kwargs):
                 # TODO: called force_words_ids in transformers 4.23.1, and force_input_ids in transformers 4.28.1
                 # have to change up the format of force_input_ids to make it work with transformers 4.23.1
                 # currently getting `ValueError: `force_words_ids` has to either be a `List[List[List[int]]]` or `List[List[int]]`of positive integers, but is [tensor([[ ...`
-
                 force_words_ids = force_input_ids[0]
-                force_words_ids = [ids.squeeze().tolist() for ids in force_words_ids]
+                constraints = [
+                    PhrasalConstraint(
+                        word_ids.squeeze().tolist()
+                    ) for word_ids in force_words_ids
+                ]
 
-                # force_input_ids = force_input_ids[0]
-                # force_input_ids = [ids.squeeze().tolist() for ids in force_input_ids]
+                # print([tokenizer.decode(ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=False) for ids in force_words_ids])
 
-                # print("using constraints, should call constrained_beam_search")
-                # print(config.beam_width, len(force_input_ids[0]), force_input_ids[0][0].shape)
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
-                    force_words_ids=force_words_ids,
-                    # force_input_ids=force_input_ids,
+                    constraints=constraints,
                     num_return_sequences=1,
+                    # min_length=100,
                     max_length=max_len,
                     num_beams=config.beam_width,
                     length_penalty=config.length_penalty,
@@ -104,6 +104,7 @@ def evaluation(models, config, dl, **kwargs):
                     use_cache=True,
                     **model_kwargs
                 )
+                # print(tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False))
             else:
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,

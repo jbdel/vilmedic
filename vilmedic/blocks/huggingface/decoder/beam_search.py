@@ -46,7 +46,7 @@ def _validate_model_kwargs(self, model_kwargs):
     return
 
 
-def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **model_kwargs):
+def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **kwargs):
     input_shape = input_ids.shape
     # if model is used as a decoder in encoder-decoder model, the decoder attention mask is created on the fly
     if attention_mask is None:
@@ -55,7 +55,7 @@ def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=Non
     # cut decoder_input_ids if past is used
     if past is not None:
         input_ids = input_ids[:, -1:]
-    return {"input_ids": input_ids, "attention_mask": attention_mask, "past_key_values": past, **model_kwargs}
+    return {"input_ids": input_ids, "attention_mask": attention_mask, "past_key_values": past, **kwargs}
 
 
 def beam_search(

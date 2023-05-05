@@ -26,6 +26,7 @@ class DecoderModel(nn.Module):
             dec_config.add_cross_attention = True
             self.decoder = BertGenerationDecoder(dec_config)
             # self.decoder.generate
+            # self.decoder.prepare_inputs_for_generation
         # Evaluation
         self.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation, self.decoder)
         # We override _validate_model_kwargs width empty function because we add custom model kwargs that triggers

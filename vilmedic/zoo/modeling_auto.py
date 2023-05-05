@@ -14,8 +14,8 @@ from ..datasets import *
 transformers.logging.set_verbosity_error()
 
 MODEL_ZOO = {
-    'selfsup/gloriaa-chexpert': ["1ibtEQH8XXNPy1Y0fE1ooSF7Jh7bdG58C", "1.6 GB"],
-    'selfsup/gloriaa-mimic-48': ["1V50_NUWY-k2ebzmgQxRUcMOIH0UhSAEr", "1.6 GB"],
+    'selfsup/gloria-chexpert': ["1ibtEQH8XXNPy1Y0fE1ooSF7Jh7bdG58C", "1.6 GB"],
+    'selfsup/gloria-mimic-48': ["1V50_NUWY-k2ebzmgQxRUcMOIH0UhSAEr", "1.6 GB"],
     'selfsup/convirt-mimic-balanced': ["1bTf16uRygWwTor3X0rYBhD7MuHSUjWxM", "1.4 GB"],
     'selfsup/convirt-mimic': ["1py2k6kFO1tbSlHroAKmHjOnayIakOtMm", "1.4 GB"],
     'selfsup/convirt-padchest-16': ["15p6ZaoqcxAB0dct7P9zgOcTfvZw-XkVv", "1.4 GB"],

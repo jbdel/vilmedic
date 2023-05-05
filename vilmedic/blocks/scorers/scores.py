@@ -90,6 +90,8 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
                 (hyps, refs)
             scores["chexbert-5_micro avg_f1-score"] = chexbert_5["micro avg"]["f1-score"]
             scores["chexbert-all_micro avg_f1-score"] = chexbert_all["micro avg"]["f1-score"]
+            scores["chexbert-5_macro avg_f1-score"] = chexbert_5["macro avg"]["f1-score"]
+            scores["chexbert-all_macro avg_f1-score"] = chexbert_all["macro avg"]["f1-score"]
         elif metric == 'radentitymatchexact':
             scores["radentitymatchexact"] = RadEntityMatchExact()(refs, hyps)[0]
         elif metric == 'radentitynli':

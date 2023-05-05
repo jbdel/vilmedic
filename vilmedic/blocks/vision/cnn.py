@@ -6,9 +6,11 @@ from .vgg_hgap import *
 from transformers import DeiTConfig, ViTConfig
 from transformers.models.vit.modeling_vit import ViTModel
 from transformers.models.deit.modeling_deit import DeiTModel
-from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention
-from transformers import ResNetConfig
+from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention, \
+    BaseModelOutputWithNoAttention
+from transformers import ResNetConfig, PoolFormerConfig
 from transformers.models.resnet.modeling_resnet import ResNetModel as HFResNetModel
+from transformers.models.poolformer.modeling_poolformer import PoolFormerModel as HFPoolFormerModel
 
 
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
@@ -33,6 +35,9 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
     # HuggingFace ResNet
     if "hfresnet" in backbone.lower():
         return HFResNetModel(ResNetConfig(return_dict=True, **kwargs))
+    # HuggingFace PoolFormer
+    if "hfpoolformer" in backbone.lower():
+        return HFPoolFormerModel(PoolFormerConfig(return_dict=True, **kwargs))
 
     # Torchxrayvision
     if "xrv" in backbone.lower():
@@ -84,6 +89,10 @@ class CNN(nn.Module):
 
         if isinstance(self.cnn, HFResNetModel):
             assert isinstance(out, BaseModelOutputWithPoolingAndNoAttention)
+            out = out.last_hidden_state
+
+        if isinstance(self.cnn, HFPoolFormerModel):
+            assert isinstance(out, BaseModelOutputWithNoAttention)
             out = out.last_hidden_state
 
         out = self.dropout_out(out)

@@ -55,7 +55,11 @@ def main():
 
     # if specific checkpoint is specified
     if ensemble_config.ckpt is not None:
-        ckpts = [os.path.join(evaluator.config.ckpt_dir, ensemble_config.ckpt)]
+        if os.path.isfile(ensemble_config.ckpt):
+            ckpts = [ensemble_config.ckpt]
+        else:
+            ckpts = [os.path.join(evaluator.config.ckpt_dir, ensemble_config.ckpt)]
+        assert os.path.isfile(ckpts[0]), "Specified checkpoint does not exist"
 
     if not ckpts:
         evaluator.logger.settings("No checkpoints found")

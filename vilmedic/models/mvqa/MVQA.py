@@ -3,7 +3,7 @@ import torch.nn as nn
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.classifier import *
 from vilmedic.blocks.classifier.evaluation import evaluation
-from vilmedic.blocks.losses import LabelSmoothingCrossEntropy
+from vilmedic.blocks.losses import *
 
 from vilmedic.models.utils import get_n_params
 
@@ -33,6 +33,7 @@ class MVQA(nn.Module):
 
         self.loss_func = eval(loss_func)(**loss).cuda()
 
+        print(self.loss_func)
         # Evaluation
         self.eval_func = evaluation
 

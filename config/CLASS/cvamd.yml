@@ -1,0 +1,81 @@
+name: cvamd
+ckpt_dir: ckpt
+
+dataset:
+  proto: ImLabel
+  label:
+    root: data/CLASS/CVAMD
+    file: label.tok
+
+  image:
+    root: data/CLASS/CVAMD
+    file: image.tok
+    image_path: data/images/mimic-cxr-images-512
+    load_memory: False
+    resize: 256
+    crop: 224
+    ext: .jpg
+
+model:
+  proto: MVQA
+  cnn:
+    proto: CNN
+    backbone: densenet169
+    output_layer: features
+    dropout_out: 0.0
+    permute: batch_first
+    freeze: False
+
+  adapter:
+    input_size: 1664
+    output_size: 768
+
+  transformer:
+    hidden_size: 768
+    intermediate_size: 2048
+    num_hidden_layers: 8
+    num_attention_heads: 8
+    attention_probs_dropout_prob: 0.1
+    hidden_dropout_prob: 0.1
+    hidden_act: gelu
+    initializer_range: 0.02
+    layer_norm_eps: 1.e-12
+
+  classifier:
+    proto: Classifier
+    input_size: 768
+    num_classes: 27
+    dropout: 0.
+
+  loss:
+    proto: BCEWithLogitsLoss
+
+trainor:
+  optimizer: Adam
+  optim_params:
+    lr: 0.00005
+    weight_decay: 5e-4
+  batch_size: 32
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.5
+    patience: 1
+    min_lr: 0.000001
+    threshold: 0.01
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: accuracy
+
+
+validator:
+  batch_size: 16
+  metrics: [accuracy]
+  splits: [validate]
+
+ensemblor:
+  batch_size: 16
+  metrics: [accuracy]
+  splits: [validate, test]
+  mode: all

@@ -12,9 +12,8 @@ DATA_ZOO = {
     "SELFSUP": ["1es-SrZaUdyyKf-1XnoirQ_Q0nZtQXtv0", "676.7 MB"],
     "MVQA": ["1YOr9fmc-zm8YwhWJIgjkjmF2Y0G_MSsV", "1 MB"],
 }
-
 IMAGE_ZOO = {
-    "indiana-images-512": ["1Cv9u3ZoOb8hZVcObMqHRNxsoAdZpYGt4", "1.27 GB"],
+    "indiana-images-512": ["1oUWkIMu4QEF7p_NINfRsywOG0I6EhT7I", "1.27 GB"],
     "imageclef-vqa-images-512": ["1ByPQ2TdXGz17pYDJKhrV05hka_XYH_pw", "327 MB"],
 }
 

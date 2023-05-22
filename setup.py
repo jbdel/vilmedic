@@ -54,9 +54,9 @@ setup(
                       'psutil==5.9.0',
                       'lightning-bolts==0.5.0',
                       'faiss-gpu',
-                      'pyedflib'
-                      'nibabel'
-                      'monai'
+                      'pyedflib',
+                      'nibabel',
+                      'monai',
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

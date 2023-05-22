@@ -18,7 +18,6 @@ from torch.utils.data._utils.collate import default_collate as pytorch_default_c
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
-logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
 def vilmedic_collate(batch, multi_image=None):

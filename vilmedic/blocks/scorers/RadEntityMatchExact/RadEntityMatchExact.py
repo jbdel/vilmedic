@@ -5,7 +5,6 @@ from stanza import Pipeline
 
 import logging
 
-logging.getLogger("stanza").setLevel(logging.WARNING)
 stanza.download('en', processors='tokenize,lemma,pos,ner')
 stanza.download('en', package='radiology')
 

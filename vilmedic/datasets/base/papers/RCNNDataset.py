@@ -5,8 +5,6 @@ from ..base.ImageDataset import ImageDataset
 import os
 import logging
 
-logging.getLogger('PIL').setLevel(logging.WARNING)
-
 
 class RCNNDataset(Dataset):
     def __init__(self, label, image, bbox, split, ckpt_dir, **kwargs):

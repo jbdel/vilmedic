@@ -15,8 +15,7 @@ import omegaconf
 import seaborn as sns
 
 sns.set_theme(style="darkgrid")
-logging.getLogger("numba").setLevel(logging.WARNING)
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
 
 
 def plot_attention(results, pp_dir, seed, logger, split, epoch, dl, smooth=True, **kwargs):

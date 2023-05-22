@@ -3,11 +3,15 @@ import numpy as np
 import json
 import torch.nn.functional as F
 import torch
+import logging
 from radgraph import F1RadGraph
 from f1chexbert import F1CheXbert
+
 from sklearn.metrics import classification_report, roc_auc_score
-from omegaconf import OmegaConf
 from . import *
+
+# RadGraph package overrides logger, need to set back to default
+logging.setLoggerClass(logging.Logger)
 
 REWARD_COMPLIANT = {
     "rougel": [RougeL, 1],

@@ -8,7 +8,7 @@ import random
 import torch
 import os
 import numpy as np
-from omegaconf import OmegaConf, _utils
+from omegaconf import OmegaConf
 from random import randrange
 import re
 import yaml

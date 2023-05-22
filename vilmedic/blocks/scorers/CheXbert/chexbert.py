@@ -17,8 +17,6 @@ from sklearn.metrics._classification import _check_targets
 import numpy as np
 from sklearn.utils.sparsefuncs import count_nonzero
 
-logging.getLogger("urllib3").setLevel(logging.ERROR)
-
 
 def generate_attention_masks(batch, source_lengths):
     """Generate masks for padded batches to avoid self-attention over pad tokens

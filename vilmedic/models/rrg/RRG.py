@@ -64,7 +64,9 @@ class RRG(nn.Module):
 
         # 3D encoder
         if self.enc[0].is3D:
-            return self.enc(images), None
+            features = self.enc(images)
+            feature_mask = (torch.sum(torch.abs(features), dim=-1) != 0)
+            return self.enc(images), feature_mask
 
         # Multi forward pass
         images = rearrange(images, 'd0 d1 d2 d3 d4 -> (d0 d1) d2 d3 d4')

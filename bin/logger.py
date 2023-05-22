@@ -18,7 +18,7 @@ class LoggingFormatter(logging.Formatter):
         logging.INFO: format,
         logging.WARNING: yellow + format + reset,
         logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+        logging.CRITICAL: bold_red + format + reset,
     }
 
     def format(self, record):
@@ -28,17 +28,24 @@ class LoggingFormatter(logging.Formatter):
 
 
 def set_logger(ckpt_dir, seed):
+    logger = logging.getLogger(str(seed))
+    logger.propagate = False  # Prevent the logger from passing messages to its parent logger
+
+    # remove all handlers if they exist
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+
     ch = logging.StreamHandler()
     ch.setFormatter(LoggingFormatter())
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)",
-        handlers=[
-            logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed)), mode='a+'),
-            ch
-        ]
-    )
+    logger.addHandler(ch)
+    logger.addHandler(logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed)), mode='a+'))
+
+    logger.setLevel(logging.DEBUG)
+
     addLoggingLevel("SETTINGS", levelNum=logging.DEBUG)
+
+    return logger  # return logger instance
+
 
 def addLoggingLevel(levelName, levelNum, methodName=None):
     """
@@ -53,34 +60,25 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 
     To avoid accidental clobberings of existing attributes, this method will
     raise an `AttributeError` if the level name is already an attribute of the
-    `logging` module or if the method name is already present
+    `logging` module or if the method name is already present.
 
-    Example
-    -------
-    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
-    >>> logging.getLogger(__name__).setLevel("TRACE")
-    >>> logging.getLogger(__name__).trace('that worked')
-    >>> logging.trace('so did this')
-    >>> logging.TRACE
-    5
-
+    :param levelName: The name of the level.
+    :param levelNum: The numeric value of the level.
+    :param methodName: The name of the method defined in `logging` and its logger
+                        classes to call the new level. Defaults to `levelName.lower()`
     """
     if not methodName:
         methodName = levelName.lower()
 
     if hasattr(logging, levelName):
-       raise AttributeError('{} already defined in logging module'.format(levelName))
+        raise AttributeError(f'Logging level {levelName} already defined')
     if hasattr(logging, methodName):
-       raise AttributeError('{} already defined in logging module'.format(methodName))
-    if hasattr(logging.getLoggerClass(), methodName):
-       raise AttributeError('{} already defined in logger class'.format(methodName))
+        raise AttributeError(f'Method {methodName} already defined in logging module')
 
-    # This method was inspired by the answers to Stack Overflow post
-    # http://stackoverflow.com/q/2183233/2988730, especially
-    # http://stackoverflow.com/a/13638084/2988730
     def logForLevel(self, message, *args, **kwargs):
         if self.isEnabledFor(levelNum):
             self._log(levelNum, message, args, **kwargs)
+
     def logToRoot(message, *args, **kwargs):
         logging.log(levelNum, message, *args, **kwargs)
 

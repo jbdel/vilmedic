@@ -11,11 +11,6 @@ from vilmedic.zoo.utils import download_model
 from torchmetrics.functional.text.bert import BERTScorer
 from itertools import chain, product
 
-import logging
-
-logging.getLogger("stanza").setLevel(logging.WARNING)
-logging.getLogger("filelock").setLevel(logging.CRITICAL)
-
 
 class RadEntityNLI(nn.Module):
     def __init__(self, **kwargs):

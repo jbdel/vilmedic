@@ -55,6 +55,8 @@ setup(
                       'lightning-bolts==0.5.0',
                       'faiss-gpu',
                       'pyedflib'
+                      'nibabel'
+                      'monai'
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

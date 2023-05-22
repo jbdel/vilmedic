@@ -12,7 +12,7 @@ dataset:
     custom_transform_train: >
       transforms.Compose([
                       transforms.ToTensor()])
-    custom_transform_val: >
+    custom_transform_validate: >
       transforms.Compose([
                       transforms.ToTensor()])
 

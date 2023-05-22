@@ -13,6 +13,7 @@ from vilmedic.models.selfsup.clip.DALLE import DALLE
 from vilmedic.models.selfsup.clip.CLIP import CLIP
 
 from vilmedic.models.rrg.RRG import RRG
+from vilmedic.models.rrg.RRG_FORCE import RRG_FORCE
 from vilmedic.models.rrg.RRG_MULTI import RRG_MULTI
 from vilmedic.models.rrg.RRG_EEG import RRG_EEG
 from vilmedic.models.rrg.RRG_PPO import RRG_PPO

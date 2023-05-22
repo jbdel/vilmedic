@@ -17,7 +17,7 @@ def evaluation(models, config, dl, **kwargs):
 
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
-            batch = {k: v.cuda() for k, v in batch.items()}
+            batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
             encoder_batch = {k: v.cuda() for k, v in batch.items() if not k.startswith("decoder_")}
 
             expanded_return_idx = (

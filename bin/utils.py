@@ -8,9 +8,10 @@ import random
 import torch
 import os
 import numpy as np
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, _utils
 from random import randrange
 import re
+import yaml
 
 
 def extract_seed_from_ckpt(ckpt):
@@ -28,6 +29,32 @@ def print_args(config, splits, seed, override):
         d = OmegaConf.to_container(getattr(config, split))
         logger.settings(split)
         logger.info(json.dumps(d, indent=4, sort_keys=True))
+
+
+def merge_with_dotlist(conf, dotlist):
+    from omegaconf import OmegaConf
+
+    def fail() -> None:
+        raise ValueError("Input list must be a list or a tuple of strings")
+
+    if not isinstance(dotlist, (list, tuple)):
+        fail()
+
+    for arg in dotlist:
+        if not isinstance(arg, str):
+            fail()
+
+        idx = arg.find("=")
+        if idx == -1:
+            key = arg
+            value = None
+        else:
+            key = arg[0:idx]
+            value = arg[idx + 1:]
+            value = yaml.unsafe_load(value)
+
+        OmegaConf.update(conf, key, value, merge=True)
+    return conf
 
 
 def get_args():
@@ -60,7 +87,7 @@ def get_args():
     config = OmegaConf.merge(include_mapping, config)
 
     # Override current config with additional args
-    override = OmegaConf.from_dotlist(others)
+    override = merge_with_dotlist(OmegaConf.create(), others)
     config = OmegaConf.merge(config, override)
 
     return config, override

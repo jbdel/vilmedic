@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
+import logging
 from torchvision.models import *
 from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
+from monai.networks.nets.densenet import densenet121 as MonaiDensenet121, densenet169 as MonaiDensenet169, \
+    densenet201 as MonaiDensenet201, densenet264 as MonaiDensenet264
 from .vgg_hgap import *
-from transformers import DeiTConfig, ViTConfig
-from transformers.models.vit.modeling_vit import ViTModel
-from transformers.models.deit.modeling_deit import DeiTModel
+from transformers.models.vit.modeling_vit import ViTModel, ViTConfig
+from transformers.models.deit.modeling_deit import DeiTModel, DeiTConfig
 from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention, \
     BaseModelOutputWithNoAttention
 from transformers import ResNetConfig, PoolFormerConfig
@@ -13,12 +15,28 @@ from transformers.models.resnet.modeling_resnet import ResNetModel as HFResNetMo
 from transformers.models.poolformer.modeling_poolformer import PoolFormerModel as HFPoolFormerModel
 
 
+class _3d_densenet121(MonaiDensenet121):
+    pass
+
+
+class _3d_densenet169(MonaiDensenet169):
+    pass
+
+
+class _3d_densenet201(MonaiDensenet201):
+    pass
+
+
+class _3d_densenet264(MonaiDensenet264):
+    pass
+
+
 def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
     """
     Create sub-network given a backbone and an output_layer
     """
-    # Create avgpool for densenet, doesnt exist as such
-    if 'densenet' in backbone and output_layer == 'avgpool':
+    # Create avgpool for densenet, does not exist as such
+    if 'densenet' in backbone and '3d' not in backbone and output_layer == 'avgpool':
         sub_network = get_network(backbone, 'features', pretrained, **kwargs)
         sub_network.add_module('relu', nn.ReLU(inplace=True))
         sub_network.add_module('avgpool', nn.AdaptiveAvgPool2d((1, 1)))
@@ -30,11 +48,14 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
         model = ViTModel(ViTConfig(return_dict=True, **kwargs), add_pooling_layer=False)
         model.layernorm = nn.Identity()
         return model
+
     if "deit" in backbone.lower():
         return DeiTModel(DeiTConfig(return_dict=True, **kwargs), add_pooling_layer=False)
+
     # HuggingFace ResNet
     if "hfresnet" in backbone.lower():
         return HFResNetModel(ResNetConfig(return_dict=True, **kwargs))
+
     # HuggingFace PoolFormer
     if "hfpoolformer" in backbone.lower():
         return HFPoolFormerModel(PoolFormerConfig(return_dict=True, **kwargs))
@@ -62,17 +83,25 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
 
 
 class CNN(nn.Module):
-    def __init__(self, backbone, permute, dropout_out=0.0, freeze=True, output_layer=None, pretrained=True,
-                 visual_embedding_dim=None, **kwargs):
+    def __init__(self,
+                 backbone,
+                 permute,
+                 dropout_out=0.0,
+                 freeze=False,
+                 output_layer=None,
+                 pretrained=True,
+                 visual_embedding_dim=None,
+                 **kwargs):
         super(CNN, self).__init__()
+
         self.backbone = backbone
         self.output_layer = output_layer
         self.permute = permute
         self.freeze = freeze
         self.pretrained = pretrained
-
         self.cnn = get_network(self.backbone, self.output_layer, self.pretrained, **kwargs)
         self.dropout_out = nn.Dropout(p=dropout_out)
+        self.is3D = "3d" in backbone
 
         assert permute in ["batch_first", "spatial_first", "no_permute"]
 

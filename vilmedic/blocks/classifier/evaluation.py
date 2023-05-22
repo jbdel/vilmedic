@@ -18,7 +18,7 @@ def evaluation(models, config, dl, **kwargs):
         label = batch['labels']
         batch_size = len(label)
 
-        batch = {k: v.cuda() for k, v in batch.items()}
+        batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
         results = [model(**batch) for model in models]
         # iterating over the batch, stacking refs and hyps
         for i in range(batch_size):

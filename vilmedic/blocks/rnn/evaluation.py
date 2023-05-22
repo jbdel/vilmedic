@@ -65,7 +65,7 @@ def beam_search(models, config, dl, lp_alpha=0.0):
         refs.extend(batch['decoder_input_ids'].tolist())
 
         # Encode source modalities
-        batch = {k: v.cuda() for k, v in batch.items()}
+        batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
         ctx_dicts = [encode(**batch) for encode in encoders]
 
         # Sanity check one of the context dictionaries for dimensions and return batch_size

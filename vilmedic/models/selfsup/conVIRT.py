@@ -20,7 +20,7 @@ def evaluation(models, config, dl, from_training, **kwargs):
 
     pbar = tqdm(dl, total=len(dl))
     for i, batch in enumerate(pbar):
-        batch = {k: v.cuda() for k, v in batch.items()}
+        batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
         out = model(**batch)
         losses.append(out['loss'].mean().cpu().data.numpy())
 

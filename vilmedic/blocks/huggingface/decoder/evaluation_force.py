@@ -48,6 +48,13 @@ def evaluation(models, config, dl, **kwargs):
             expanded_return_idx = (
                 torch.arange(batch_size).view(-1, 1).repeat(1, config.beam_width).view(-1).cuda()
             )
+
+            print([[phrase.split() for phrase in sublist] for sublist in batch["concepts"]])
+            force_words_ids = tokenizer([[phrase.split() for phrase in sublist] for sublist in batch["concepts"]],
+                                        add_special_tokens=False)
+            print(force_words_ids)
+            troll
+
             # Getting encoder infos
             encoder_outputs = []
             encoder_attention_masks = []
@@ -72,6 +79,7 @@ def evaluation(models, config, dl, **kwargs):
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
                 num_return_sequences=1,
                 max_length=max_len,
+                force_words_ids=force_words_ids,
                 num_beams=config.beam_width,
                 length_penalty=config.length_penalty,
                 bos_token_id=bos_token_id,

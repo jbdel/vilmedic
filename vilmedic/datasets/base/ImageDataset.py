@@ -1,14 +1,10 @@
 import os
 import pydicom
-from pydicom.pixel_data_handlers.util import apply_voi_lut
-
 import numpy as np
 import json
 import PIL
 import skimage
 import logging
-
-from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
 import torchxrayvision as xrv
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
@@ -16,6 +12,9 @@ from torchvision.transforms import *
 from .utils import load_file
 from .papers.open_image import *
 from .papers.transforms import *
+import nibabel as nib
+from pydicom.pixel_data_handlers.util import apply_voi_lut
+from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
@@ -68,16 +67,16 @@ def read_images(root, image_path, split, file):
     return [[os.path.join(image_path, image) for image in line.split(',')] for line in lines]
 
 
-def get_transforms(split, resize, crop, custom_transform_train, custom_transform_val, ext, called_by_ensemblor):
-    # If called_by_ensemblor, return custom_transform_val or evaluation transform
+def get_transforms(split, resize, crop, custom_transform_train, custom_transform_validate, ext, called_by_ensemblor):
+    # If called_by_ensemblor, return custom_transform_validate or evaluation transform
     if called_by_ensemblor:
         split = not "train"
 
     if custom_transform_train is not None and split == "train":
         return eval(custom_transform_train)
 
-    if custom_transform_val is not None and not split == "train":
-        return eval(custom_transform_val)
+    if custom_transform_validate is not None and not split == "train":
+        return eval(custom_transform_validate)
 
     if ext in [".npy", ".npz"]:
         return lambda x: x
@@ -115,6 +114,9 @@ def open_image(image, ext):
         if len(img.shape) < 2:
             print("error, dimension lower than 2 for image")
         return img[None, :, :]
+
+    if ext == '.nib':
+        return nib.load(image).get_fdata().astype('float32')
 
     if ext == '.png':
         return Image.open(image).convert('RGB')
@@ -157,7 +159,7 @@ class ImageDataset(Dataset):
                  image_path=None,
                  load_memory=False,
                  custom_transform_train=None,
-                 custom_transform_val=None,
+                 custom_transform_validate=None,
                  resize=256,
                  crop=224,
                  ext='.jpg',
@@ -185,7 +187,7 @@ class ImageDataset(Dataset):
                                         self.resize,
                                         self.crop,
                                         custom_transform_train,
-                                        custom_transform_val,
+                                        custom_transform_validate,
                                         self.ext,
                                         called_by_ensemblor)
 
@@ -226,11 +228,11 @@ class ImageDataset(Dataset):
             transform = self.transform.transforms
 
         return "ImageDataset\n" + \
-               json.dumps({
-                   "split": self.split,
-                   "image_path": self.image_path,
-                   "root": self.root,
-                   "file": self.file,
-                   "transforms": transform,
-                   "ext": self.ext,
-               }, indent=4, sort_keys=False, default=str)
+            json.dumps({
+                "split": self.split,
+                "image_path": self.image_path,
+                "root": self.root,
+                "file": self.file,
+                "transforms": transform,
+                "ext": self.ext,
+            }, indent=4, sort_keys=False, default=str)

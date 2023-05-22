@@ -16,7 +16,7 @@ dataset:
       transforms.Compose([
                       transforms.Resize((232, 232)),
                       transforms.ToTensor()])
-    custom_transform_val: >
+    custom_transform_validate: >
       transforms.Compose([
                       transforms.Resize((232, 232)),
                       transforms.ToTensor()])

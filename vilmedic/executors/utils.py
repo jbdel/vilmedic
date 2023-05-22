@@ -92,7 +92,7 @@ def create_data_loader(config, split, logger, called_by_validator=False, called_
             RandomSampler(dataset),
             batch_size=config.batch_size,
             drop_last=config.drop_last or False)
-        logger.info('Using' + type(sampler.sampler).__name__)
+        logger.info('Using ' + type(sampler.sampler).__name__)
 
     else:
         sampler = BatchSampler(

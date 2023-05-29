@@ -1,9 +1,10 @@
+# import open_clip
 import torch
 import torch.nn as nn
 from torchvision.models import *
 from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
 from .vgg_hgap import *
-from transformers import DeiTConfig, ViTConfig
+from transformers import CLIPModel, DeiTConfig, ViTConfig
 from transformers.models.vit.modeling_vit import ViTModel
 from transformers.models.deit.modeling_deit import DeiTModel
 from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention
@@ -23,6 +24,12 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
         sub_network.add_module('flatten', nn.Flatten(1))
         return sub_network
 
+    # # HuggingFace BioMed-CLIP model
+    # if "clip" in backbone.lower():
+    #     model = CLIPModel.from_pretrained(backbone)
+    # # HuggingFace BioMed-CLIP model
+    # if "biomedclip" in backbone.lower():
+    #     model, _, _ = open_clip.create_model_and_transforms(backbone)
     # HuggingFace Vision transformer
     if "vit" in backbone.lower():
         model = ViTModel(ViTConfig(return_dict=True, **kwargs), add_pooling_layer=False)

@@ -81,20 +81,22 @@ def evaluation(models, config, dl, **kwargs):
                 # TODO: called force_words_ids in transformers 4.23.1, and force_input_ids in transformers 4.28.1
                 # have to change up the format of force_input_ids to make it work with transformers 4.23.1
                 # currently getting `ValueError: `force_words_ids` has to either be a `List[List[List[int]]]` or `List[List[int]]`of positive integers, but is [tensor([[ ...`
-                force_words_ids = force_input_ids[0]
+                force_words_ids = [force_input_ids[0][0]]
+                # force_words_ids = [word_ids.tolist() for word_ids in force_words_ids]
                 constraints = [
                     PhrasalConstraint(
                         word_ids.squeeze().tolist()
                     ) for word_ids in force_words_ids
                 ]
-
-                # print([tokenizer.decode(ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=False) for ids in force_words_ids])
+                force_words = [tokenizer.decode(ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=False) for ids in force_words_ids]
+                print(len(force_words_ids), force_words)
 
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
                     constraints=constraints,
+                    # force_words_ids=force_words_ids,
                     num_return_sequences=1,
-                    # min_length=100,
+                    # min_length=max_len,
                     max_length=max_len,
                     num_beams=config.beam_width,
                     length_penalty=config.length_penalty,
@@ -104,7 +106,9 @@ def evaluation(models, config, dl, **kwargs):
                     use_cache=True,
                     **model_kwargs
                 )
-                # print(tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False))
+                decoded_hyps = tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+                print(decoded_hyps)
+                print(all([word in decoded_hyps for word in force_words]))
             else:
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,

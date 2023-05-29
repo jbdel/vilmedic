@@ -1,6 +1,9 @@
+*.egg*
 **/*.pyc
+ckpt/*
 data/*
 !data/make_datasets
+data/make_datasets/mimic_cxr/*
 cmd/*
 vilmedic/blocks/scorers/radgraph/model_checkpoint/*
 vilmedic/idea/*

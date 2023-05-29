@@ -6,6 +6,8 @@ from collections import defaultdict
 from tqdm import tqdm
 
 DATA_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)).split('vilmedic/data/')[0], 'vilmedic/data/')
+# IMG_PATH = 'mimic-cxr-images-512/files'
+IMG_PATH = '/data4/mimic_cxr/physionet.org/files/mimic-cxr-jpg/2.0.0/files/'
 DICOM_VIEWS = {row["dicom_id"]: row["ViewPosition"] for row in csv.DictReader(open("mimic-cxr-2.0.0-metadata.csv"))}
 
 RULES = {
@@ -52,7 +54,6 @@ def main():
     skipped_reports_i_f = 0
 
     for row in tqdm(csv.DictReader(open('mimic_cxr_sectioned.csv'))):
-
         impression = re.sub("\s+", " ", row['impression'])  # removing all line breaks
         findings = re.sub("\s+", " ", row['findings'])  # removing all line breaks
 
@@ -134,7 +135,7 @@ def main():
             for row in tqdm(csv.DictReader(open('mimic-cxr-2.0.0-split.csv'))):
                 key = ('s' + row['study_id'], row['split'])
                 study_images[key].append(os.path.join(
-                    'mimic-cxr-images-512/files',
+                    IMG_PATH,
                     'p' + str(row['subject_id'])[:2],  # 10000032 -> p10
                     'p' + str(row['subject_id']),
                     's' + str(row['study_id']),

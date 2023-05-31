@@ -36,7 +36,7 @@ setup(
                       'dalle-pytorch==1.4.2',
                       'torchxrayvision==0.0.32',
                       'stanza==1.3.0',
-                      'bert-score==0.3.11',
+                      'bert-score',
                       'torch==1.8.1',
                       'pytorch-lightning==1.4.2',
                       'pytorch-metric-learning==0.9.99',
@@ -58,6 +58,7 @@ setup(
                       'pyedflib',
                       'nibabel',
                       'monai==1.1.0',
+                      'typing_extensions==4.4.0'
                       ],
     include_package_data=True,
     exclude_package_data={'': ['.git']},

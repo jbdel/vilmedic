@@ -1,0 +1,414 @@
+0	21	interview	Interview						
+1	51	prize	Preisgeld						
+2	77	China	China						
+3	80	trade	Handel						
+4	86	side	Seite						
+5	87	budgetary deficit	Haushaltsdefizit						
+6	88	side	Seite	solution	Lösung				
+7	113	forced prostitution	Zwangsprostitution						
+8	127	Upper Palatinate	Oberpfalz						
+9	128	Swabia	Schwaben						
+10	146	request	Antrag						
+11	157	repeatedly	wiederholt						
+12	168	opinion	Meinung						
+13	177	month	Monat						
+14	189	bonus	Bonus						
+15	191	summit	Gipfeltreffen						
+16	193	Syria	Syrien						
+17	196	consensus	Konsens	Syria	Syrien				
+18	204	sponsorship	Sponsoring	sport	Sport				
+19	215	sponsorship	Sponsoring	sponsorship	Sponsoring				
+20	223	night	Nacht						
+21	232	victories	Siege						
+22	235	strong	stark						
+23	236	charisma	Charisma						
+24	244	strength	Stärke						
+25	251	deputy	Stellvertreter						
+26	253	capital	Hauptstadt	Moscow State Institute of International Relations	MGIMO	Tokyo	Tokyo	embassy	Botschaft
+27	267	conversation	Gespräch						
+28	272	Federal Security Service	FSB	deputy	Stellvertreter				
+29	278	month	Monat						
+30	279	series	Serie						
+31	281	disagreement	Meinungsverschiedenheit						
+32	295	bridge	Brücke						
+33	296	bridge	Brücke						
+34	300	bridge	Brücke						
+35	301	building	Bau						
+36	302	bridge	Brücke						
+37	303	bridge	Brücke	bridge	Brücke				
+38	304	bridge	Brücke	bridge	Brücke				
+39	305	bridge	Bridge						
+40	315	BST	BST						
+41	316	safety	Sicherheit						
+42	319	buoy	Boje						
+43	330	perpetrator	Täter						
+44	337	side	Seite						
+45	345	designate	ausweisen						
+46	351	CDU	CDU						
+47	353	housing market	Wohnungsmarkt						
+48	367	target	Ziel						
+49	370	CDU	CDU						
+50	385	generation	Generation						
+51	389	public health	Gesundheit	public health	Gesundheit				
+52	401	subside	nachlassen						
+53	402	virtual reality	virtuelle Realität						
+54	404	gold	Gold						
+55	406	hype	Hype						
+56	407	immune	immun						
+57	415	Brazil	Brasilien						
+58	416	generation	Generation						
+59	420	Brazil	Brasilien						
+60	421	Texas	Texas						
+61	422	gold	Gold	Brazil	Brasilien				
+62	452	microcephaly	Mikrozephalie						
+63	454	microcephaly	Mikrozephalie						
+64	469	sign	Zeichen						
+65	483	state of emergency	Notstand						
+66	496	stepson	Stiefsohn						
+67	498	stepson	Stiefsohn						
+68	549	presence	Anwesenheit						
+69	554	performances	Leistung						
+70	555	gold	Gold						
+71	560	sport	Sport						
+72	568	strength	Stärke						
+73	571	sport	Sport						
+74	578	night	Nacht						
+75	581	month	Monat						
+76	590	sign	Zeichen						
+77	608	safety	Sicherheit						
+78	610	office	Amt						
+79	616	vote	Wahlstimme						
+80	623	campaign	Kampagne						
+81	632	options	Optionen						
+82	640	requirement	Anforderung						
+83	644	series	Reihe						
+84	650	gold	Gold						
+85	658	actor	Schauspieler						
+86	662	comparison	Vergleich	actor	Schauspieler				
+87	663	skin	Haut						
+88	670	died	gestorben						
+89	677	China	China						
+90	678	tone	Ton						
+91	679	China	China	died	gestorben				
+92	681	China	China	China	China				
+93	693	night	Nacht						
+94	707	pair	Paar						
+95	715	pair	Paar						
+96	723	forearm	Vorderarm						
+97	724	knee	Knie						
+98	730	tongue	Zunge						
+99	732	strength	Widerstandsfähigkeit						
+100	736	trip	Reise						
+101	743	units	Einheiten						
+102	744	comparison	Vergleich						
+103	745	units	Einheiten						
+104	756	environment	Kontext						
+105	764	damage	Schaden						
+106	769	housing	Wohnung						
+107	788	side	Seite						
+108	796	cash	Bargeld						
+109	802	warning	Warnung						
+110	817	safety	Sicherheit						
+111	818	parts	Teile	Madeira	Madeira				
+112	819	fog	Nebel						
+113	824	Brazil	Brasilien						
+114	826	knee	Knie						
+115	831	Madrid	Madrid						
+116	836	World Championship	WM						
+117	854	election campaign	Wahlkampf						
+118	856	election campaign	Wahlkampagne						
+119	866	interview	Interview						
+120	867	holiday	Urlaub						
+121	882	sample	Probe						
+122	884	Beijing	Peking						
+123	890	Brazil	Brasilien						
+124	894	Beijing	Peking						
+125	895	series	Reihe						
+126	929	Syria	Syrien						
+127	930	Syria	Syrien						
+128	931	Syria	Syrien						
+129	932	air strike	Luftangriff						
+130	936	Syria	Syrien						
+131	938	Judge	Richter						
+132	939	Republicans	Die Republikaner						
+133	949	generation	Generation						
+134	968	minority	Minderheit						
+135	985	holiday	Urlaub						
+136	990	Prime Minister	Ministerpräsident						
+137	991	CDU	CDU						
+138	993	election campaign	Wahlkampf						
+139	997	CDU	CDU						
+140	999	target group	Zielgruppe						
+141	1000	CDU	CDU						
+142	1007	election campaign	Wahlkampf						
+143	1008	CDU	CDU						
+144	1009	CDU	CDU						
+145	1024	link	Verbindung						
+146	1025	both sides	beidseitig						
+147	1030	commune	Gemeinde						
+148	1032	minute	Minute						
+149	1042	owner	Inhaber						
+150	1072	communications	Kommunikation						
+151	1090	Brussels	Brüssel	Nice	Nizza				
+152	1096	equipment	Ausstattung						
+153	1112	Western Europe	Westeuropa						
+154	1114	Western Europe	Westeuropa	China	China				
+155	1137	damage	Schaden	damage	Schaden				
+156	1140	penalty interest	Strafzinsen						
+157	1142	sign	Signal						
+158	1151	cash	Bargeld						
+159	1156	fees	Gebühren						
+160	1157	penalty interest	Strafzinsen						
+161	1158	strong	stark						
+162	1177	charm	Charme						
+163	1178	observation	Beobachtung						
+164	1201	month	Monat						
+165	1203	stack	Stapel						
+166	1216	option	Option						
+167	1220	generation	Generation						
+168	1239	Lille	Lille						
+169	1243	petition	Petition						
+170	1248	World Championship	WM						
+171	1258	comparison	Vergleich						
+172	1276	integrated	integriert						
+173	1282	generation	Generation						
+174	1294	gold	Gold						
+175	1296	strength	Kraft	gold	Gold				
+176	1304	progress	Fortschritt						
+177	1311	minute	Minute						
+178	1321	Japan	Japan						
+179	1325	gold	Gold						
+180	1330	gold	Gold						
+181	1332	bladder cancer	Blasenkrebs						
+182	1350	pair	Paar						
+183	1357	pair	Paar						
+184	1375	commune	Gemeinde						
+185	1379	fees	Gebühren						
+186	1390	challenge	Herausforderung						
+187	1391	night	Nacht						
+188	1405	perpetrator	Täter						
+189	1415	perpetrator	Täter						
+190	1416	perpetrator	Täter						
+191	1417	homicide	Tötungsdelikt						
+192	1433	campaign	Kampagne						
+193	1436	financial crisis	Finanzkrise						
+194	1437	China	China						
+195	1438	dumping	Preisdumping						
+196	1440	China	China						
+197	1449	month	Monat						
+198	1455	rehearsal	Probe						
+199	1471	challenge	Herausforderung						
+200	1473	aspect	Aspekt						
+201	1496	duration	Dauer						
+202	1519	state of emergency	Ausnahmezustand						
+203	1521	sport	Sport						
+204	1537	26	26						
+205	1539	AC	AC						
+206	1542	doping	Doping						
+207	1546	doping	Doping						
+208	1549	gold	Gold						
+209	1566	Court of Arbitration for Sport	CAS						
+210	1568	China	China						
+211	1570	Thailand	Thailand						
+212	1571	Thailand	Thailand						
+213	1576	capital	Hauptstadt	Bangkok	Bangkok				
+214	1589	terrorism	Terrorismus						
+215	1590	Bangkok	Bangkok						
+216	1595	Thailand	Thailand						
+217	1598	surroundings	Umgebung						
+218	1599	travel	Reisen						
+219	1603	Prime Minister	Ministerpräsident						
+220	1618	target group	Zielgruppe						
+221	1631	terrorism	Terrorismus						
+222	1640	CDU	CDU						
+223	1657	minute	Minute						
+224	1679	holiday	Urlaub						
+225	1680	holiday	Urlaub						
+226	1682	Islamic State	IS						
+227	1703	resignation	Rücktritt						
+228	1723	accident	Unfall						
+229	1733	fees	Gebühren						
+230	1738	industrial enterprises	Industriebetriebe						
+231	1740	fees	Gebühren						
+232	1743	repairs	Reparaturen						
+233	1757	CPI	CPI						
+234	1760	goods	Güter	beverages	Getränke	goods	Güter		
+235	1762	tobacco	Tabak	communications	Kommunikation				
+236	1769	skin	Haut						
+237	1770	caricature	Karikatur						
+238	1772	feature	Feature						
+239	1773	caricature	Karikatur						
+240	1777	comparison	Gegenüberstellung	caricature	Karikatur				
+241	1782	interview	Interview						
+242	1792	Iraq	Irak	Syria	Syrien				
+243	1799	Islamic State	ISIL						
+244	1802	Iraq	Irak						
+245	1804	Iraq	Irak						
+246	1805	Republicans	Die Republikaner						
+247	1816	Iraq	Irak	Syria	Syrien				
+248	1817	Iraq	Irak						
+249	1818	Iraq	Irak						
+250	1820	black market	Schwarzmarkt						
+251	1825	Japan	Japan						
+252	1829	Japan	Japan						
+253	1835	sport	Sport						
+254	1854	conversation	Gespräch						
+255	1857	gold	Gold						
+256	1861	charm	Charme						
+257	1866	China	China						
+258	1871	series	Reihe						
+259	1872	execution	Ausführung						
+260	1874	vector	Vektor						
+261	1875	gold	Gold						
+262	1880	vector	Vektor						
+263	1882	astronaut	Astronaut						
+264	1901	Africa	Afrika						
+265	1903	Africa	Afrika						
+266	1905	capital	Hauptstadt						
+267	1910	options	Optionen						
+268	1912	generation	Generation						
+269	1913	covering	Bezug	land use	Bodennutzung				
+270	1916	National Liberation Front	Nationale Befreiungsfront						
+271	1942	shape	Form						
+272	1943	month	Monat						
+273	1949	campaign	Kampagne						
+274	1956	campaign	Kampagne						
+275	1965	tone	Ton						
+276	1971	Iraq	Irak						
+277	1979	shape	Form						
+278	1986	owner	Eigentümer						
+279	1997	stream	Strom						
+280	2008	menu	Menü						
+281	2017	building	Gebäude						
+282	2021	to smell	riechen						
+283	2023	lunch	Mittagessen						
+284	2025	menu	Menü	eggs	Eier				
+285	2041	lunch	Mittagessen						
+286	2047	taste	Geschmack						
+287	2053	eating habits	Essgewohnheiten						
+288	2054	challenge	Herausforderung						
+289	2061	error	Fehler						
+290	2064	science	Wissenschaft						
+291	2065	writing	Schreiben	eating habits	Essgewohnheiten				
+292	2070	whip	Whip						
+293	2083	Syria	Syrien						
+294	2088	Syria	Syrien						
+295	2119	cosmic radiation	kosmische Strahlung						
+296	2122	length	Länge						
+297	2139	rural	ländlich						
+298	2143	Brexit	Brexit						
+299	2144	Dublin	Dublin	Luxembourg	Luxemburg				
+300	2154	Luxembourg	Luxemburg	Dublin	Dublin				
+301	2160	Luxembourg	Luxemburg	Dublin	Dublin				
+302	2167	relief	Erlass						
+303	2168	generation	Generation						
+304	2169	ingredient	Inhaltsstoff						
+305	2182	customary	üblich						
+306	2196	campaign	Kampagne						
+307	2212	explosion	Explosion						
+308	2217	request	Aufforderung						
+309	2219	author	Autor						
+310	2220	Israel	Israel						
+311	2222	capital	Hauptstadt	Israel	Israel				
+312	2224	Israel	Israel						
+313	2240	Israel	Israel						
+314	2258	supplies	Lieferungen						
+315	2267	cash	Bargeld						
+316	2309	gold	Gold						
+317	2314	Beijing	Peking						
+318	2319	gold	Gold						
+319	2321	transformation	Transformation						
+320	2323	comparison	Vergleich						
+321	2334	Beijing	Peking						
+322	2337	sport	Sport						
+323	2348	gold	Gold						
+324	2350	height	Körpergröße						
+325	2353	Beijing	Peking						
+326	2354	resignation	Rücktritt						
+327	2367	joint	Joint						
+328	2368	facility	Anlage						
+329	2379	generator	Stromerzeuger						
+330	2381	US	US						
+331	2391	feature	umfassen						
+332	2394	generation	Generation	category	Kategorie				
+333	2424	campaign	Kampagne						
+334	2425	campaign	Kampagne						
+335	2429	damage	Schaden						
+336	2431	campaign	Kampagne						
+337	2432	campaign	Kampagne						
+338	2435	campaign	Kampagne						
+339	2437	campaign	Kampagne						
+340	2439	CDU	CDU						
+341	2440	CDU	CDU						
+342	2445	CDU	CDU						
+343	2449	NPD	NPD						
+344	2451	CDU	CDU						
+345	2466	office	Büro						
+346	2471	keyboard	Tastatur						
+347	2497	regions	Regionen						
+348	2501	challenge	Herausforderung						
+349	2514	to block	blockieren						
+350	2517	source	Source						
+351	2518	social media	soziale Medien						
+352	2522	revenue	Einnahmen						
+353	2527	Swiss	Schweizer						
+354	2528	night	Nacht						
+355	2532	Swiss	Schweizerin						
+356	2535	criminal investigation	Ermittlungsverfahren						
+357	2540	night	Nacht						
+358	2541	night	Nacht						
+359	2543	emergency call	Notruf	presence	Anwesenheit				
+360	2550	simulation	Simulation						
+361	2566	depth	Tiefe						
+362	2578	pay	Entlohnung						
+363	2588	generation	Generation						
+364	2601	star	Stern						
+365	2606	laboratory	Labor						
+366	2619	Texas	Texas						
+367	2639	Brazil	Brasilien						
+368	2644	International Olympic Committee	IOC	hearing	Anhörung				
+369	2652	Prime Minister	Ministerpräsident						
+370	2653	observation	Beobachtung						
+371	2659	China	China						
+372	2662	radio	Radio						
+373	2676	target	Ziel						
+374	2682	damage	Schaden						
+375	2684	hospitals	Krankenhäuser						
+376	2696	appearance	Aussehen						
+377	2716	materials	Materialien						
+378	2726	comfort	Komfort						
+379	2742	claimant	Kläger						
+380	2743	accident	Unfall						
+381	2749	holiday	Urlaub						
+382	2751	organiser	Veranstalter						
+383	2754	organiser	Veranstalter						
+384	2764	general public	Bevölkerung	approval	Zustimmung				
+385	2767	terrorism	Terrorismus						
+386	2776	CDU	CDU						
+387	2792	bridge	Brücke						
+388	2796	bridge	Brücke						
+389	2798	bridge	Brücke						
+390	2808	Syria	Syrien						
+391	2816	night	Nacht						
+392	2818	night	Nacht						
+393	2822	night	Nacht	sleep disorders	Schlafstörungen				
+394	2825	sleep disorders	Schlafstörungen						
+395	2826	sleep disorders	Schlafstörungen						
+396	2827	sleep disorders	Schlafstörungen						
+397	2830	sleep disorders	Schlafstörungen						
+398	2831	sleep disorders	Schlafstörungen						
+399	2838	sleep disorders	Schlafstörungen						
+400	2839	month	Monat						
+401	2856	alcohol	Alkohol						
+402	2859	gold	Gold						
+403	2861	night	Nacht						
+404	2863	doping	Doping						
+405	2870	arrest	Festnahme						
+406	2883	parts	Teile						
+407	2894	26	26						
+408	2899	bodily harm	Körperverletzung						
+409	2931	certified	anerkannt						
+410	2950	structure	Struktur						
+411	2962	commune	Gemeinde						
+412	2980	helicopter	Hubschrauber						
+413	2995	building	Gebäude						

@@ -1,0 +1,3 @@
+[submodule "vilmedic/a_star_neurologic"]
+	path = vilmedic/a_star_neurologic
+	url = https://github.com/GXimingLu/a_star_neurologic.git

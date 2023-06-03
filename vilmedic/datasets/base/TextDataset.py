@@ -117,6 +117,7 @@ class TextDataset(Dataset):
                 input_ids_for_example = []
                 for phrase in phrase_list:
                     # TODO: do we need add_prefix_space=True?
+                    # Yes! https://github.com/GXimingLu/a_star_neurologic/blob/main/translation/decode.py#L79
                     phrase_input_ids = self.tokenizer([phrase], add_prefix_space=True, **self.tokenizer_args).input_ids
                     input_ids_for_example.append(phrase_input_ids)
                 collated['input_ids'].append(input_ids_for_example)

@@ -32,8 +32,6 @@ class ImForceSeq(Dataset):
             collated['force_input_ids'] = force_seq_batch['input_ids']
 
             return collated
-
-
         return collate_fn
 
     def __len__(self):

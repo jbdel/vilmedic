@@ -8,6 +8,8 @@ import numpy as np
 import torch.nn as nn
 
 
+from a_star_neurologic import a_star_generate, init_batch, process_constraints
+
 # scst loss intuition:
 # https://ai.stackexchange.com/questions/2405/how-do-i-handle-negative-rewards-in-policy-gradients-with-the-cross-entropy-loss
 
@@ -46,7 +48,7 @@ def scst_loss(input,
 
 
 class SCST(nn.Module):
-    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False, use_forcing=False, num_beams=1):
+    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False, use_forcing=False, num_beams=1, prune_factor=200, sat_tolerance=2, alpha=0.05, beta=0.25, look_ahead_step=35, look_ahead_width=5, fusion_t=1):
         super().__init__()
 
         dataset = dl.dataset
@@ -70,6 +72,14 @@ class SCST(nn.Module):
         self.scores_args = scores_args
         self.scores_weights = scores_weights
         self.num_beams = num_beams
+
+        self.prune_factor = prune_factor
+        self.sat_tolerance = sat_tolerance
+        self.alpha = alpha
+        self.beta = beta
+        self.look_ahead_step = look_ahead_step
+        self.look_ahead_width = look_ahead_width
+        self.fusion_t = fusion_t
 
         assert self.scores is not None
 
@@ -141,27 +151,71 @@ class SCST(nn.Module):
                                     labels=input_ids.cuda(),
                                     )["loss"]
 
-        out = inspect.unwrap(self.decoder.generate)(  # inspect.unwrap removes the torch.no_grad() decorator
-            self=self.decoder,
-            input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
-            max_length=self.max_length,
-            force_words_ids=force_input_ids,
-            num_beams=self.num_beams,
-            num_return_sequences=1,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_attention_mask=encoder_attention_mask,
-            bad_words_ids=[[self.pad_token_id], [self.bos_token_id]],
-            top_k=self.top_k,
-            forced_eos_token_id=True,
-            output_scores=True,
-            do_sample=True,
-            use_cache=True,
-            return_dict_in_generate=True,
-        )
-        sampled_ids = out.sequences[:, 1:].contiguous()
-        logits = torch.stack(out.scores, dim=1)
-        logits = F.log_softmax(logits, dim=-1)
-        sampled_logits = logits.gather(2, sampled_ids.unsqueeze(-1))
+        if self.use_forcing:
+            constraints_list = process_constraints(force_input_ids)
+
+            constraints = init_batch(
+                raw_constraints=constraints_list,
+                key_constraints=constraints_list,
+                beam_size=self.num_beams,
+                eos_id=[self.eos_token_id] + [self.tokenizer('.')]
+            )
+
+            # TODO: min_length, no_repeat_ngram_size, length_penalty? unclear if output_scores and return_dict_in_generate are handled in `a_star_generate`
+            input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id
+            sampled_ids, sampled_logits, _ = inspect.unwrap(a_star_generate)(  # inspect.unwrap removes the torch.no_grad() decorator
+                self=self.decoder,
+                input_ids=input_ids,
+                attention_mask=(~torch.eq(input_ids, self.bos_token_id)).int(),
+                pad_token_id=self.pad_token_id,
+                max_length=self.max_length,
+                num_beams=self.num_beams,
+                num_return_sequences=1,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=encoder_attention_mask,
+                bad_words_ids=[[self.pad_token_id], [self.bos_token_id]],
+                top_k=self.top_k,
+                constraints=constraints,
+                prune_factor=self.prune_factor,
+                sat_tolerance=self.sat_tolerance,
+                alpha=self.alpha,
+                beta=self.beta,
+                look_ahead_step=self.look_ahead_step,
+                look_ahead_width=self.look_ahead_width,
+                fusion_t=self.fusion_t,
+                look_ahead_sample=True,  # the most important part of NLA* for SCST
+                forced_eos_token_id=True,
+                # output_scores=True,
+                do_sample=True,
+                use_cache=True,
+                # return_dict_in_generate=True,
+            )
+
+            # TODO: don't need decoded[:, 1:] because decoded doesn't include input_ids in generated text?
+            # TODO: don't think I need to do torch.gather either?
+            sampled_ids = sampled_ids.contiguous()
+        else:
+            out = inspect.unwrap(self.decoder.generate)(  # inspect.unwrap removes the torch.no_grad() decorator
+                self=self.decoder,
+                input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
+                max_length=self.max_length,
+                force_words_ids=force_input_ids,
+                num_beams=self.num_beams,
+                num_return_sequences=1,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=encoder_attention_mask,
+                bad_words_ids=[[self.pad_token_id], [self.bos_token_id]],
+                top_k=self.top_k,
+                forced_eos_token_id=True,
+                output_scores=True,
+                do_sample=True,
+                use_cache=True,
+                return_dict_in_generate=True,
+            )
+            sampled_ids = out.sequences[:, 1:].contiguous()
+            logits = torch.stack(out.scores, dim=1)
+            logits = F.log_softmax(logits, dim=-1)
+            sampled_logits = logits.gather(2, sampled_ids.unsqueeze(-1))
 
         reward_sampling, hyp_list, _ = self.get_reward(sampled_ids.data, input_ids)
         loss, delta_reward, delta_reward_per_metric = scst_loss(sampled_logits,

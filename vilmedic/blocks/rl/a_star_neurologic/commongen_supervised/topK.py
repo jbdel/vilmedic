@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Set, Union
 import transformers
 
 from lexical_constraints import ConstrainedHypothesis, ConstrainedCandidate
-from commongen_supervised.look_ahead import _generate_beam_search, _generate_greedy, _generate_sample
+from vilmedic.blocks.rl.a_star_neurologic.commongen_supervised.look_ahead import _generate_beam_search, _generate_greedy, _generate_sample
 
 
 def _reorder_cache(past: Tuple, beam_idx: torch.Tensor) -> Tuple[torch.Tensor]:

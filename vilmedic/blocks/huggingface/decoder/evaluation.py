@@ -5,8 +5,8 @@ import torch
 import functools
 from .beam_search import beam_search, constrained_beam_search
 import torch.nn as nn
-from transformers import PhrasalConstraint
 
+from vilmedic.blocks.rl.a_star_neurologic_utils import a_star_generate, init_batch, process_constraints
 
 def get_special_token_ids(model, tokenizer):
     bos_token_id = model.config.bos_token_id
@@ -26,7 +26,7 @@ def evaluation(models, config, dl, **kwargs):
 
     # We are in an ensembling scenario, we override huggingface beam-search functions
     hf_models[0].beam_search = functools.partial(beam_search, hf_models[0])
-    hf_models[0].constrained_beam_search = functools.partial(constrained_beam_search, hf_models[0])
+    # hf_models[0].constrained_beam_search = functools.partial(constrained_beam_search, hf_models[0])
 
     # Get tokenizer and reference sentences from dataloader
     try:
@@ -45,6 +45,7 @@ def evaluation(models, config, dl, **kwargs):
     hyp_list = []
 
     with torch.no_grad():
+        # next_i = 0
         for batch in tqdm.tqdm(dl):
             force_input_ids = batch.pop('force_input_ids', [])
             batch = {k: v.cuda() for k, v in batch.items()}
@@ -78,37 +79,51 @@ def evaluation(models, config, dl, **kwargs):
             if force_input_ids:
                 assert batch_size == len(force_input_ids) == 1, "To use constraint forcing, batch_size must be 1"
 
-                # TODO: called force_words_ids in transformers 4.23.1, and force_input_ids in transformers 4.28.1
-                # have to change up the format of force_input_ids to make it work with transformers 4.23.1
-                # currently getting `ValueError: `force_words_ids` has to either be a `List[List[List[int]]]` or `List[List[int]]`of positive integers, but is [tensor([[ ...`
-                force_words_ids = [force_input_ids[0][0]]
-                # force_words_ids = [word_ids.tolist() for word_ids in force_words_ids]
-                constraints = [
-                    PhrasalConstraint(
-                        word_ids.squeeze().tolist()
-                    ) for word_ids in force_words_ids
-                ]
-                force_words = [tokenizer.decode(ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=False) for ids in force_words_ids]
-                print(len(force_words_ids), force_words)
+                constraints_list = process_constraints(force_input_ids)
 
-                hyps = hf_models[0].generate(
-                    input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
-                    constraints=constraints,
-                    # force_words_ids=force_words_ids,
-                    num_return_sequences=1,
-                    # min_length=max_len,
+                constraints = init_batch(
+                    # raw_constraints=constraints_list[next_i:next_i + batch_size],
+                    # key_constraints=constraints_list[next_i:next_i + batch_size],
+                    raw_constraints=constraints_list,
+                    key_constraints=constraints_list,
+                    beam_size=config.beam_width,
+                    eos_id=[eos_token_id] + [tokenizer('.')]
+                )
+
+                # next_i += batch_size
+                
+                # TODO: min_length, no_repeat_ngram_size, length_penalty? unclear if output_scores and return_dict_in_generate are handled in `a_star_generate`
+                input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id
+
+                # # undo beam_width expansion and format for a_star_generate
+                # encoder_outputs = {}
+                # encoder_outputs["encoder_hidden_states"] = model_kwargs["encoders_outputs"][0]["encoder_hidden_states"][0,...].unsqueeze(0).unsqueeze(0)
+                # encoder_outputs["encoder_attention_mask"] = model_kwargs["encoders_outputs"][0]["encoder_attention_mask"][0,...].unsqueeze(0).unsqueeze(0)
+                # model_kwargs["encoders_outputs"] = encoder_outputs
+                hyps, _, _ = a_star_generate(
+                    self=hf_models[0],
+                    input_ids=input_ids,
+                    attention_mask=(~torch.eq(input_ids, bos_token_id)).int(),
+                    pad_token_id=pad_token_id,
                     max_length=max_len,
                     num_beams=config.beam_width,
-                    length_penalty=config.length_penalty,
-                    bos_token_id=bos_token_id,
-                    eos_token_id=eos_token_id,
-                    pad_token_id=pad_token_id,
+                    num_return_sequences=1,
+                    bad_words_ids=[[pad_token_id], [bos_token_id]],
+                    constraints=constraints,
+                    prune_factor=config.prune_factor,
+                    sat_tolerance=config.sat_tolerance,
+                    alpha=config.alpha,
+                    beta=config.beta,
+                    look_ahead_step=config.look_ahead_step,
+                    look_ahead_width=config.look_ahead_width,
+                    fusion_t=config.fusion_t,
+                    # look_ahead_sample=True,  # the most important part of NLA* for SCST
+                    do_sample=False,
                     use_cache=True,
                     **model_kwargs
                 )
                 decoded_hyps = tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
                 print(decoded_hyps)
-                print(all([word in decoded_hyps for word in force_words]))
             else:
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,

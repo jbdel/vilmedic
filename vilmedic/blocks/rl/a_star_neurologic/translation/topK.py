@@ -1,3 +1,5 @@
+import collections
+import copy
 import numpy as np
 import torch
 import math
@@ -7,26 +9,33 @@ from operator import attrgetter
 from typing import Dict, List, Optional, Tuple, Set, Union
 import transformers
 
-from commongen_supervised.lexical_constraints import ConstrainedHypothesis, ConstrainedCandidate
-from translation.look_ahead import _generate_beam_search, _generate_greedy, _generate_sample
+from vilmedic.blocks.rl.a_star_neurologic.commongen_supervised.lexical_constraints import ConstrainedHypothesis, ConstrainedCandidate
+from vilmedic.blocks.rl.a_star_neurologic.translation.look_ahead import _generate_beam_search, _generate_greedy, _generate_sample
 
 
-# bart
-def _reorder_cache(past, beam_idx):
-    ((enc_out, enc_mask), decoder_cached_states) = past
-    reordered_past = []
-    for layer_past in decoder_cached_states:
-        # get the correct batch idx from decoder layer's batch dim for cross and self-attn
-        layer_past_new = {
-            attn_key: _reorder_buffer(attn_cache, beam_idx) for attn_key, attn_cache in layer_past.items()
-        }
-        reordered_past.append(layer_past_new)
+# # bart
+# def _reorder_cache(past, beam_idx):
+#     ((enc_out, enc_mask), decoder_cached_states) = past
+#     reordered_past = []
+#     for layer_past in decoder_cached_states:
+#         # get the correct batch idx from decoder layer's batch dim for cross and self-attn
+#         layer_past_new = {
+#             attn_key: _reorder_buffer(attn_cache, beam_idx) for attn_key, attn_cache in layer_past.items()
+#         }
+#         reordered_past.append(layer_past_new)
 
-    new_enc_out = enc_out if enc_out is None else enc_out.index_select(0, beam_idx)
-    new_enc_mask = enc_mask if enc_mask is None else enc_mask.index_select(0, beam_idx)
+#     new_enc_out = enc_out if enc_out is None else enc_out.index_select(0, beam_idx)
+#     new_enc_mask = enc_mask if enc_mask is None else enc_mask.index_select(0, beam_idx)
 
-    past = ((new_enc_out, new_enc_mask), reordered_past)
-    return past
+#     past = ((new_enc_out, new_enc_mask), reordered_past)
+#     return past
+
+# bert
+def _reorder_cache(past_key_values, beam_idx):
+        reordered_past = ()
+        for layer_past in past_key_values:
+            reordered_past += (tuple(past_state.index_select(0, beam_idx) for past_state in layer_past),)
+        return reordered_past
 
 def _reorder_buffer(attn_cache, new_order):
     new_attn_cache = {}
@@ -107,8 +116,9 @@ def topk_huggingface(timestep: int,
             select_num_mets[sentno] = [-1] * num_fill
             continue
 
+        temp_decode_kwargs = copy.deepcopy(decode_kwargs)
+        temp_decode_kwargs['model_specific_kwargs'] = {k: v[rows] for k,v in temp_decode_kwargs['model_specific_kwargs'].items()}
         assert not any([x is None for x in hypotheses[rows]]), 'Bad state'
-
         select_best_ids[sentno], select_best_word_ids[sentno], select_seq_scores[sentno],\
             select_hypotheses[sentno], select_num_mets[sentno] = _sequential_topk(sentno,
                                                                                   timestep,
@@ -169,7 +179,7 @@ def _sequential_topk(sentno: int,
                      temp_input_ids: torch.Tensor,
                      temp_attention_mask: torch.Tensor,
                      temp_past: Tuple[torch.Tensor],
-                     decode_kwargs: Dict,
+                     temp_decode_kwargs: Dict,
                      model_specific_kwargs,
                      chunk_size=80) -> Tuple[np.array, np.array, np.array,
                                                        List[ConstrainedHypothesis], List[int]]:
@@ -189,7 +199,6 @@ def _sequential_topk(sentno: int,
     :return: A tuple containing the best hypothesis rows, the best hypothesis words, the scores,
         the updated constrained hypotheses, and the updated set of inactive hypotheses.
     """
-
     chunk_size = int(batch_size * beam_size // look_ahead_width) if chunk_size is None else chunk_size
 
     candidates = set()
@@ -265,24 +274,39 @@ def _sequential_topk(sentno: int,
                 attention_mask = temp_attention_mask[back_ptrs, :]
                 past = _reorder_cache(temp_past, back_ptrs)
 
+                if 'model_specific_kwargs' in temp_decode_kwargs.keys():
+                    decode_kwargs = copy.deepcopy(temp_decode_kwargs)
+                    decode_kwargs['model_specific_kwargs'] = {k: v[back_ptrs,...] for k, v in decode_kwargs['model_specific_kwargs'].items()}
+
                 look_ahead_phrases = [c.hypothesis.phrase_to_look_ahead() for c in sorted_candidates]
-                phrases_idx_map = {}
+
+                # TODO: also switched to defaultdict
+                phrases_idx_map = collections.defaultdict(list)
                 for j, phrases in enumerate(look_ahead_phrases):
                     for phrase in phrases:
-                        if tuple(phrase) not in phrases_idx_map:
-                            phrases_idx_map[tuple(phrase)] = []
-                        phrases_idx_map[tuple(phrase)].append(j)
+                        # TODO: tuple(Tensor) fails! https://github.com/pytorch/pytorch/issues/2569
+                        # hotfixed
+                        tup_phrase = tuple(phrase.tolist())
+                        phrases_idx_map[tup_phrase].append(j)
+                        # if tuple(phrase) not in phrases_idx_map:
+                        #     phrases_idx_map[tuple(phrase)] = []
+                        # phrases_idx_map[tuple(phrase)].append(j)
                 phrases_idx_mask = [(k, input_ids.new([x in v for x in range(len(sorted_candidates))])[:, None].expand(-1, look_ahead_step))
                                     for k, v in phrases_idx_map.items()]
 
                 look_ahead_continues = [c.hypothesis.continue_to_look_ahead() for c in sorted_candidates]
                 if any(look_ahead_continues):
-                    continues_idx_map = {}
+                    # TODO: also switched to defaultdict
+                    continues_idx_map = collections.defaultdict(list)
                     for j, continues in enumerate(look_ahead_continues):
                         for ctn in continues:
-                            if tuple(ctn) not in continues_idx_map:
-                                continues_idx_map[tuple(ctn)] = []
-                            continues_idx_map[tuple(ctn)].append(j)
+                            # TODO: tuple(Tensor) fails! https://github.com/pytorch/pytorch/issues/2569
+                            # hotfixed
+                            tup_ctn = tuple(ctn.tolist())
+                            continues_idx_map[tup_ctn].append(j)
+                            # if tuple(ctn) not in continues_idx_map:
+                            #     continues_idx_map[tuple(ctn)] = []
+                            # continues_idx_map[tuple(ctn)].append(j)
                     continues_idx_mask = [(k, torch.cat([input_ids.new([x in v for x in range(len(sorted_candidates))])[:, None],
                                                          input_ids.new_zeros(len(sorted_candidates), look_ahead_step - 1)], dim=-1))
                                           for k, v in continues_idx_map.items()]

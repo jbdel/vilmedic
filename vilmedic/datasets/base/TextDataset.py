@@ -11,6 +11,7 @@ from .papers.report_preprocessing import *
 
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 
 sns.set_theme(style="darkgrid")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
@@ -114,6 +115,13 @@ class TextDataset(Dataset):
             for phrase_str in phrase_seqs:
                 phrase_list = phrase_str.split(self.separate_tokenizer_per_phrase_delimiter)
                 phrase_list = [phrase.strip() for phrase in phrase_list]
+
+                ### TODO: for testing only! sample subset of phrases
+                np.random.shuffle(phrase_list)
+                phrase_list = phrase_list[:4]
+                print(phrase_list)
+                ###
+
                 input_ids_for_example = []
                 for phrase in phrase_list:
                     # TODO: do we need add_prefix_space=True?

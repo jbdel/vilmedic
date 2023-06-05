@@ -8,7 +8,7 @@ import numpy as np
 import torch.nn as nn
 
 
-from a_star_neurologic import a_star_generate, init_batch, process_constraints
+from vilmedic.blocks.rl.a_star_neurologic_utils import a_star_generate, init_batch, process_constraints
 
 # scst loss intuition:
 # https://ai.stackexchange.com/questions/2405/how-do-i-handle-negative-rewards-in-policy-gradients-with-the-cross-entropy-loss
@@ -48,7 +48,7 @@ def scst_loss(input,
 
 
 class SCST(nn.Module):
-    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False, use_forcing=False, num_beams=1, prune_factor=200, sat_tolerance=2, alpha=0.05, beta=0.25, look_ahead_step=35, look_ahead_width=5, fusion_t=1):
+    def __init__(self, decoder, dl, scores, scores_args=None, scores_weights=None, top_k=None, use_nll=False, use_forcing=False, num_beams=1, prune_factor=200, sat_tolerance=2, alpha=0.05, beta=0.25, look_ahead_step=4, look_ahead_width=2, fusion_t=1):
         super().__init__()
 
         dataset = dl.dataset
@@ -163,6 +163,21 @@ class SCST(nn.Module):
 
             # TODO: min_length, no_repeat_ngram_size, length_penalty? unclear if output_scores and return_dict_in_generate are handled in `a_star_generate`
             input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id
+
+            # Registering encoder outputs
+            expanded_return_idx = (
+                torch.arange(batch_size).view(-1, 1).repeat(1, self.num_beams).view(-1).cuda()
+            )
+            model_kwargs = {
+                "encoders_outputs":
+                    [
+                        {
+                            "encoder_hidden_states": encoder_hidden_states.index_select(0, expanded_return_idx),
+                            "encoder_attention_mask": encoder_attention_mask.index_select(0, expanded_return_idx)
+                        }
+                    ],
+            }
+
             sampled_ids, sampled_logits, _ = inspect.unwrap(a_star_generate)(  # inspect.unwrap removes the torch.no_grad() decorator
                 self=self.decoder,
                 input_ids=input_ids,
@@ -184,11 +199,9 @@ class SCST(nn.Module):
                 look_ahead_width=self.look_ahead_width,
                 fusion_t=self.fusion_t,
                 look_ahead_sample=True,  # the most important part of NLA* for SCST
-                forced_eos_token_id=True,
-                # output_scores=True,
-                do_sample=True,
+                do_sample=False,
                 use_cache=True,
-                # return_dict_in_generate=True,
+                **model_kwargs
             )
 
             # TODO: don't need decoded[:, 1:] because decoded doesn't include input_ids in generated text?

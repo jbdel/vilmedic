@@ -5,9 +5,17 @@ from torch.nn import functional as F
 import logging
 import math
 import numpy as np
-from typing import Iterable, List, Optional, Tuple, Union
+from transformers.generation_logits_process import (
+    ForcedEOSTokenLogitsProcessor,
+    LogitsProcessorList,
+    MinLengthLogitsProcessor,
+    NoBadWordsLogitsProcessor,
+    NoRepeatNGramLogitsProcessor,
+    RepetitionPenaltyLogitsProcessor,
+)
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-from a_star_neurologic.translation.topK import topk_huggingface, ConstrainedHypothesis
+from vilmedic.blocks.rl.a_star_neurologic.translation.topK import topk_huggingface, ConstrainedHypothesis
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +23,17 @@ Phrase = List[int]
 Literal = Tuple[Phrase, bool]
 ClauseConstraintList = List[List[Literal]]
 
+
+def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **kwargs):
+    input_shape = input_ids.shape
+    # if model is used as a decoder in encoder-decoder model, the decoder attention mask is created on the fly
+    if attention_mask is None:
+        attention_mask = input_ids.new_ones(input_shape)
+
+    # cut decoder_input_ids if past is used
+    if past is not None:
+        input_ids = input_ids[:, -1:]
+    return {"input_ids": input_ids, "attention_mask": attention_mask, "past_key_values": past, **kwargs}
 
 # modified version of tokenize_constraints from NLA*, since we already have tokenized constraint text
 def process_constraints(raw_cts):
@@ -25,6 +44,35 @@ def process_constraints(raw_cts):
         # assert all([x is not None for x in token_ids]), f'unrecognized token in {phrase} {type}'
         return phrase, True
     return [[list(map(tokenize, clause)) for clause in ct] for ct in raw_cts]
+
+def postprocess_next_token_scores(
+        scores,
+        input_ids,
+        no_repeat_ngram_size,
+        bad_words_ids,
+        cur_len,
+        min_length,
+        max_length,
+        eos_token_id,
+        repetition_penalty,
+        batch_size,
+        num_beams
+    ):
+
+    logits_processor = [
+        MinLengthLogitsProcessor(min_length=min_length, eos_token_id=eos_token_id),
+        # NoRepeatNGramLogitsProcessor(ngram_size=no_repeat_ngram_size),
+        RepetitionPenaltyLogitsProcessor(penalty=repetition_penalty),
+        NoBadWordsLogitsProcessor(bad_words_ids=bad_words_ids, eos_token_id=eos_token_id),
+        ForcedEOSTokenLogitsProcessor(max_length=max_length, eos_token_id=eos_token_id)
+    ]
+    if no_repeat_ngram_size > 0:
+        logits_processor.append(NoRepeatNGramLogitsProcessor(ngram_size=no_repeat_ngram_size))
+
+    logits_processor = LogitsProcessorList(logits_processor)
+
+    scores = logits_processor(input_ids, scores)
+    return scores
 
 def init_batch(raw_constraints: List[ClauseConstraintList],
                key_constraints: List[ClauseConstraintList],
@@ -47,6 +95,7 @@ def init_batch(raw_constraints: List[ClauseConstraintList],
 def a_star_generate(
     self,
     input_ids: Optional[torch.LongTensor] = None,
+    attention_mask: Optional[torch.LongTensor] = None,
     max_length: Optional[int] = None,
     min_length: Optional[int] = None,
     do_sample: Optional[bool] = None,
@@ -63,8 +112,9 @@ def a_star_generate(
     length_penalty: Optional[float] = None,
     no_repeat_ngram_size: Optional[int] = None,
     num_return_sequences: Optional[int] = None,
-    encoder_hidden_states: Optional[torch.LongTensor] = None,
-    encoder_attention_mask: Optional[torch.LongTensor] = None,
+    # encoder_outputs: Optional[Dict] = None,
+    # encoder_hidden_states: Optional[torch.LongTensor] = None,
+    # encoder_attention_mask: Optional[torch.LongTensor] = None,
     decoder_start_token_id: Optional[int] = None,
     use_cache: Optional[bool] = None,
     constraints: Optional[List[Optional[ConstrainedHypothesis]]] = None,
@@ -333,33 +383,34 @@ def a_star_generate(
 
     # if self.config.is_encoder_decoder:
     # create empty decoder_input_ids
-    input_ids = torch.full(
-        (effective_batch_size * num_beams, 1),
-        decoder_start_token_id,
-        dtype=torch.long,
-        device=next(self.parameters()).device,
-    )
+    # input_ids = torch.full(
+    #     (effective_batch_size * num_beams, 1),
+    #     decoder_start_token_id,
+    #     dtype=torch.long,
+    #     device=next(self.parameters()).device,
+    # )
     cur_len = 1
 
+    assert (len(model_specific_kwargs['encoders_outputs']) == 1), "len(model_specific_kwargs['encoders_outputs']) must == 1, don't support ensembling yet!"
     assert (
-        batch_size == encoder_hidden_states[0].shape[0]
-    ), f"expected encoder_hidden_states[0] to have 1st dimension bs={batch_size}, got {encoder_hidden_states[0].shape[0]} "
+        effective_batch_size * num_beams == model_specific_kwargs['encoders_outputs'][0]['encoder_hidden_states'].shape[0]
+    ), f"expected model_specific_kwargs['encoders_outputs'][0]['encoder_hidden_states'] to have 1st dimension bs={effective_batch_size * num_beams}, got {model_specific_kwargs['encoders_outputs'][0]['encoder_hidden_states'].shape[0]} "
 
-    # expand batch_idx to assign correct encoder output for expanded input_ids (due to num_beams > 1 and num_return_sequences > 1)
-    expanded_batch_idxs = (
-        torch.arange(batch_size)
-        .view(-1, 1)
-        .repeat(1, num_beams * effective_batch_mult)
-        .view(-1)
-        .to(input_ids.device)
-    )
-    # expand encoder_hidden_states and encoder_attention_mask
-    encoder_hidden_states = (encoder_hidden_states[0].index_select(0, expanded_batch_idxs), *encoder_hidden_states[1:])
-    encoder_attention_mask = (encoder_attention_mask[0].index_select(0, expanded_batch_idxs), *encoder_attention_mask[1:])
-
-    # else:
-    #     encoder_outputs = None
-    #     cur_len = input_ids.shape[-1]
+    # # expand batch_idx to assign correct encoder output for expanded input_ids (due to num_beams > 1 and num_return_sequences > 1)
+    # expanded_batch_idxs = (
+    #     torch.arange(batch_size)
+    #     .view(-1, 1)
+    #     .repeat(1, num_beams * effective_batch_mult)
+    #     .view(-1)
+    #     .to(input_ids.device)
+    # )
+    # expand encoder_hidden_states. don't expand encoder_attention_mask; note *encoder_hidden_states[1:] is the non-hidden state part and isn't expanded
+    # # expand encoder_outputs
+    # encoder_outputs = (encoder_outputs[0].index_select(0, expanded_batch_idxs), *encoder_outputs[1:])
+    # model_specific_kwargs['encoders_outputs']['encoder_hidden_states'] = model_specific_kwargs['encoders_outputs']['encoder_hidden_states'][0].index_select(0, expanded_batch_idxs)
+    encoder_outputs = model_specific_kwargs['encoders_outputs'][0]
+    # model_specific_kwargs = {}
+    model_specific_kwargs = encoder_outputs
     ### CVU 06/03/2023 ###
 
     if num_beams > 1:
@@ -382,8 +433,7 @@ def a_star_generate(
             length_penalty=length_penalty,
             num_beams=num_beams,
             vocab_size=vocab_size,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_attention_mask=encoder_attention_mask,
+            encoder_outputs=encoder_outputs,
             use_cache=use_cache,
             constraints=constraints,
             prune_factor=prune_factor,
@@ -394,12 +444,28 @@ def a_star_generate(
             beta=beta,
             fusion_t=fusion_t,
             look_ahead_sample=look_ahead_sample,
-            model_specific_kwargs=model_specific_kwargs,
+            model_specific_kwargs=model_specific_kwargs
         )
     else:
         raise NotImplementedError
     return output
 
+
+# use bert _reorder_cache
+def _reorder_cache(past_key_values, beam_idx):
+    reordered_past = ()
+    for layer_past in past_key_values:
+        reordered_past += (tuple(past_state.index_select(0, beam_idx) for past_state in layer_past),)
+    return reordered_past
+
+# def _reorder_cache(past: Tuple, beam_idx: Tensor) -> Tuple[Tensor]:
+#     return tuple(layer_past.index_select(1, beam_idx) for layer_past in past)
+
+def _use_cache(outputs, use_cache):
+    """During generation, decide whether to pass the `past` variable to the next forward pass."""
+    if len(outputs) <= 1 or use_cache is False:
+        return False
+    return True
 
 def _generate_beam_search(
         self,
@@ -420,8 +486,7 @@ def _generate_beam_search(
         length_penalty,
         num_beams,
         vocab_size,
-        encoder_hidden_states,
-        encoder_attention_mask,
+        encoder_outputs,
         use_cache,
         constraints,
         prune_factor,
@@ -433,6 +498,8 @@ def _generate_beam_search(
         fusion_t,
         look_ahead_sample,
         model_specific_kwargs,
+        output_attentions = False,  # TODO
+        output_hidden_states = False
 ):
     """ Generate sequences for each example with beam search.
     """
@@ -445,6 +512,11 @@ def _generate_beam_search(
                      'bad_words_ids': bad_words_ids, 'pad_token_id': pad_token_id, 'eos_token_id': eos_token_id,
                      'num_return_sequences': num_return_sequences, 'vocab_size': vocab_size, 'use_cache': use_cache,
                      'model_specific_kwargs': model_specific_kwargs}
+
+    # # TODO: handle only a single model for now
+    # hf_model = model_specific_kwargs.pop("hf_models")[0]
+    # model_kwargs = model_specific_kwargs.pop("encoders_outputs")[0]
+    
     # generated hypotheses
     generated_hyps = [
         BeamHypotheses(num_beams, max_length, length_penalty, early_stopping=early_stopping)
@@ -462,7 +534,8 @@ def _generate_beam_search(
     # cache compute states
     ### CVU 06/03/2023 ###
     # past = (encoder_outputs, None) if encoder_outputs is not None else None
-    past = (encoder_hidden_states, None) if encoder_hidden_states is not None else None
+    past = ((encoder_outputs['encoder_hidden_states'], encoder_outputs['encoder_attention_mask']), None) if encoder_outputs['encoder_hidden_states'] is not None else None
+
     ### CVU 06/03/2023 ###
 
     # done sentences
@@ -473,7 +546,7 @@ def _generate_beam_search(
 
     # history of token score
     score_history = None
-
+    
     while cur_len < max_length:
         ### CVU 06/03/2023 ###
         # model_inputs = self.prepare_inputs_for_generation(
@@ -482,12 +555,12 @@ def _generate_beam_search(
         # outputs = self(**model_inputs)  # (batch_size * num_beams, cur_len, vocab_size)
         
         # https://huggingface.co/transformers/v3.5.1/model_doc/bertgeneration.html#bertgenerationdecoder
-        outputs = self(input_ids=input_ids,
-            attention_mask=attention_mask,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_attention_mask=encoder_attention_mask,
-            labels=input_ids,
-            output_hidden_states=True
+        model_inputs = self.prepare_inputs_for_generation(input_ids, **encoder_outputs)
+        outputs = self(
+            **model_inputs,
+            return_dict=True,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states
         )
         ### CVU 06/03/2023 ###
 
@@ -496,9 +569,10 @@ def _generate_beam_search(
 
         # if model has past, then set the past variable to speed up decoding
         ### CVU 06/03/2023 ###
-        if self._use_cache(outputs, use_cache):
-            # past = outputs[1]
-            past = outputs["hidden_states"]
+        # if self._use_cache(outputs, use_cache):
+        #     past = outputs[1]
+        if _use_cache(outputs, use_cache):
+            past = outputs["past_key_values"]
         ### CVU 06/03/2023 ###
 
         ### CVU 06/03/2023 ###
@@ -511,7 +585,11 @@ def _generate_beam_search(
 
         scores = F.log_softmax(next_token_logits, dim=-1)  # (batch_size * num_beams, vocab_size)
 
-        scores = self.postprocess_next_token_scores(
+        # TODO: add this?
+        # https://github.com/jbdel/vilmedic/blob/main/vilmedic/blocks/huggingface/decoder/beam_search.py#L265
+        # next_token_scores = next_token_scores_processed + beam_scores[:, None].expand_as(next_token_scores)
+
+        scores = postprocess_next_token_scores(
             scores=scores,
             input_ids=input_ids,
             no_repeat_ngram_size=no_repeat_ngram_size,
@@ -542,9 +620,12 @@ def _generate_beam_search(
             next_scores, next_tokens = torch.topk(full_scores, 2 * num_beams, dim=1, largest=True, sorted=True)
 
             # prepare look ahead input
-            assert self._use_cache(outputs, use_cache) and use_cache, 'model not using past'
-            temp_attention_mask = attention_mask if self.config.is_encoder_decoder else \
-                torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
+            ### CVU 06/03/2023 ###
+            # assert self._use_cache(outputs, use_cache) and use_cache, 'model not using past'
+            # temp_attention_mask = attention_mask if self.config.is_encoder_decoder else torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
+            assert _use_cache(outputs, use_cache), 'model not using past'
+            temp_attention_mask = attention_mask
+            ### CVU 06/03/2023 ###
 
             pick_scores, pick_tokens, constraints, num_mets = topk_huggingface(timestep=cur_len,
                                                                                batch_size=batch_size,
@@ -674,7 +755,7 @@ def _generate_beam_search(
 
         # re-order internal states
         if past is not None:
-            past = self._reorder_cache(past, beam_idx)
+            past = _reorder_cache(past, beam_idx)
 
         # extend attention_mask for new generated input if only decoder
         if self.config.is_encoder_decoder is False:

@@ -4,11 +4,54 @@ from typing import Iterable, Optional, Tuple
 import torch
 from torch import Tensor
 from torch.nn import functional as F
+from transformers.generation_logits_process import (
+    ForcedEOSTokenLogitsProcessor,
+    LogitsProcessorList,
+    MinLengthLogitsProcessor,
+    NoBadWordsLogitsProcessor,
+    NoRepeatNGramLogitsProcessor,
+    RepetitionPenaltyLogitsProcessor,
+)
 
 THRESHOLD = 1
 
+def _use_cache(outputs, use_cache):
+    """During generation, decide whether to pass the `past` variable to the next forward pass."""
+    if len(outputs) <= 1 or use_cache is False:
+        return False
+    return True
+
+def postprocess_next_token_scores(
+        scores,
+        input_ids,
+        no_repeat_ngram_size,
+        bad_words_ids,
+        cur_len,
+        min_length,
+        max_length,
+        eos_token_id,
+        repetition_penalty,
+        batch_size,
+        num_beams
+    ):
+
+    logits_processor = [
+        MinLengthLogitsProcessor(min_length=min_length, eos_token_id=eos_token_id),
+        # NoRepeatNGramLogitsProcessor(ngram_size=no_repeat_ngram_size),
+        RepetitionPenaltyLogitsProcessor(penalty=repetition_penalty),
+        NoBadWordsLogitsProcessor(bad_words_ids=bad_words_ids, eos_token_id=eos_token_id),
+        ForcedEOSTokenLogitsProcessor(max_length=max_length, eos_token_id=eos_token_id)
+    ]
+    if no_repeat_ngram_size > 0:
+        logits_processor.append(NoRepeatNGramLogitsProcessor(ngram_size=no_repeat_ngram_size))
+
+    logits_processor = LogitsProcessorList(logits_processor)
+
+    scores = logits_processor(input_ids, scores)
+    return scores
+    
 def _expand_input(batch_size, num_beams, input_ids, attention_mask,
-                  look_ahead_scores, phrases_idx_mask, past, _reorder_cache):
+                  look_ahead_scores, phrases_idx_mask, past, _reorder_cache, model_specific_kwargs=None):
     input_ids_len = input_ids.shape[-1]
     input_ids = input_ids.unsqueeze(1).expand(batch_size, num_beams, input_ids_len)
     input_ids = input_ids.contiguous().view(batch_size * num_beams, input_ids_len)
@@ -30,7 +73,26 @@ def _expand_input(batch_size, num_beams, input_ids, attention_mask,
         mask = mask.contiguous().view(batch_size * num_beams, -1)
         extended_phrases_idx_mask.append((phrase, mask))
 
-    return input_ids, attention_mask, look_ahead_scores, extended_phrases_idx_mask, past
+    if model_specific_kwargs is None:
+        return input_ids, attention_mask, look_ahead_scores, extended_phrases_idx_mask, past
+    else:
+        expanded_model_specific_kwargs = {}
+        for k,v in model_specific_kwargs.items():
+            if len(v.shape) == 2:
+                v_len = v.shape[-1]
+                v = v.unsqueeze(1).expand(batch_size, num_beams, v_len)
+                v = v.contiguous().view(batch_size * num_beams, v_len)
+            elif len(v.shape) == 3:
+                v_len = v.shape[-2]
+                v_embed = v.shape[-1]
+                v = v.unsqueeze(1).expand(batch_size, num_beams, v_len, v_embed)
+                v = v.contiguous().view(batch_size * num_beams, v_len, v_embed)
+            else:
+                raise ValueError("can only handle encoder_hidden_states (3-dim) encoder_attention_masks (2-dim) in model_specific_kwargs!")
+            expanded_model_specific_kwargs[k] = v
+
+        return input_ids, attention_mask, look_ahead_scores, extended_phrases_idx_mask, past, expanded_model_specific_kwargs
+
 
 
 def _generate_greedy(
@@ -81,7 +143,7 @@ def _generate_greedy(
 
         log_prob = F.log_softmax(next_token_logits, dim=-1)
 
-        scores = self.postprocess_next_token_scores(
+        scores = postprocess_next_token_scores(
             scores=next_token_logits,
             input_ids=input_ids,
             no_repeat_ngram_size=no_repeat_ngram_size,
@@ -96,7 +158,7 @@ def _generate_greedy(
         )
 
         # if model has past, then set the past variable to speed up decoding
-        if self._use_cache(outputs, use_cache):
+        if _use_cache(outputs, use_cache):
             past = outputs[1]
 
         # Greedy decoding
@@ -235,7 +297,7 @@ def _generate_sample(
 
         log_prob = F.log_softmax(next_token_logits, dim=-1)
 
-        scores = self.postprocess_next_token_scores(
+        scores = postprocess_next_token_scores(
             scores=next_token_logits,
             input_ids=input_ids,
             no_repeat_ngram_size=no_repeat_ngram_size,
@@ -250,7 +312,7 @@ def _generate_sample(
         )
 
         # if model has past, then set the past variable to speed up decoding
-        if self._use_cache(outputs, use_cache):
+        if _use_cache(outputs, use_cache):
             past = outputs[1]
 
         # Top-p/top-k filtering
@@ -359,10 +421,9 @@ def _generate_beam_search(
 ):
     """ Generate sequences for each example with beam search.
     """
-
-    input_ids, attention_mask, look_ahead_scores, phrases_idx_mask, past = \
+    input_ids, attention_mask, look_ahead_scores, phrases_idx_mask, past, model_specific_kwargs = \
         _expand_input(batch_size, num_beams, input_ids, attention_mask,
-                      look_ahead_scores, phrases_idx_mask, past, _reorder_cache)
+                      look_ahead_scores, phrases_idx_mask, past, _reorder_cache, model_specific_kwargs)
 
     # generated hypotheses
     generated_hyps = [
@@ -389,12 +450,12 @@ def _generate_beam_search(
         next_token_logits = outputs[0][:, -1, :]  # (batch_size * num_beams, vocab_size)
 
         # if model has past, then set the past variable to speed up decoding
-        if self._use_cache(outputs, use_cache):
+        if _use_cache(outputs, use_cache):
             past = outputs[1]
-        if self.config.is_encoder_decoder and do_sample is False:
-            next_token_logits = self.adjust_logits_during_generation(
-                next_token_logits, cur_len=cur_len, max_length=max_length
-            )
+        # if self.config.is_encoder_decoder and do_sample is False:
+        #     next_token_logits = self.adjust_logits_during_generation(
+        #         next_token_logits, cur_len=cur_len, max_length=max_length
+        #     )
 
         scores = F.log_softmax(next_token_logits, dim=-1)  # (batch_size * num_beams, vocab_size)
 
@@ -433,7 +494,7 @@ def _generate_beam_search(
                 phrase_score.masked_fill_(is_valid == 0, -float("inf"))
                 look_ahead_scores[j, :, t] = phrase_score
 
-        scores = self.postprocess_next_token_scores(
+        scores = postprocess_next_token_scores(
             scores=scores,
             input_ids=input_ids,
             no_repeat_ngram_size=no_repeat_ngram_size,

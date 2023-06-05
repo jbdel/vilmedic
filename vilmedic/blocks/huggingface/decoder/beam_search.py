@@ -563,7 +563,8 @@ def constrained_beam_search(
                     break
 
             # Changed by CVU
-            models_inputs = [hf_models[0].prepare_inputs_for_generation(input_ids, **m) for m in model_kwargs_list]
+            # models_inputs = [hf_models[0].prepare_inputs_for_generation(input_ids, **m) for m in model_kwargs_list]
+            models_inputs = hf_models[0].prepare_inputs_for_generation(input_ids, **model_kwargs_list)
             outputs = [hf(**model_inputs,
                         return_dict=True,
                         output_attentions=output_attentions,

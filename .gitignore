@@ -9,3 +9,4 @@ vilmedic/blocks/scorers/radgraph/model_checkpoint/*
 vilmedic/idea/*
 gradio/*
 **/*.txt
+reader_study/*

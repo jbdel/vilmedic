@@ -1,7 +1,10 @@
+import collections
 import os
+from pickle import NONE
 import tqdm
 import json
 import sys
+from itertools import chain, combinations
 
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
@@ -17,8 +20,15 @@ sns.set_theme(style="darkgrid")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # https://github.com/huggingface/transformers/issues/5486
 
 
+def powerset(iterable):
+    "powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
+
+
 def split_sentences(sentences, processing):
-    return [processing(s.strip()).split() for s in sentences]
+    # return [processing(s.strip()).split() for s in sentences]
+    return ['' if s == "REMOVE" else processing(s.strip()).split() for s in sentences]
 
 
 def make_sentences(root, split, file, processing):
@@ -37,10 +47,12 @@ class TextDataset(Dataset):
                  tokenizer_max_len=None,
                  separate_tokenizer_per_phrase=False,
                  separate_tokenizer_per_phrase_delimiter=",",
+                 num_concepts=None,
                  vocab_file=None,
                  source='src',
                  show_length=False,
                  name=None,
+                 n_examples=None,
                  **kwargs):
 
         assert source in ["src", "tgt"]
@@ -48,7 +60,7 @@ class TextDataset(Dataset):
         assert not (file is not None and vocab_file is not None), "You cannot mention both a data file and a vocab file"
         assert not (
                 vocab_file is not None and tokenizer is not None), "You cannot mention both a pretrained tokenizer and a vocab file"
-        assert not (source == "tgt" and tokenizer_max_len is None), "You must specify tokenizer_max_len for source tgt"
+        # assert not (source == "tgt" and tokenizer_max_len is None), "You must specify tokenizer_max_len for source tgt"
 
         self.root = root
         self.file = file
@@ -58,11 +70,15 @@ class TextDataset(Dataset):
         self.ckpt_dir = ckpt_dir
         self.processing = eval(processing or 'lambda x: x')
         self.tokenizer_max_len = tokenizer_max_len
+        self.num_concepts = num_concepts
         self.vocab_file = vocab_file
         self.sentences = None
 
         if file is not None:
             self.sentences = make_sentences(root, split, file, self.processing)
+
+        if n_examples is not None:
+            self.sentences = self.sentences[:n_examples]
 
         # Create tokenizer from pretrained or vocabulary file
         self.separate_tokenizer_per_phrase = separate_tokenizer_per_phrase
@@ -116,18 +132,43 @@ class TextDataset(Dataset):
                 phrase_list = phrase_str.split(self.separate_tokenizer_per_phrase_delimiter)
                 phrase_list = [phrase.strip() for phrase in phrase_list]
 
-                ### TODO: for testing only! sample subset of phrases
-                np.random.shuffle(phrase_list)
-                phrase_list = phrase_list[:4]
-                print(phrase_list)
-                ###
+                if self.num_concepts > 0:
+                    np.random.shuffle(phrase_list)
+                    phrase_list = phrase_list[:self.num_concepts]
+                elif self.num_concepts == 0:
+                    phrase_list = phrase_list
+                else:
+                    if phrase_list != ['']:
+                        CHEXPERT_CONCEPTS = ['atelectasis', 'cardiomegaly', 'consolidation', 'edema', 'effusion']
+                        phrase_dict = collections.defaultdict(list)
+                        for concept in CHEXPERT_CONCEPTS:
+                            temp_phrase_list_for_concept = [phrase for phrase in phrase_list if concept in phrase]
+                            if len(temp_phrase_list_for_concept) > 1:
+                                # constrained decoding cannot have a single term in a disjunctive set be a complete subset of any other phrases
+                                # therefore, just keep the single, smaller complete subset phrase!
+                                remove_sets = []
+                                keep_sets = []
+                                for this_phrase in temp_phrase_list_for_concept:
+                                    if any([other_phrase in this_phrase for other_phrase in temp_phrase_list_for_concept if this_phrase != other_phrase]):
+                                        # remove the superset
+                                        remove_sets.append(this_phrase)
+                                    else:
+                                        keep_sets.append(this_phrase)
 
-                input_ids_for_example = []
-                for phrase in phrase_list:
-                    # TODO: do we need add_prefix_space=True?
-                    # Yes! https://github.com/GXimingLu/a_star_neurologic/blob/main/translation/decode.py#L79
-                    phrase_input_ids = self.tokenizer([phrase], add_prefix_space=True, **self.tokenizer_args).input_ids
-                    input_ids_for_example.append(phrase_input_ids)
+                                phrase_dict[concept] = [phrase for phrase in keep_sets if phrase not in remove_sets]
+                            else:
+                                phrase_dict[concept] = temp_phrase_list_for_concept
+
+                        phrase_list = [v for k,v in phrase_dict.items() if len(v) > 0]
+                
+                # input_ids_for_example = []
+                # for phrase in phrase_list:
+                #     # TODO: do we need add_prefix_space=True?
+                #     # Yes! https://github.com/GXimingLu/a_star_neurologic/blob/main/translation/decode.py#L79
+                #     phrase_input_ids = self.tokenizer(phrase, add_prefix_space=False, **self.tokenizer_args).input_ids
+                #     # phrase_input_ids = phrase_input_ids[1:]
+                #     input_ids_for_example.append(phrase_input_ids)
+                input_ids_for_example = [self.tokenizer(phrase, add_prefix_space=True, add_special_tokens=False).input_ids for phrase in phrase_list]
                 collated['input_ids'].append(input_ids_for_example)
             return collated
 

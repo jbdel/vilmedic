@@ -137,7 +137,15 @@ class SCST(nn.Module):
             use_cache=True,
         )
         greedy_input_ids = out.sequences
-        reward_greedy, hyp_list, ref_list = self.get_reward(greedy_input_ids.detach().data, input_ids)
+
+        try:
+            reward_greedy, hyp_list, ref_list = self.get_reward(greedy_input_ids.detach().data, input_ids)
+        except:
+            # TODO: sometimes the regular generate fails! hacky solution
+            # import pdb; pdb.set_trace()
+            reward_greedy = [[0.] for _ in range(len(self.scorers))]
+            hyp_list, ref_list = [''], ['']
+
         return reward_greedy, hyp_list, ref_list
 
     def forward_sampling(self, input_ids, force_input_ids, attention_mask, encoder_hidden_states, encoder_attention_mask, reward_greedy):
@@ -151,69 +159,48 @@ class SCST(nn.Module):
                                     labels=input_ids.cuda(),
                                     )["loss"]
 
-        if self.use_forcing:
-            constraints_list = process_constraints(force_input_ids)
+        if self.use_forcing and len(force_input_ids[0][0]) > 0:
+            assert batch_size == len(force_input_ids) == 1, "To use constraint forcing, batch_size must be 1"
 
-            constraints = init_batch(
-                raw_constraints=constraints_list,
-                key_constraints=constraints_list,
-                beam_size=self.num_beams,
-                eos_id=[self.eos_token_id] + [self.tokenizer('.')]
-            )
+            # randomly sample one of the concepts/concept sets
+            samp_force_idx = torch.randperm(len(force_input_ids[0]))[0]
+            sampled_force_input_ids = [force_input_ids[0][samp_force_idx]]
+            
+            num_return_sequences = 4
+            num_beams = 4
 
-            # TODO: min_length, no_repeat_ngram_size, length_penalty? unclear if output_scores and return_dict_in_generate are handled in `a_star_generate`
-            input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id
-
-            # Registering encoder outputs
-            expanded_return_idx = (
-                torch.arange(batch_size).view(-1, 1).repeat(1, self.num_beams).view(-1).cuda()
-            )
-            model_kwargs = {
-                "encoders_outputs":
-                    [
-                        {
-                            "encoder_hidden_states": encoder_hidden_states.index_select(0, expanded_return_idx),
-                            "encoder_attention_mask": encoder_attention_mask.index_select(0, expanded_return_idx)
-                        }
-                    ],
-            }
-
-            sampled_ids, sampled_logits, _ = inspect.unwrap(a_star_generate)(  # inspect.unwrap removes the torch.no_grad() decorator
+            out = inspect.unwrap(self.decoder.generate)(
                 self=self.decoder,
-                input_ids=input_ids,
-                attention_mask=(~torch.eq(input_ids, self.bos_token_id)).int(),
-                pad_token_id=self.pad_token_id,
-                max_length=self.max_length,
-                num_beams=self.num_beams,
-                num_return_sequences=1,
+                input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
+                force_words_ids=sampled_force_input_ids,
+                num_beams=num_beams,
+                num_return_sequences=num_return_sequences,
                 encoder_hidden_states=encoder_hidden_states,
                 encoder_attention_mask=encoder_attention_mask,
                 bad_words_ids=[[self.pad_token_id], [self.bos_token_id]],
                 top_k=self.top_k,
-                constraints=constraints,
-                prune_factor=self.prune_factor,
-                sat_tolerance=self.sat_tolerance,
-                alpha=self.alpha,
-                beta=self.beta,
-                look_ahead_step=self.look_ahead_step,
-                look_ahead_width=self.look_ahead_width,
-                fusion_t=self.fusion_t,
-                look_ahead_sample=True,  # the most important part of NLA* for SCST
-                do_sample=False,
+                forced_eos_token_id=True,
+                output_scores=True,
+                # do_sample=True,
                 use_cache=True,
-                **model_kwargs
+                return_dict_in_generate=True,
             )
 
-            # TODO: don't need decoded[:, 1:] because decoded doesn't include input_ids in generated text?
-            # TODO: don't think I need to do torch.gather either?
-            sampled_ids = sampled_ids.contiguous()
+            if num_return_sequences > 1:
+                # randomly sample one of the returned sequences
+                samp_idx = torch.randperm(out.sequences.shape[0])[0]
+                sequences = out.sequences[samp_idx,...].unsqueeze(0)
+                logits = torch.stack(out.scores, dim=1)
+                logits = logits[samp_idx,...].unsqueeze(0)
+            else:
+                sequences = out.sequences
+                logits = torch.stack(out.scores, dim=1)
         else:
             out = inspect.unwrap(self.decoder.generate)(  # inspect.unwrap removes the torch.no_grad() decorator
                 self=self.decoder,
                 input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * self.bos_token_id,
                 max_length=self.max_length,
-                force_words_ids=force_input_ids,
-                num_beams=self.num_beams,
+                num_beams=1,
                 num_return_sequences=1,
                 encoder_hidden_states=encoder_hidden_states,
                 encoder_attention_mask=encoder_attention_mask,
@@ -225,22 +212,36 @@ class SCST(nn.Module):
                 use_cache=True,
                 return_dict_in_generate=True,
             )
-            sampled_ids = out.sequences[:, 1:].contiguous()
+
+            sequences = out.sequences
             logits = torch.stack(out.scores, dim=1)
-            logits = F.log_softmax(logits, dim=-1)
-            sampled_logits = logits.gather(2, sampled_ids.unsqueeze(-1))
 
-        reward_sampling, hyp_list, _ = self.get_reward(sampled_ids.data, input_ids)
-        loss, delta_reward, delta_reward_per_metric = scst_loss(sampled_logits,
-                                                                sampled_ids.data,
-                                                                reward_sampling,
-                                                                reward_greedy,
-                                                                # avoid nll_weight if present
-                                                                self.scores_weights[-len(self.scores):],
-                                                                self.pad_token_id)
-        if self.use_nll:
-            loss += self.scores_weights[0] * nll_loss
+        sampled_ids = sequences[:, 1:].contiguous()
+        logits = F.log_softmax(logits, dim=-1)
+        sampled_logits = logits.gather(2, sampled_ids.unsqueeze(-1))
 
+        try:
+            reward_sampling, hyp_list, _ = self.get_reward(sampled_ids.data, input_ids)
+            loss, delta_reward, delta_reward_per_metric = scst_loss(sampled_logits,
+                                                        sampled_ids.data,
+                                                        reward_sampling,
+                                                        reward_greedy,
+                                                        # avoid nll_weight if present
+                                                        self.scores_weights[-len(self.scores):],
+                                                        self.pad_token_id)
+            if self.use_nll:
+                loss += self.scores_weights[0] * nll_loss
+
+        except: 
+            # TODO: sometimes the regular generate fails! hacky solution
+            # import pdb; pdb.set_trace()
+            loss = nll_loss
+            delta_reward = torch.zeros(0).to(loss.device)
+            delta_reward_per_metric = torch.zeros(len(self.scorers)).to(loss.device)
+            reward_sampling = [[0.] for _ in range(len(self.scorers))]
+            hyp_list = ['']
+        
+        # import pdb; pdb.set_trace()
         return loss, delta_reward, delta_reward_per_metric, reward_sampling, hyp_list
 
     def get_reward(self, rollout_input_ids, input_ids):

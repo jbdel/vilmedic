@@ -278,9 +278,9 @@ def _generate_sample(
         All returned sequence are generated independantly.
     """
 
-    input_ids, attention_mask, look_ahead_scores, phrases_idx_mask, past = \
+    input_ids, attention_mask, look_ahead_scores, phrases_idx_mask, past, model_specific_kwargs = \
         _expand_input(batch_size, num_samples, input_ids, attention_mask,
-                      look_ahead_scores, phrases_idx_mask, past, _reorder_cache)
+                      look_ahead_scores, phrases_idx_mask, past, _reorder_cache, model_specific_kwargs)
 
     # length of generated sentences / unfinished sentences
     unfinished_sents = input_ids.new(batch_size * num_samples).fill_(1)

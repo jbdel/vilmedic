@@ -163,6 +163,7 @@ class ImageDataset(Dataset):
                  ext='.jpg',
                  multi_image=None,
                  called_by_ensemblor=None,
+                 n_examples=None,
                  **kwargs):
 
         assert split is not None, "Argument split cant be None"
@@ -181,6 +182,9 @@ class ImageDataset(Dataset):
         if file is not None:
             self.images = read_images(root, image_path, split, file)
 
+        if n_examples is not None:
+            self.images = self.images[:n_examples]
+            
         self.transform = get_transforms(split,
                                         self.resize,
                                         self.crop,

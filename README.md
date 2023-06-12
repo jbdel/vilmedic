@@ -1,3 +1,9 @@
+### For CS224R:
+
+I built off of the `vilmedic` repo: https://github.com/jbdel/vilmedic. Please see my code changes on the `cvu-ccbm` branch.
+
+I specifically implemented constrained text generation for training in the SCST sampling step and for inference in the greedy decoding step. The RL changes can be found in `vilmedic/blocks/rl`. Note that I fully implemented and ran NeuroLogic A*-esque as my constrained generation method, but it ran too slowly and so I switched to HuggingFace constrained generation. The addition of constraints required several changes in `config` and in `vilmedic/datasets`, including creating the `ImForceSeq` dataset class.
+
 ### ViLMedic: a framework for research at the intersection of vision and language in medical AI
 
 <p align="center">

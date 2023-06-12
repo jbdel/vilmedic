@@ -74,56 +74,73 @@ def evaluation(models, config, dl, **kwargs):
                     ],
                 "hf_models": hf_models
             }
-
             # let's gooooo
-            if force_input_ids:
+            if force_input_ids and len(force_input_ids[0]) > 0 and len(force_input_ids[0][0]) > 0:
                 assert batch_size == len(force_input_ids) == 1, "To use constraint forcing, batch_size must be 1"
+                input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id
+                # decoded_constraints = [tokenizer.decode(force_input_id[0][0], skip_special_tokens=True, clean_up_tokenization_spaces=False) for force_input_id in force_input_ids]
+                # print(decoded_constraints)
 
-                constraints_list = process_constraints(force_input_ids)
+                # constraints_list = process_constraints(force_input_ids)
 
-                constraints = init_batch(
-                    # raw_constraints=constraints_list[next_i:next_i + batch_size],
-                    # key_constraints=constraints_list[next_i:next_i + batch_size],
-                    raw_constraints=constraints_list,
-                    key_constraints=constraints_list,
-                    beam_size=config.beam_width,
-                    eos_id=[eos_token_id] + [tokenizer('.')]
-                )
+                # constraints = init_batch(
+                #     # raw_constraints=constraints_list[next_i:next_i + batch_size],
+                #     # key_constraints=constraints_list[next_i:next_i + batch_size],
+                #     raw_constraints=constraints_list,
+                #     key_constraints=constraints_list,
+                #     beam_size=config.beam_width,
+                #     eos_id=[eos_token_id] + [tokenizer('.')]
+                # )
 
                 # next_i += batch_size
                 
                 # TODO: min_length, no_repeat_ngram_size, length_penalty? unclear if output_scores and return_dict_in_generate are handled in `a_star_generate`
-                input_ids = torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id
+                # hyps, _, _ = a_star_generate(
+                #     self=hf_models[0],
+                #     input_ids=input_ids,
+                #     attention_mask=(~torch.eq(input_ids, bos_token_id)).int(),
+                #     pad_token_id=pad_token_id,
+                #     max_length=max_len,
+                #     num_beams=config.beam_width,
+                #     num_return_sequences=1,
+                #     bad_words_ids=[[pad_token_id], [bos_token_id]],
+                #     constraints=constraints,
+                #     prune_factor=config.prune_factor,
+                #     sat_tolerance=config.sat_tolerance,
+                #     alpha=config.alpha,
+                #     beta=config.beta,
+                #     look_ahead_step=config.look_ahead_step,
+                #     look_ahead_width=config.look_ahead_width,
+                #     fusion_t=config.fusion_t,
+                #     look_ahead_sample=config.look_ahead_sample,
+                #     do_sample=False,
+                #     use_cache=True,
+                #     **model_kwargs
+                # )
 
-                # # undo beam_width expansion and format for a_star_generate
-                # encoder_outputs = {}
-                # encoder_outputs["encoder_hidden_states"] = model_kwargs["encoders_outputs"][0]["encoder_hidden_states"][0,...].unsqueeze(0).unsqueeze(0)
-                # encoder_outputs["encoder_attention_mask"] = model_kwargs["encoders_outputs"][0]["encoder_attention_mask"][0,...].unsqueeze(0).unsqueeze(0)
-                # model_kwargs["encoders_outputs"] = encoder_outputs
-                hyps, _, _ = a_star_generate(
-                    self=hf_models[0],
-                    input_ids=input_ids,
-                    attention_mask=(~torch.eq(input_ids, bos_token_id)).int(),
-                    pad_token_id=pad_token_id,
+                model_kwargs = {
+                    "encoder_hidden_states": model_kwargs['encoders_outputs'][0]['encoder_hidden_states'],
+                    "encoder_attention_mask": model_kwargs['encoders_outputs'][0]['encoder_attention_mask'],
+                }
+
+                hyps = hf_models[0].generate(
+                    input_ids,
+                    force_words_ids=force_input_ids[0],
                     max_length=max_len,
                     num_beams=config.beam_width,
+                    length_penalty=config.length_penalty,
+                     bos_token_id=bos_token_id,
+                    eos_token_id=eos_token_id,
+                    pad_token_id=pad_token_id,
                     num_return_sequences=1,
-                    bad_words_ids=[[pad_token_id], [bos_token_id]],
-                    constraints=constraints,
-                    prune_factor=config.prune_factor,
-                    sat_tolerance=config.sat_tolerance,
-                    alpha=config.alpha,
-                    beta=config.beta,
-                    look_ahead_step=config.look_ahead_step,
-                    look_ahead_width=config.look_ahead_width,
-                    fusion_t=config.fusion_t,
-                    # look_ahead_sample=True,  # the most important part of NLA* for SCST
-                    do_sample=False,
+                    no_repeat_ngram_size=2,
+                    remove_invalid_values=True,
                     use_cache=True,
                     **model_kwargs
                 )
-                decoded_hyps = tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-                print(decoded_hyps)
+
+                # decoded_hyps = tokenizer.decode(hyps[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+                # print(decoded_hyps)
             else:
                 hyps = hf_models[0].generate(
                     input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,

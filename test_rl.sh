@@ -1,3 +1,4 @@
+# rl_checkpoint=0.617898_11_358234.pth
 rl_checkpoint=0.617898_11_358234.pth
 python bin/ensemble.py config/RRG/baseline-mimic.yml \
     dataset.seq.processing=ifcc_clean_report \

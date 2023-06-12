@@ -6,15 +6,16 @@ import json
 
 
 class ImForceSeq(Dataset):
-    def __init__(self, seq, force_seq, image, split, ckpt_dir, **kwargs):
+    def __init__(self, seq, force_seq, image, split, ckpt_dir, n_examples=None, **kwargs):
         self.split = split
 
-        self.seq = TextDataset(**seq, split=split, ckpt_dir=ckpt_dir, name='seq')
-        self.force_seq = TextDataset(**force_seq, split=split, ckpt_dir=ckpt_dir, separate_tokenizer_per_phrase=True, name='force_seq')
-        self.image = ImageDataset(**image, split=split)
+        self.seq = TextDataset(**seq, split=split, ckpt_dir=ckpt_dir, n_examples=n_examples, name='seq')
+        force_seq['tokenizer_max_len'] = None
+        self.force_seq = TextDataset(**force_seq, split=split, ckpt_dir=ckpt_dir, n_examples=n_examples, separate_tokenizer_per_phrase=True, name='force_seq')
+        self.image = ImageDataset(**image, split=split, n_examples=n_examples)
 
         assert len(self.image) == len(self.seq) == len(self.force_seq)
-
+        
         # For decoding, if needed
         self.tokenizer = self.seq.tokenizer
         self.tokenizer_max_len = self.seq.tokenizer_max_len

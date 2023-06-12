@@ -248,7 +248,7 @@ def a_star_generate(
     decoder_start_token_id = (
         decoder_start_token_id if decoder_start_token_id is not None else self.config.decoder_start_token_id
     )
-
+    
     if input_ids is not None:
         batch_size = input_ids.shape[0]  # overriden by the input batch_size
     else:
@@ -409,8 +409,8 @@ def a_star_generate(
     # encoder_outputs = (encoder_outputs[0].index_select(0, expanded_batch_idxs), *encoder_outputs[1:])
     # model_specific_kwargs['encoders_outputs']['encoder_hidden_states'] = model_specific_kwargs['encoders_outputs']['encoder_hidden_states'][0].index_select(0, expanded_batch_idxs)
     encoder_outputs = model_specific_kwargs['encoders_outputs'][0]
-    # model_specific_kwargs = {}
-    model_specific_kwargs = encoder_outputs
+    model_specific_kwargs = {}
+    # model_specific_kwargs = encoder_outputs
     ### CVU 06/03/2023 ###
 
     if num_beams > 1:
@@ -653,6 +653,10 @@ def _generate_beam_search(
                                                                                decode_kwargs=decode_kwargs,
                                                                                model_specific_kwargs=model_specific_kwargs)
 
+            if np.sum(num_mets) > 0:
+                import pdb; pdb.set_trace()
+            else:
+                print(pick_tokens, num_mets)
             next_scores = torch.tensor(pick_scores, dtype=next_scores.dtype, device=next_scores.device)
             next_tokens = torch.tensor(pick_tokens, dtype=next_tokens.dtype, device=next_tokens.device)
 

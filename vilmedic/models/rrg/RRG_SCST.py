@@ -37,7 +37,6 @@ class RRG_SCST(nn.Module):
         super().__init__()
 
         # Models
-
         self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), dl=dl, **kwargs)
         if ckpt:
             state_dict = torch.load(get_ckpt(ckpt))["model"]

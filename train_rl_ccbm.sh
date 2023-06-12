@@ -1,5 +1,10 @@
-nll_checkpoint=/home/cvanuden/git-repos/vilmedic/ckpt/rl_findings_scst_all_concepts_constraints_gt_4_bertscore_128/0.554715_6_736581.pth
-concept_type=all_concepts
+nll_checkpoint=/home/cvanuden/git-repos/vilmedic/ckpt/nll_findings_bertscore_128/0.554715_6_736581.pth
+CONCEPT_TYPE=chexpert_concepts
+# N_CONSTRAINTS=-1
+N_CONSTRAINTS=0
+BATCH_SIZE=1
+N_EXAMPLES=100000
+
 python bin/train.py config/RRG/baseline-mimic-force.yml \
             dataset.seq.processing=ifcc_clean_report \
             dataset.image.root=data/RRG/mimic-cxr/findings/ \
@@ -8,11 +13,13 @@ python bin/train.py config/RRG/baseline-mimic-force.yml \
             dataset.seq.tokenizer_max_len=128 \
             dataset.force_seq.processing=ifcc_clean_report \
             dataset.force_seq.root=data/RRG/mimic-cxr/concepts/ \
-            dataset.force_seq.file=${concept_type}.tok \
+            dataset.force_seq.file=${CONCEPT_TYPE}.tok \
             dataset.force_seq.tokenizer_max_len=128 \
+            dataset.force_seq.num_concepts=$N_CONSTRAINTS \
             dataset.image.file=image.tok \
             dataset.image.image_path=data/images/ \
             dataset.image.multi_image=3 \
+            dataset.n_examples=$N_EXAMPLES \
             model.proto=RRG_SCST \
             model.top_k=0 \
             model.ckpt=${nll_checkpoint} \
@@ -22,16 +29,18 @@ python bin/train.py config/RRG/baseline-mimic-force.yml \
             model.use_nll=true \
             model.cnn.backbone=densenet121 \
             model.cnn.visual_embedding_dim=1024 \
-            trainor.batch_size=12 \
+            trainor.batch_size=$BATCH_SIZE \
             trainor.optim_params.lr=5e-5 \
             trainor.optimizer=Adam \
             trainor.grad_accu=2 \
             trainor.early_stop_metric=bertscore \
-            trainor.early_stop=3 \
+            trainor.early_stop=2 \
+            trainor.epochs=10 \
             trainor.lr_decay_params.patience=0 \
             trainor.lr_decay_params.factor=0.8 \
-            validator.batch_size=16 \
+            trainor.lr_decay_params.factor=0.8 \
+            validator.batch_size=1 \
             validator.beam_width=2 \
             validator.metrics='[bertscore,radgraph]' \
             ckpt_dir=ckpt \
-            name=rl_findings_scst_${concept_type}_constraints_gt_4_bertscore_128
+            name=rl_findings_scst_${CONCEPT_TYPE}_gt_nconstraints${N_CONSTRAINTS}_bertscore_128

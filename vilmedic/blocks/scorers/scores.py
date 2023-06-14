@@ -6,7 +6,6 @@ import torch
 import logging
 from radgraph import F1RadGraph
 from f1chexbert import F1CheXbert
-
 from sklearn.metrics import classification_report, roc_auc_score
 from . import *
 
@@ -103,6 +102,8 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
         elif metric == 'radgraph':
             scores["radgraph_simple"], scores["radgraph_partial"], scores["radgraph_complete"] = \
                 F1RadGraph(reward_level="all")(refs=refs, hyps=hyps)[0]
+        elif metric == 'stanford_ct_abd_accuracy':
+            scores["stanford_ct_abd"] = StanfordCTAbdAcc()(refs=refs, hyps=hyps)[0]
         else:
             logger.warning("Metric not implemented: {}".format(metric))
 

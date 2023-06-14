@@ -155,5 +155,5 @@ class CNN(nn.Module):
             ', freeze=' + str(self.freeze) + \
             (', output_layer=' + str(self.output_layer) if self.output_layer is not None else '') + \
             (', pretrained=' + str(self.pretrained) if self.backbone.lower() not in ['deit', 'vit'] else '') + \
-            ('\n classifier= {}'.format(self.cnn.classifier) if self.output_layer == 'classifier' else '' + ')')
+            ('\n classifier= {}'.format(list(self.cnn.children())[-1]) if self.output_layer == 'classifier' else '' + ')')
         return s

@@ -120,5 +120,5 @@ if __name__ == '__main__':
         'vicarious excretion of contrast .']
 
     hyps = random.sample(refs, len(refs))
-    scores = {"stanford_ct": StanfordCTAbdAcc()(refs=refs, hyps=hyps)}
+    scores = {"stanford_ct": StanfordCTAbdAcc()(refs=refs, hyps=hyps)[0]}
     print(json.dumps(scores, indent=4))

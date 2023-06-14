@@ -18,6 +18,7 @@ from vilmedic.models.rrg.RRG_MULTI import RRG_MULTI
 from vilmedic.models.rrg.RRG_EEG import RRG_EEG
 from vilmedic.models.rrg.RRG_PPO import RRG_PPO
 from vilmedic.models.rrg.RRG_SCST import RRG_SCST
+from vilmedic.models.rrg.RRG_2D_CT import RRG_2D_CT
 
 from vilmedic.models.selfsup.conVIRT import ConVIRT
 from vilmedic.models.selfsup.SimCLR import SimCLR

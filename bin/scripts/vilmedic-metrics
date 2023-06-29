@@ -8,10 +8,12 @@ def main():
     try:
         hyps_file = sys.argv[1]
         refs_file = sys.argv[2]
+        metrics = sys.argv[3].split(",")
         print("Hyp file is", hyps_file)
         print("Ref file is", refs_file)
+        print("Metrics are", metrics)
     except IndexError:
-        print("Usage vilmedic-metrics hyps_file refs_file")
+        print("Usage vilmedic-metrics hyps_file refs_file metric1,metric2,...")
         return
 
     try:
@@ -22,7 +24,6 @@ def main():
         return
 
     print("Computing metrics, this can take a while...")
-    metrics = ["ROUGEL", "ROUGE1", "ROUGE2", "radgraph", "radentitymatchexact", "radentitynli", "chexbert"]
     print(json.dumps(compute_scores(metrics,
                                     refs=refs,
                                     hyps=hyps,

@@ -2,8 +2,8 @@ import torch.nn as nn
 
 labels_lists = {
     "radiologist_labels_from_n_grams": {'focal splenic lesions', 'pericholecystic fluid', 'dilated loops of small',
-                                        'spleen is enlarged , measuring',
-                                        'for biliary duct dilatation', 'gallstones without ct', 'spleen is enlarged',
+                                        'spleen is enlarged , measuring', 'for biliary duct dilatation',
+                                        'gallstones without ct', 'spleen is enlarged',
                                         'gallbladder wall thickening',
                                         'lesion in the pancreatic', 'evidence of cholecystitis', 'surgically absent',
                                         'ct evidence of acute cholecystitis',
@@ -23,7 +23,6 @@ labels_lists = {
                                         'wall thickening or pericholecystic fluid',
                                         'the spleen is enlarged ,', 'lymphadenopathy by size criteria'},
     "chatgpt_labels_from_n_grams": {
-        'gallbladder',
         'gallbladder wall',
         'cholecystitis',
         'pericholecystic fluid',
@@ -38,7 +37,6 @@ labels_lists = {
         'seminal vesicles',
         'right lower quadrant',
         'spleen',
-        'pancreas',
         'pancreatic duct',
         'pancreatic ductal dilatation',
         'pancreatic head',
@@ -52,9 +50,7 @@ labels_lists = {
         'enlarged',
         'absent',
         'evidence of',
-        'no evidence of',
-        'dilated',
-        'not dilated'
+        'dilated'
     }
 }
 

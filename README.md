@@ -1,8 +1,8 @@
 **News**
 | Papers  | | 
 | ----------- | ----------- |
-|  Toward Expanding the Scope of Radiology Report Summarization to Multiple Anatomies and Modalities | [Dataset](https://vilmedic.app/misc/bionlp23/sharedtask/) 
-|  Overview of the RadSum23 Shared Task on Multi-modal and Multi-anatomical Radiology Report Summarization | [Challenge](https://aclanthology.org/2023.bionlp-1.45/) 
+|  Toward Expanding the Scope of Radiology Report Summarization to Multiple Anatomies and Modalities | [Dataset](https://vilmedic.app/papers/acl2023) 
+|  Overview of the RadSum23 Shared Task on Multi-modal and Multi-anatomical Radiology Report Summarization | [Challenge](https://vilmedic.app/misc/bionlp23/sharedtask/) 
 |  Improving the Factual Correctness of Radiology Report Generation with Semantic Rewards | [Replicate](https://vilmedic.app/papers/emnlp2022/) 
 
 ---

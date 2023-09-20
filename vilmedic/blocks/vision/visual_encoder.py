@@ -1,38 +1,42 @@
-import torch
 import torch.nn as nn
-import logging
 from torchvision.models import *
-from torchxrayvision.models import DenseNet as XrvDenseNet, ResNet as XrvResNet
-from monai.networks.nets.densenet import densenet121 as MonaiDensenet121, densenet169 as MonaiDensenet169, \
-    densenet201 as MonaiDensenet201, densenet264 as MonaiDensenet264
 
-from .vgg_hgap import *
-from transformers.models.vit.modeling_vit import ViTModel, ViTConfig
-from transformers.models.deit.modeling_deit import DeiTModel, DeiTConfig
-from transformers.modeling_outputs import BaseModelOutputWithPooling, BaseModelOutputWithPoolingAndNoAttention, \
-    BaseModelOutputWithNoAttention
-from transformers import ResNetConfig, PoolFormerConfig
-from transformers.models.resnet.modeling_resnet import ResNetModel as HFResNetModel
-from transformers.models.poolformer.modeling_poolformer import PoolFormerModel as HFPoolFormerModel
+from monai.networks.nets.densenet import (
+    densenet121 as _3d_densenet121,
+    densenet169 as _3d_densenet169,
+    densenet201 as _3d_densenet201,
+    densenet264 as _3d_densenet264,
+)
+
+from transformers.models.vit.modeling_vit import (
+    ViTModel,
+    ViTConfig
+)
+from transformers.models.deit.modeling_deit import (
+    DeiTModel,
+    DeiTConfig
+)
+
+from transformers.models.resnet.modeling_resnet import (
+    ResNetModel as HFResNetModel
+)
+
+from transformers.modeling_outputs import (
+    BaseModelOutputWithPooling,
+    BaseModelOutputWithPoolingAndNoAttention,
+    BaseModelOutputWithNoAttention,
+)
+
+from transformers import (
+    ResNetConfig,
+    PoolFormerConfig
+)
+from transformers.models.poolformer.modeling_poolformer import (
+    PoolFormerModel as HFPoolFormerModel
+)
 
 
-class _3d_densenet121(MonaiDensenet121):
-    pass
-
-
-class _3d_densenet169(MonaiDensenet169):
-    pass
-
-
-class _3d_densenet201(MonaiDensenet201):
-    pass
-
-
-class _3d_densenet264(MonaiDensenet264):
-    pass
-
-
-def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
+def get_network(backbone, output_layer, pretrained, **kwargs):
     """
     Create sub-network given a backbone and an output_layer
     """
@@ -61,14 +65,7 @@ def get_network(backbone, output_layer, pretrained, weights=None, **kwargs):
     if "hfpoolformer" in backbone.lower():
         return HFPoolFormerModel(PoolFormerConfig(return_dict=True, **kwargs))
 
-    # Torchxrayvision
-    if "xrv" in backbone.lower():
-        network = eval(backbone)(weights=weights)
-        if hasattr(network, 'model'):  # XrvResNet Fix
-            network = network.model
-    # PyTorch
-    else:
-        network = eval(backbone)(pretrained=pretrained, **kwargs)
+    network = eval(backbone)(pretrained=pretrained, **kwargs)
 
     if output_layer is not None and (not output_layer == 'classifier'):
         layers = [n for n, _ in network.named_children()]
@@ -155,5 +152,6 @@ class CNN(nn.Module):
             ', freeze=' + str(self.freeze) + \
             (', output_layer=' + str(self.output_layer) if self.output_layer is not None else '') + \
             (', pretrained=' + str(self.pretrained) if self.backbone.lower() not in ['deit', 'vit'] else '') + \
-            ('\n classifier= {}'.format(list(self.cnn.children())[-1]) if self.output_layer == 'classifier' else '' + ')')
+            ('\n classifier= {}'.format(
+                list(self.cnn.children())[-1]) if self.output_layer == 'classifier' else '' + ')')
         return s

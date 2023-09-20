@@ -80,5 +80,9 @@ ViLMedic replicates solutions from the multimodal medical literature.
 | [SimCLR: A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
 | [GLoRIA: A Multimodal Global-Local Representation Learning Framework for Label-efficient Medical Image Recognition](https://openaccess.thecvf.com/content/ICCV2021/papers/Huang_GLoRIA_A_Multimodal_Global-Local_Representation_Learning_Framework_for_Label-Efficient_Medical_ICCV_2021_paper.pdf)
 
+## Citation
+
+If you use ViLMedic in your work or use any models published in ViLMedic, please cite:
+
 ## License
 ViLMedic is MIT-licensed. The license applies to the pre-trained models as well.

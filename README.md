@@ -146,7 +146,7 @@ ViLMedic replicates solutions from the multimodal medical literature.
 | NLG metrics (BLEU, ROUGE, METEOR, MAUVE) and Radiology Reports Generation metrics ([F1-CheXbert](https://github.com/stanfordmlgroup/CheXbert))
 | [RadGraph](https://openreview.net/pdf?id=pMWtc5NKd7V)
 | **Vision**
-| All PyTorch CNN architectures 
+| All PyTorch VisualEncoder architectures 
 | [Vision Transformer](https://arxiv.org/abs/2010.11929)
 | [TorchXRayVision](https://github.com/mlmed/torchxrayvision)
 | **Losses**

@@ -6,6 +6,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 DATA_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)).split('vilmedic/data/')[0], 'vilmedic/data/')
+DATA_PATH = "./"
 DICOM_VIEWS = {row["dicom_id"]: row["ViewPosition"] for row in csv.DictReader(open("mimic-cxr-2.0.0-metadata.csv"))}
 
 RULES = {
@@ -170,7 +171,7 @@ def main():
                         files[split + '_report'].write(reports["findings"][study_id] + '\n')
                     if study_id not in reports["findings"]:
                         files[split + '_report'].write(reports["impression"][study_id] + '\n')
-                    if study_id in reports["impression"] or study_id in reports["findings"]:
+                    if study_id in reports["impression"] and study_id in reports["findings"]:
                         files[split + '_report'].write(
                             reports["impression"][study_id] + ' ' + reports["findings"][study_id] + '\n')
 

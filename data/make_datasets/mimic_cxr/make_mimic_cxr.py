@@ -6,7 +6,6 @@ from collections import defaultdict
 from tqdm import tqdm
 
 DATA_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)).split('vilmedic/data/')[0], 'vilmedic/data/')
-DATA_PATH = "./"
 DICOM_VIEWS = {row["dicom_id"]: row["ViewPosition"] for row in csv.DictReader(open("mimic-cxr-2.0.0-metadata.csv"))}
 
 RULES = {

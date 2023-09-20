@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 
-from vilmedic.blocks.vision import *
+from vilmedic.blocks.vision import VisualEncoder
 from vilmedic.blocks.huggingface.decoder.decoder_model import DecoderModel
 from vilmedic.blocks.huggingface.decoder.evaluation import evaluation
-from einops import rearrange
 
 
 class RRG(nn.Module):
@@ -18,14 +17,7 @@ class RRG(nn.Module):
         self.dec = DecoderModel(decoder)
 
         # Encoder
-        visual_embedding_dim = cnn.pop("visual_embedding_dim", None)
-        cnn = eval(cnn.pop('proto'))(**cnn)
-        if visual_embedding_dim:
-            visual_projection = nn.Linear(visual_embedding_dim, self.dec.decoder.config.hidden_size)
-        else:
-            visual_projection = nn.Identity()
-
-        self.enc = nn.Sequential(cnn, visual_projection)
+        self.enc = eval(cnn.pop('proto'))(**cnn)
 
         # Evaluation
         self.eval_func = evaluation
@@ -49,46 +41,8 @@ class RRG(nn.Module):
         return out
 
     # Necessary for generation
-    def encode(self, images, images_mask=None, **kwargs):
-        if torch.cuda.is_available():
-            images = images.cuda()
-
-        # Single-image forward pass
-        if len(images.shape) == 4:
-            feature = self.enc(images)
-            feature_mask = (torch.sum(torch.abs(feature), dim=-1) != 0)
-            return feature, feature_mask
-
-        assert len(images.shape) == 5, "wrong images shape"
-        # Multi-image or multi patch:
-
-        # 3D encoder
-        if self.enc[0].is3D:
-            features = self.enc(images)
-            feature_mask = (torch.sum(torch.abs(features), dim=-1) != 0)
-            return features, feature_mask
-
-        # Multi forward pass
-        images = rearrange(images, 'd0 d1 d2 d3 d4 -> (d0 d1) d2 d3 d4')
-        feature = self.enc(images)
-
-        # Masking features of empty images
-        num_images = images.shape[1]
-        feature = feature.view(int(feature.shape[0] / num_images), num_images, feature.shape[-2], feature.shape[-1])
-
-        if torch.cuda.is_available() and images_mask is not None:
-            images_mask = images_mask.cuda()
-
-        if images_mask is not None:
-            feature = feature * images_mask.unsqueeze(-1).unsqueeze(-1)
-
-        if torch.cuda.is_available():
-            feature = feature.cuda()
-
-        # Creating feature-wise attention mask
-        feature = rearrange(feature, 'd0 d1 d2 d3 -> d0 (d1 d2) d3')
-        feature_mask = (torch.sum(torch.abs(feature), dim=-1) != 0)
-        return feature, feature_mask
+    def encode(self, images, images_mask, **kwargs):
+        return self.enc.encode(images, images_mask, **kwargs)
 
     def __repr__(self):
         s = "model: RRG\n"

@@ -23,12 +23,14 @@ model:
   decoder:
     proto: allenai/biomed_roberta_base
   cnn:
-    proto: CNN
+    proto: VisualEncoder
     backbone: densenet169
     output_layer: features
     dropout_out: 0.0
     permute: batch_first
-    visual_embedding_dim: 1664
+    visual_projection:
+      in_features: 1664
+      out_features: 768
     freeze: False
 
 trainor:

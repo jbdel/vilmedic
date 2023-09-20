@@ -6,7 +6,7 @@ import pickle
 from torch.utils.data import Dataset, DataLoader
 from eeg_dataloader_utils import *
 
-from vilmedic.blocks.vision.eeg_modeling.dense_inception import DenseInception
+from vilmedic.blocks.vision.papers.eeg_modeling.dense_inception import DenseInception
 
 
 class EegTextDataset(Dataset):

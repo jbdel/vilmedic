@@ -18,11 +18,6 @@ class Rouge(nn.Module):
                 raise ValueError("Must have equal number of lines across target and "
                                  "prediction.")
             scores.append(self.scorer.score(target_rec, prediction_rec))
-
-        # aggregator = scoring.BootstrapAggregator()
-        # for score in scores:
-        #     aggregator.add_scores(score)
-        # print(aggregator.aggregate())
         f1_rouge = [s[self.rouges[0]].fmeasure for s in scores]
         return np.mean(f1_rouge), f1_rouge
 

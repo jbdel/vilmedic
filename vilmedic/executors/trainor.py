@@ -4,46 +4,21 @@ import torch
 import tqdm
 import sys
 import os
+from vilmedic import __version__
 
 from .validator import Validator
 from .utils import CheckpointSaver, create_model, create_data_loader, create_optimizer, create_training_scheduler, \
     create_scaler
 
 
-class InitTrainor(object):
+class ConfigTrainor(object):
     def __init__(self, config, seed):
-        self.seed = seed
+        # Misc
         self.config = config
+        self.seed = seed
         self.state = None
-
-        # Do we resume training?
-        if config.ckpt is not None:
-            self.state = torch.load(config.ckpt)
-
-        # Logger
-        self.logger = logging.getLogger(str(seed))
-
-        # Checkpoints
-        self.saver = CheckpointSaver(ckpt_dir=self.config.ckpt_dir, logger=self.logger, seed=self.seed,
-                                     ckpt=self.config.ckpt)
-
-        # Dataloader
-        self.dl = create_data_loader(self.config, split='train', logger=self.logger)
-
-        # Model
-        self.model = create_model(self.config, dl=self.dl, logger=self.logger, from_training=True,
-                                  state_dict=self.state)
-
-        # Optimizer
-        self.optimizer = create_optimizer(config=self.config, logger=self.logger, params=self.model.parameters(),
-                                          state_dict=self.state)
-
-        # Lr Scheduler and early stop
-        self.training_scheduler = create_training_scheduler(config=self.config, optimizer=self.optimizer,
-                                                            logger=self.logger, state_dict=self.state)
-
-        # Scaler
-        self.scaler = create_scaler(config=self.config, logger=self.logger, state_dict=self.state)
+        self.ckpt_dir = self.config.ckpt_dir
+        self.ckpt = self.config.ckpt
 
         # Training
         self.eval_start = self.config.eval_start or 0
@@ -52,11 +27,54 @@ class InitTrainor(object):
         self.grad_accu = self.config.grad_accu or 1
         self.clip_grad_norm = self.config.clip_grad_norm
 
+        # Do we resume training?
+        if config.ckpt is not None:
+            self.state = torch.load(config.ckpt)
+
+        # Logger
+        self.logger = logging.getLogger(str(self.seed))
+
+        # Checkpoints
+        self.saver = CheckpointSaver(ckpt_dir=self.ckpt_dir,
+                                     logger=self.logger,
+                                     seed=self.seed,
+                                     ckpt=self.ckpt)
+
+        # Dataloader
+        self.dl = create_data_loader(self.config,
+                                     split='train',
+                                     logger=self.logger
+                                     )
+
+        # Model
+        self.model = create_model(self.config,
+                                  dl=self.dl,
+                                  logger=self.logger,
+                                  from_training=True,
+                                  state_dict=self.state)
+
+        # Optimizer
+        self.optimizer = create_optimizer(config=self.config,
+                                          logger=self.logger,
+                                          model_params=self.model.parameters(),
+                                          state_dict=self.state)
+
+        # Lr Scheduler and early stop
+        self.training_scheduler = create_training_scheduler(config=self.config,
+                                                            optimizer=self.optimizer,
+                                                            logger=self.logger,
+                                                            state_dict=self.state)
+
+        # Scaler
+        self.scaler = create_scaler(config=self.config,
+                                    logger=self.logger,
+                                    state_dict=self.state)
+
         # Validator is None at init
         self.evaluator: Validator = None
 
 
-class Trainor(InitTrainor):
+class Trainor(ConfigTrainor):
     def __init__(self, config, seed):
         super().__init__(config=config, seed=seed)
 
@@ -107,7 +125,7 @@ class Trainor(InitTrainor):
                     )
                     pbar.set_description(log)
 
-                break
+                # break
             # Perform last update if needed
             if (iteration % self.grad_accu != 0) and ('loss' in out):
                 if self.clip_grad_norm is not None:
@@ -159,7 +177,8 @@ class Trainor(InitTrainor):
                                             "training_scheduler": self.training_scheduler.state_dict(),
                                             "optimizer": self.optimizer.state_dict(),
                                             "config": self.config,
-                                            "scaler": self.scaler.state_dict()
+                                            "scaler": self.scaler.state_dict(),
+                                            "__version__": __version__
                                             },
                                 tag=early_stop_score,
                                 current_epoch=epoch + 1,

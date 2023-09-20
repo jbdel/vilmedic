@@ -15,7 +15,7 @@ dataset:
 model:
   proto: VQA
   visual:
-    proto: CNN
+    proto: VisualEncoder
     backbone: densenet169
     output_layer: classifier
     dropout_out: 0.0

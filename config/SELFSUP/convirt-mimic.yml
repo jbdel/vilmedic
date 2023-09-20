@@ -24,7 +24,7 @@ model:
   encoder:
     proto: allenai/biomed_roberta_base
   cnn:
-    proto: CNN
+    proto: VisualEncoder
     backbone: resnet50
     output_layer: avgpool
     dropout_out: 0.0

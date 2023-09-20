@@ -1,3 +1,5 @@
+__version__ = "1.3.2"
+
 import logging
 
 logging.getLogger('faiss.loader').setLevel(logging.CRITICAL)

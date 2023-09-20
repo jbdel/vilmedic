@@ -26,7 +26,7 @@ model:
   proto: SIM_MCAN
 
   visual:
-    proto: CNN
+    proto: VisualEncoder
     backbone: densenet169
     output_layer: features
     dropout_out: 0.0

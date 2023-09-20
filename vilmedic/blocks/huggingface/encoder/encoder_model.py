@@ -59,7 +59,6 @@ class EncoderModel(nn.Module):
             pooled_output = self.pooler(hidden_states=out.last_hidden_state)
             setattr(out, "pooler_output", pooled_output)
 
-        # out = vars(out)
         return out
 
     def __repr__(self):

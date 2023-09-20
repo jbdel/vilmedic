@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
 
-from vilmedic.blocks.vision import CNN
+from vilmedic.blocks.vision import VisualEncoder
 from vilmedic.blocks.losses import VICREGLoss
 
 from vilmedic.blocks.huggingface.encoder.encoder_model import EncoderModel

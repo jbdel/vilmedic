@@ -173,7 +173,7 @@ class PCL2(nn.Module):
         self.config = copy.deepcopy(config)
 
         cnn = {
-            "proto": "CNN",
+            "proto": "VisualEncoder",
             "backbone": "resnet50",
             "output_layer": "avgpool",
             "dropout_out": 0.0,

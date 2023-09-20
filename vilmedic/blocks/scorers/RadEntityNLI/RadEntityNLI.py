@@ -8,7 +8,9 @@ from vilmedic.blocks.scorers.RadEntityNLI.nli import SimpleNLI
 from vilmedic.constants import EXTRA_CACHE_DIR
 from vilmedic.zoo.utils import download_model
 
-from torchmetrics.functional.text.bert import BERTScorer
+# from torchmetrics.functional.text.bert import BERTScorer
+from bert_score import BERTScorer
+
 from itertools import chain, product
 
 

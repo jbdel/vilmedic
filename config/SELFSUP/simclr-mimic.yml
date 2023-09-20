@@ -47,7 +47,7 @@ dataset:
 model:
   proto: SimCLR
   cnn:
-    proto: CNN
+    proto: VisualEncoder
     backbone: resnet50
     output_layer: avgpool
     dropout_out: 0.0

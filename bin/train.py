@@ -17,12 +17,10 @@ def main():
     config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
     os.makedirs(config.ckpt_dir, exist_ok=True)
 
-    # If ckpt is specified, we continue training. Lets extract seed
-    if config.ckpt is not None:
-        copy_ckpt_path = copy.deepcopy(config.ckpt)
-        if not os.path.exists(config.ckpt):
-            config.ckpt = os.path.join(config.ckpt_dir, config.ckpt)
-        assert os.path.exists(config.ckpt), "Path '{}' or '{}' does not exist".format(copy_ckpt_path, config.ckpt)
+    # If ckpt is specified, we continue training. Let's extract seed
+    if config.ckpt:
+        config.ckpt = os.path.join(config.ckpt_dir, config.ckpt) if not os.path.exists(config.ckpt) else config.ckpt
+        assert os.path.exists(config.ckpt), f"Path '{config.ckpt}' does not exist"
         seed = extract_seed_from_ckpt(config.ckpt)
 
     # Create logger according to seed

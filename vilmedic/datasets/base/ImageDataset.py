@@ -1,11 +1,7 @@
 import os
 import pydicom
-import numpy as np
 import json
 import PIL
-import skimage
-import logging
-import torchxrayvision as xrv
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
 from torchvision.transforms import *
@@ -25,7 +21,8 @@ def vilmedic_collate(batch, multi_image=None):
 
     # Return one image
     if not multi_image or multi_image == 1:
-        return {'images': torch.stack([s['image'][0] for s in batch])}
+        return {'images': torch.stack([s['image'][0] for s in batch]),
+                'images_mask': None}
 
     # Return multiple image
     new_batch = []
@@ -80,11 +77,6 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
     if ext in [".npy", ".npz"]:
         return lambda x: x
 
-    if ext == '.xrv':
-        return transforms.Compose([xrv.datasets.XRayCenterCrop(),
-                                   xrv.datasets.XRayResizer(crop),
-                                   lambda x: torch.from_numpy(x)])
-
     if split == 'train':
         return transforms.Compose([
             transforms.Resize(resize),
@@ -104,15 +96,6 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
 def open_image(image, ext):
     if ext == '.jpg' or ext == '.jpeg':
         return Image.open(image).convert('RGB')
-
-    if ext == '.xrv':
-        img = skimage.io.imread(image)
-        img = xrv.datasets.normalize(img, 255)
-        if len(img.shape) > 2:
-            img = img[:, :, 0]
-        if len(img.shape) < 2:
-            print("error, dimension lower than 2 for image")
-        return img[None, :, :]
 
     if ext == '.nib':
         return nib.load(image).get_fdata().astype('float32')

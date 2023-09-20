@@ -25,7 +25,7 @@ model:
   decoder:
     proto: allenai/biomed_roberta_base
   cnn:
-    proto: CNN
+    proto: VisualEncoder
     backbone: densenet169
     output_layer: features
     dropout_out: 0.0

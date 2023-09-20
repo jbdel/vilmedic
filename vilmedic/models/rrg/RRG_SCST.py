@@ -1,16 +1,13 @@
-import torch.nn as nn
-from vilmedic.models.utils import get_n_params
-import functools
 import os
-from vilmedic.blocks.vision import *
-from vilmedic.blocks.huggingface.decoder.evaluation import evaluation as evaluation_
 import glob
-
-from .RRG import RRG
-import numpy as np
 import copy
 import torch
+import torch.nn as nn
+from vilmedic.models.utils import get_n_params
+from vilmedic.blocks.vision import *
+from vilmedic.blocks.huggingface.decoder.evaluation import evaluation as evaluation_
 from vilmedic.blocks.rl.SCST import SCST
+from .RRG import RRG
 
 
 def evaluation(models, config, dl, **kwargs):
@@ -30,19 +27,23 @@ def get_ckpt(ckpt):
         raise FileNotFoundError(ckpt)
 
 
-class RRG_SCST(nn.Module):
+def load_checkpoint(ckpt):
+    from vilmedic.executors.utils import vilmedic_state_dict_versioning
+    state_dict = torch.load(ckpt)
+    params = vilmedic_state_dict_versioning(state_dict["model"], state_dict.get('__version__', None))
+    return params
 
+
+class RRG_SCST(nn.Module):
     def __init__(self, decoder, cnn, dl, scores="ROUGEL", ckpt=None, scores_args=None, scores_weights=None, top_k=None,
                  use_nll=False, **kwargs):
         super().__init__()
 
         # Models
-
         self.model = RRG(copy.deepcopy(decoder), copy.deepcopy(cnn), dl=dl, **kwargs)
         if ckpt:
-            state_dict = torch.load(get_ckpt(ckpt))["model"]
-            state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
-            self.model.load_state_dict(state_dict, strict=True)
+            params = load_checkpoint(ckpt)
+            self.model.load_state_dict(params, strict=True)
 
         # SCST
         self.scst = SCST(decoder=self.model.dec.decoder,

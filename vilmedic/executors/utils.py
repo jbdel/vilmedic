@@ -21,6 +21,18 @@ from torch.optim import *
 from torch_optimizer import *
 from torch.optim.lr_scheduler import *
 from vilmedic.blocks.schedulers import LinearWarmupCosineAnnealingLR
+import sys
+
+
+def vilmedic_state_dict_versioning(params, version):
+    params = {k.replace('module.', ''): v for k, v in params.items()}
+
+    if version is None or version < '1.3.2':
+        params = {k.replace('enc.0.cnn.', 'enc.model.'): v for k, v in params.items()}
+        params = {k.replace('enc.1.weight', 'enc.visual_projection.weight'): v for k, v in params.items()}
+        params = {k.replace('enc.1.bias', 'enc.visual_projection.bias'): v for k, v in params.items()}
+
+    return params
 
 
 def get_eval_func(models):
@@ -31,8 +43,10 @@ def get_eval_func(models):
     return dummy.eval_func
 
 
-def create_optimizer(config, logger, params, state_dict=None):
+def create_optimizer(config, logger, model_params, state_dict=None):
     assert 'lr' in config.optim_params
+    config.optim_params.lr = float(config.optim_params.lr)
+
     if hasattr(torch.optim, config.optimizer):
         optim = getattr(torch.optim, config.optimizer)
     elif hasattr(torch_optimizer, config.optimizer):
@@ -40,7 +54,8 @@ def create_optimizer(config, logger, params, state_dict=None):
     else:
         raise NotImplementedError(config.optimizer)
 
-    optimizer = optim(params, **config.optim_params)
+    print(config.optim_params)
+    optimizer = optim(model_params, **config.optim_params)
     logger.settings('Optimizer {} created'.format(type(optimizer).__name__))
 
     if state_dict is not None and "optimizer" in state_dict:
@@ -57,9 +72,12 @@ def create_model(config, dl, logger, from_training=True, state_dict=None):
     model = eval(config.pop('proto'))(**config, dl=dl, logger=logger, from_training=from_training)
     logger.settings('Model {} created'.format(type(model).__name__))
 
-    if state_dict is not None and "model" in state_dict:
-        params = {k.replace('module.', ''): v for k, v in state_dict["model"].items()}
-        model.load_state_dict(params)
+    if state_dict is not None:
+        if "model" not in state_dict:
+            logger.critical('This checkpoint is not valid. Key "model" is missing from dict.')
+            sys.exit()
+        params = vilmedic_state_dict_versioning(state_dict["model"], state_dict.get('__version__', None))
+        model.load_state_dict(params, strict=True)
         logger.info('Model state loaded')
     else:
         logger.info(model)

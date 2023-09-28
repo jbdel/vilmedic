@@ -6,7 +6,7 @@ import numpy as np
 from vilmedic.blocks.vision import *
 from vilmedic.blocks.huggingface.decoder.decoder_model import DecoderModel
 from vilmedic.blocks.huggingface.decoder.evaluation import evaluation
-from vilmedic.blocks.vision.eeg_modeling.dense_inception import DenseInception
+from vilmedic.blocks.vision.papers.eeg_modeling.dense_inception import DenseInception
 
 from einops import rearrange
 

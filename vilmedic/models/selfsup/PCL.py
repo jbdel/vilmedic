@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 import numpy as np
 import torch.nn as nn
 from vilmedic.models.utils import get_n_params
-from vilmedic.blocks.vision.papers.PCL import MoCo
+from vilmedic.blocks.vision.papers.PCL.moco import MoCo
 
 
 def accuracy(output, target, topk=(1,)):

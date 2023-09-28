@@ -2,6 +2,7 @@ import torch
 import json
 import torch.nn as nn
 from einops import rearrange
+
 from torchvision.models import *
 
 from monai.networks.nets.densenet import (
@@ -101,6 +102,7 @@ class VisualEncoder(nn.Module):
         self.permute = permute
         self.freeze = freeze
         self.pretrained = pretrained
+
         self.model = get_network(self.backbone, self.output_layer, self.pretrained, **kwargs)
         self.dropout_out = nn.Dropout(p=dropout_out)
         self.is3D = "3d" in backbone

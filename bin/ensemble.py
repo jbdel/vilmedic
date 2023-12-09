@@ -38,7 +38,7 @@ def main():
     ensemble_config = get(config, 'ensemblor')
     seed = '{}_{}'.format(ensemble_config.mode, get_seed())
 
-    set_logger(config.ckpt_dir, seed)
+    set_logger(config.ckpt_dir, seed, ensemble_config.log_dir)
 
     # Nice printing the args
     print_args(config, ['ensemblor'], seed, override)

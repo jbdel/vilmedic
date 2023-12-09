@@ -1,10 +1,7 @@
-import os
 import torch
-import time
-import numpy as np
 import torch.nn as nn
-# from torchmetrics.functional.text.bert import BERTScorer
 from bert_score import BERTScorer
+
 
 class BertScore(nn.Module):
     def __init__(self):

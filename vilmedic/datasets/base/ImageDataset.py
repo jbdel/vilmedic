@@ -1,3 +1,4 @@
+import torch
 import os
 import pydicom
 import json
@@ -8,7 +9,6 @@ from torchvision.transforms import *
 from .utils import load_file
 from .papers.open_image import *
 from .papers.transforms import *
-import nibabel as nib
 from pydicom.pixel_data_handlers.util import apply_voi_lut
 from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
 
@@ -96,9 +96,6 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
 def open_image(image, ext):
     if ext == '.jpg' or ext == '.jpeg':
         return Image.open(image).convert('RGB')
-
-    if ext == '.nib':
-        return nib.load(image).get_fdata().astype('float32')
 
     if ext == '.png':
         return Image.open(image).convert('RGB')

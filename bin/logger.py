@@ -27,7 +27,7 @@ class LoggingFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def set_logger(ckpt_dir, seed):
+def set_logger(ckpt_dir, seed, log_dir=None):
     logger = logging.getLogger(str(seed))
     logger.propagate = False  # Prevent the logger from passing messages to its parent logger
 
@@ -38,8 +38,12 @@ def set_logger(ckpt_dir, seed):
     ch = logging.StreamHandler()
     ch.setFormatter(LoggingFormatter())
     logger.addHandler(ch)
-    logger.addHandler(logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed)), mode='a+'))
-
+    if log_dir is None:
+        logger.addHandler(logging.FileHandler(os.path.join(ckpt_dir, "{}.log".format(seed)), mode='a+'))
+    else:
+        full_log_dir = os.path.join(ckpt_dir, log_dir)
+        os.makedirs(full_log_dir, exist_ok=True)
+        logger.addHandler(logging.FileHandler(os.path.join(full_log_dir, "{}.log".format(seed)), mode='a+'))
     logger.setLevel(logging.DEBUG)
 
     addLoggingLevel("SETTINGS", levelNum=logging.DEBUG)
@@ -86,3 +90,18 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     setattr(logging, levelName, levelNum)
     setattr(logging.getLoggerClass(), methodName, logForLevel)
     setattr(logging, methodName, logToRoot)
+
+
+if __name__ == '__main__':
+    def get_logger_directory(logger):
+        for handler in logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                # Extract the directory from the file handler's path
+                return os.path.dirname(handler.baseFilename)
+        return None
+
+
+    # Example usage
+    logger = set_logger('your_checkpoint_directory', 42, 'your_log_directory')
+    log_dir = get_logger_directory(logger)
+    print("Logger is saving files in:", log_dir)

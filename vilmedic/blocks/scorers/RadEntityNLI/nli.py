@@ -8,7 +8,7 @@ import pandas as pd
 import torch
 from collections import defaultdict, OrderedDict
 from bert_score.utils import bert_cos_score_idf, cache_scibert, get_idf_dict, get_model, lang2model, model2layers
-from cachetools import LRUCache
+from .CacheTools import LRUCache
 from torch.nn import DataParallel
 from torch.nn.functional import softmax
 from transformers import AutoTokenizer

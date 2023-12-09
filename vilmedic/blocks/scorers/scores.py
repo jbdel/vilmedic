@@ -8,6 +8,7 @@ from radgraph import F1RadGraph
 from f1chexbert import F1CheXbert
 from sklearn.metrics import classification_report, roc_auc_score
 from . import *
+from .utils import get_logger_directory
 
 # RadGraph package overrides logger, need to set back to default
 logging.setLoggerClass(logging.Logger)
@@ -21,7 +22,7 @@ REWARD_COMPLIANT = {
     "ciderdrl": [CiderDRL, 1],
     "radentitymatchexact": [RadEntityMatchExact, 1],
     "radentitynli": [RadEntityNLI, 1],
-    "chexbert": [CheXbert, 1],
+    "chexbert": [F1CheXbert, 1],
     "radgraph": [F1RadGraph, 1],
     "bertscore": [BertScore, 1],
     # "MAUVE": [MauveScorer, 0],
@@ -41,8 +42,7 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
 
     # Dump
     if dump:
-        ckpt_dir = config.ckpt_dir
-        base = os.path.join(ckpt_dir, '{}_{}_{}'.format(split, seed, '{}'))
+        base = os.path.join(get_logger_directory(logger), '{}_{}_{}'.format(split, seed, '{}'))
         refs_file = base.format('refs.txt')
         hyps_file = base.format('hyps.txt')
         metrics_file = base.format('metrics.txt')

@@ -8,6 +8,7 @@ import logging
 stanza.download('en', processors='tokenize,lemma,pos,ner')
 stanza.download('en', package='radiology')
 
+
 class RadEntityMatchExact(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()

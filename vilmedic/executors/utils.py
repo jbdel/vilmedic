@@ -16,9 +16,7 @@ from torch.utils.data.sampler import BatchSampler, SequentialSampler, RandomSamp
 from vilmedic.models import *
 from vilmedic.datasets import *
 
-import torch_optimizer
 from torch.optim import *
-from torch_optimizer import *
 from torch.optim.lr_scheduler import *
 from vilmedic.blocks.schedulers import LinearWarmupCosineAnnealingLR
 import sys

@@ -12,7 +12,6 @@ import subprocess
 import sys
 import threading
 
-import psutil
 import torch.nn as nn
 
 # Assumes meteor-1.5.jar is in the same directory as meteor.py.  Change as needed.
@@ -35,14 +34,6 @@ class Meteor(nn.Module):
         self.lock = threading.Lock()
 
         mem = '2G'
-        mem_available_G = psutil.virtual_memory().available / 1E9
-        if mem_available_G < 2:
-            logging.warning("There is less than 2GB of available memory.\n"
-                            "Will try with limiting Meteor to 1GB of memory but this might cause issues.\n"
-                            "If you have problems using Meteor, "
-                            "then you can try to lower the `mem` variable in meteor.py")
-            mem = '1G'
-
         meteor_cmd = ['java', '-jar', '-Xmx{}'.format(mem), METEOR_JAR,
                       '-', '-', '-stdio', '-l', 'en', '-norm']
         env = os.environ.copy()

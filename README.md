@@ -14,12 +14,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/logo.png" width="190px">
+  <img src="vilmedic/logo.png" width="190px">
   <br />
   <br />
-  <a href="https://vilmedic.readthedocs.io/en/latest/">
-  <img alt="Documentation Status" src="https://readthedocs.org/projects/vilmedic/badge/?version=latest"/>
-  </a>
    <a href="https://github.com/jbdel/vilmedic/blob/master/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-red.svg" /></a>
   <img src="https://img.shields.io/badge/Stanford-Medicine-red" />
 </p>

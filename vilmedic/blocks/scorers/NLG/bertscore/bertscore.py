@@ -13,7 +13,7 @@ class BertScore(nn.Module):
                                           nthreads=4,
                                           all_layers=False,
                                           idf=False,
-                                          device='cuda',
+                                          device=None,
                                           lang='en',
                                           rescale_with_baseline=True,
                                           baseline_path=None)

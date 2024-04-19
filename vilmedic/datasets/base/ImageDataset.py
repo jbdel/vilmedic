@@ -3,14 +3,19 @@ import os
 import pydicom
 import json
 import PIL
+import tqdm
+
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
 from torchvision.transforms import *
-from .utils import load_file
+from transformers.image_utils import PILImageResampling
+
+from .utils import load_file, process_hf_dataset
 from .papers.open_image import *
 from .papers.transforms import *
 from pydicom.pixel_data_handlers.util import apply_voi_lut
 from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
+from transformers import ViTImageProcessor
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
@@ -54,13 +59,13 @@ def default_collate(batch):
     return collated
 
 
-def read_images(root, image_path, split, file):
+def read_images(root, split, file):
     file_path = os.path.join(root, split + '.' + file)
     if '.npy' in file_path:
         return [[x] for x in np.load(file_path)]
 
     lines = load_file(file_path)
-    return [[os.path.join(image_path, image) for image in line.split(',')] for line in lines]
+    return [[image for image in line.split(',')] for line in lines]
 
 
 def get_transforms(split, resize, crop, custom_transform_train, custom_transform_validate, ext, called_by_ensemblor):
@@ -93,7 +98,15 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
                                  (0.229, 0.224, 0.225))])
 
 
-def open_image(image, ext):
+def open_image(image, ext, image_path):
+    if isinstance(image, Image.Image):
+        if image.mode == 'RGB':
+            return image
+        else:
+            return image.convert('RGB')
+
+    image = os.path.join(image_path, image)
+
     if ext == '.jpg' or ext == '.jpeg':
         return Image.open(image).convert('RGB')
 
@@ -124,8 +137,8 @@ def open_image(image, ext):
     raise NotImplementedError("Image extension {} not implemented".format(ext))
 
 
-def do_images(images, transform, ext):
-    opened_images = [open_image(im, ext) for im in images]
+def do_images(images, transform, ext, image_path):
+    opened_images = [open_image(im, ext, image_path) for im in images]
     transformed_images = [transform(im) for im in opened_images]
     return transformed_images
 
@@ -136,7 +149,6 @@ class ImageDataset(Dataset):
                  file=None,
                  split=None,
                  image_path=None,
-                 load_memory=False,
                  custom_transform_train=None,
                  custom_transform_validate=None,
                  resize=256,
@@ -144,15 +156,22 @@ class ImageDataset(Dataset):
                  ext='.jpg',
                  multi_image=None,
                  called_by_ensemblor=None,
+                 hf_dataset=None,
+                 hf_field=None,
+                 hf_local=None,
+                 hf_filter=None,
                  **kwargs):
 
         assert split is not None, "Argument split cant be None"
+
+        assert hf_dataset is None or (hf_field is not None), "If 'hf_dataset' is not None, " \
+                                                             "then 'hf_field' must also " \
+                                                             "be not None."
 
         self.root = root
         self.file = file
         self.split = split
         self.image_path = image_path
-        self.load_memory = load_memory
         self.resize = eval(str(resize))
         self.crop = eval(str(crop))
         self.ext = ext
@@ -160,7 +179,17 @@ class ImageDataset(Dataset):
         self.images = None
 
         if file is not None:
-            self.images = read_images(root, image_path, split, file)
+            self.images = read_images(root, split, file)
+
+        if hf_dataset is not None:
+            dataset = process_hf_dataset(hf_dataset, hf_local, hf_filter, hf_field, split)
+
+            first_example = dataset[0]
+            if not isinstance(first_example, list):
+                assert isinstance(first_example, Image.Image) or isinstance(first_example, str)
+                self.images = [[d] for d in dataset]
+            else:
+                self.images = dataset
 
         self.transform = get_transforms(split,
                                         self.resize,
@@ -174,7 +203,7 @@ class ImageDataset(Dataset):
         return len(self.images or [])
 
     def __getitem__(self, index):
-        return {'image': do_images(self.images[index], self.transform, self.ext)}
+        return {'image': do_images(self.images[index], self.transform, self.ext, self.image_path)}
 
     def inference(self, image):
         if not isinstance(image, (list, str)):
@@ -189,7 +218,7 @@ class ImageDataset(Dataset):
                     image[i] = [im]
 
         # Image is a list of example, an example a list of images.
-        batch = [{'image': do_images(i, self.transform, self.ext)} for i in image]
+        batch = [{'image': do_images(i, self.transform, self.ext, self.image_path)} for i in image]
         return self.get_collate_fn()(batch)
 
     def get_collate_fn(self):
@@ -201,6 +230,24 @@ class ImageDataset(Dataset):
 
         return collate_fn
 
+    def to_huggingface_processor(self):
+        try:
+            return ViTImageProcessor(
+                **{
+                    "do_normalize": True,
+                    "do_resize": True,
+                    "do_rescale": True,
+                    "image_mean": list(self.transform.transforms[-1].mean),
+                    "image_std": list(self.transform.transforms[-1].std),
+                    "resample": PILImageResampling.BILINEAR,
+                    "size": self.transform.transforms[0].size,
+                }
+            )
+        except Exception as e:
+            print("custom transforms has been provided and is not compatible with this method.")
+            print(e)
+            return None
+
     def __repr__(self):
         transform = self.transform
         if hasattr(self.transform, "transforms"):
@@ -209,6 +256,7 @@ class ImageDataset(Dataset):
         return "ImageDataset\n" + \
             json.dumps({
                 "split": self.split,
+                "len": len(self),
                 "image_path": self.image_path,
                 "root": self.root,
                 "file": self.file,

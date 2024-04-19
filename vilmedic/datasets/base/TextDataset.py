@@ -6,7 +6,7 @@ import sys
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from transformers import BertTokenizer
-from .utils import Vocab, load_file
+from .utils import Vocab, load_file, process_hf_dataset
 from .papers.report_preprocessing import *
 
 import seaborn as sns
@@ -37,6 +37,10 @@ class TextDataset(Dataset):
                  vocab_file=None,
                  source='src',
                  show_length=False,
+                 hf_dataset=None,
+                 hf_field=None,
+                 hf_local=None,
+                 hf_filter=None,
                  **kwargs):
 
         assert source in ["src", "tgt"]
@@ -45,7 +49,12 @@ class TextDataset(Dataset):
         assert not (
                 vocab_file is not None and tokenizer is not None), "You cannot mention both a pretrained tokenizer and a vocab file"
         assert not (source == "tgt" and tokenizer_max_len is None), "You must specify tokenizer_max_len for source tgt"
+        assert (vocab_file is not None) or ((hf_dataset is None) != (
+                file is None)), "Either 'hf_dataset' or 'file' must be specified, but not both or neither, unless 'vocab_file' is not None."
 
+        assert hf_dataset is None or (hf_field is not None), "If 'hf_dataset' is not None, " \
+                                                             "then 'hf_field' must also " \
+                                                             "be not None."
         self.root = root
         self.file = file
         self.split = split
@@ -58,6 +67,13 @@ class TextDataset(Dataset):
 
         if file is not None:
             self.sentences = make_sentences(root, split, file, self.processing)
+
+        if hf_dataset is not None:
+            dataset = process_hf_dataset(hf_dataset, hf_local, hf_filter, hf_field, split)
+            self.sentences = split_sentences(
+                sentences=dataset,
+                processing=self.processing
+            )
 
         # Create tokenizer from pretrained or vocabulary file
         if tokenizer is not None:
@@ -111,17 +127,18 @@ class TextDataset(Dataset):
 
     def __repr__(self):
         return "TextDataset\n" + \
-               json.dumps({"source": self.source,
-                           "root": self.root,
-                           "file": self.file,
-                           "processing": self.processing,
-                           "Tokenizer": {
-                               "name_or_path": self.tokenizer.name_or_path,
-                               "vocab_size": self.tokenizer.vocab_size,
-                               "tokenizer_args": self.tokenizer_args,
-                               "special_tokens": self.tokenizer.special_tokens_map_extended,
-                           }}, indent=4,
-                          sort_keys=False, default=str)
+            json.dumps({"source": self.source,
+                        "root": self.root,
+                        "file": self.file,
+                        "len": len(self),
+                        "processing": self.processing,
+                        "Tokenizer": {
+                            "name_or_path": self.tokenizer.name_or_path,
+                            "vocab_size": self.tokenizer.vocab_size,
+                            "tokenizer_args": self.tokenizer_args,
+                            "special_tokens": self.tokenizer.special_tokens_map_extended,
+                        }}, indent=4,
+                       sort_keys=False, default=str)
 
     def show_length(self):
         print("Plotting sequences length...")

@@ -3,7 +3,6 @@ import functools
 
 from transformers.models.auto import AutoModelForCausalLM, AutoConfig
 from transformers.models.bert_generation import BertGenerationConfig, BertGenerationDecoder
-from vilmedic.blocks.huggingface.decoder.beam_search import prepare_inputs_for_generation, _validate_model_kwargs
 
 
 class DecoderModel(nn.Module):
@@ -28,10 +27,10 @@ class DecoderModel(nn.Module):
             # self.decoder.generate
             # self.decoder.prepare_inputs_for_generation
         # Evaluation
-        self.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation, self.decoder)
-        # We override _validate_model_kwargs width empty function because we add custom model kwargs that triggers
-        # errors in original _validate_model_kwargs
-        self.decoder._validate_model_kwargs = functools.partial(_validate_model_kwargs, self.decoder)
+        # self.decoder.prepare_inputs_for_generation = functools.partial(prepare_inputs_for_generation, self.decoder)
+        # # We override _validate_model_kwargs width empty function because we add custom model kwargs that triggers
+        # # errors in original _validate_model_kwargs
+        # self.decoder._validate_model_kwargs = functools.partial(_validate_model_kwargs, self.decoder)
 
         # Inference
         self.generate = self.decoder.generate

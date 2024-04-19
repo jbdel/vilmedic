@@ -47,8 +47,6 @@ def create_optimizer(config, logger, model_params, state_dict=None):
 
     if hasattr(torch.optim, config.optimizer):
         optim = getattr(torch.optim, config.optimizer)
-    elif hasattr(torch_optimizer, config.optimizer):
-        optim = getattr(torch_optimizer, config.optimizer)
     else:
         raise NotImplementedError(config.optimizer)
 

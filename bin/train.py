@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import copy
@@ -6,11 +7,13 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from vilmedic.executors import Trainor, Validator
 from utils import get_args, get, print_args, get_seed, extract_seed_from_ckpt
 from logger import set_logger
+from omegaconf import OmegaConf
 
 
 def main():
     # Get args and create seed
     config, override = get_args()
+
     seed = get_seed()
 
     # Create checkpoint dir
@@ -25,6 +28,10 @@ def main():
 
     # Create logger according to seed
     set_logger(config.ckpt_dir, seed)
+
+    # Dump config
+    json.dump(OmegaConf.to_container(config, resolve=True), open(f"{config.ckpt_dir}/config_{seed}.json", "w"),
+              indent=4)
 
     # Nice print args
     print_args(config, ['trainor', 'validator'], seed, override)

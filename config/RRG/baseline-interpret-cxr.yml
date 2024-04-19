@@ -1,26 +1,46 @@
-name: rrg_mimic
+name: interpret-cxr-baseline
 ckpt_dir: ckpt
+
 dataset:
   proto: ImSeq
   image:
-    root: data/RRG/mimic-cxr/impression/
-    file: image.tok
-    image_path: data/images/
+    hf_dataset: StanfordAIMI/interpret-cxr-public
+    hf_field: images_path
     resize: 256
     crop: 224
     ext: .jpg
   seq:
-    root: data/RRG/mimic-cxr/impression/
-    file: impression.tok
-    tokenizer: allenai/biomed_roberta_base
+    hf_dataset: StanfordAIMI/interpret-cxr-public
+    hf_field: impression
+    tokenizer: null
     tokenizer_max_len: 120
-    processing: r2gen_clean_report
+    processing: ifcc_clean_report
     source: tgt
 
 model:
   proto: RRG
   decoder:
-    proto: allenai/biomed_roberta_base
+    proto: null
+    add_cross_attention: true
+    attention_probs_dropout_prob: 0.1
+    bos_token_id: 0
+    eos_token_id: 2
+    gradient_checkpointing: false
+    hidden_act: gelu
+    hidden_dropout_prob: 0.1
+    hidden_size: 768
+    initializer_range: 0.02
+    intermediate_size: 3072
+    is_decoder: true
+    layer_norm_eps: 1e-05
+    max_position_embeddings: 514
+    num_attention_heads: 12
+    num_hidden_layers: 2
+    pad_token_id: 1
+    position_embedding_type: absolute
+    transformers_version: 4.5.1
+    type_vocab_size: 1
+    use_cache: true
   cnn:
     proto: VisualEncoder
     backbone: densenet169
@@ -61,20 +81,4 @@ validator:
     - radentitymatchexact
     - radentitynli
     - radgraph
-  splits: [validate]
-
-
-ensemblor:
-  batch_size: 4
-  beam_width: 8
-  metrics:
-    - ROUGEL
-    - BLEU
-    - METEOR
-    - CIDERD
-    - chexbert
-    - radentitymatchexact
-    - radentitynli
-    - radgraph
-  splits: [validate, test]
-  mode: best-1
+  splits: [ validation ]

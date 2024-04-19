@@ -1,0 +1,28 @@
+includes:
+  - config/RRG/biomed-roberta-baseline-mimic.yml
+name: rrg_mimic_baseline
+
+dataset:
+  seq:
+    tokenizer: null
+    tokenizer_max_len: 100
+
+model:
+  vision:
+    proto_model: deit
+    proto_config: deit
+
+
+  decoder:
+    proto_model: bert-generation
+    proto_config: bert-generation
+    proto_config_args:
+      num_hidden_layers: 2
+      hidden_size: 768
+
+
+trainor:
+  batch_size: 128
+  optim_params:
+    lr: 0.001
+

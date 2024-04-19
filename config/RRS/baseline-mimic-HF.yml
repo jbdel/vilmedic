@@ -1,0 +1,60 @@
+name: rrs_mimic_hf
+ckpt_dir: ckpt
+
+dataset:
+  proto: Seq2Seq
+  src:
+    hf_dataset: StanfordAIMI/report-summarization-mimic-cxr
+    hf_field: findings
+    tokenizer: allenai/biomed_roberta_base
+    tokenizer_max_len: 128
+  tgt:
+    hf_dataset: StanfordAIMI/report-summarization-mimic-cxr
+    hf_field: impression
+    tokenizer: allenai/biomed_roberta_base
+    tokenizer_max_len: 80
+
+model:
+  proto: RRS_HF
+  encoder: allenai/biomed_roberta_base
+  decoder: allenai/biomed_roberta_base
+
+trainor:
+  batch_size: 128
+  optimizer: RAdam
+  optim_params:
+    lr: 5e-5
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: bertscore
+
+validator:
+  batch_size: 4
+  beam_width: 2
+  metrics:
+    - ROUGEL
+    - BLEU
+    - chexbert
+    - radgraph
+    - bertscore
+  splits: [ validate ]
+
+ensemblor:
+  batch_size: 4
+  beam_width: 2
+  metrics:
+    - ROUGEL
+    - BLEU
+    - chexbert
+    - radgraph
+    - bertscore
+  splits: [ validate, test ]
+  mode: best-1

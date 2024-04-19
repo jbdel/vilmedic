@@ -1,8 +1,7 @@
 import tqdm
 import torch
-import torch.nn as nn
-from transformers import BertGenerationDecoder
-from transformers import GenerationConfig
+from transformers import EncoderDecoderModel, GenerationConfig
+import voxel as vx
 
 
 def get_special_token_ids(model, tokenizer):
@@ -18,9 +17,10 @@ def get_special_token_ids(model, tokenizer):
 
 
 def evaluation(models, config, dl, **kwargs):
-    models = [m if not isinstance(m, nn.DataParallel) else m.module for m in models]
-    hf_models = [model.dec.decoder for model in models]
-    hf_model = hf_models[0]  # one model only
+    hf_models = [m.model for m in models]
+
+    # only working with one model right now
+    hf_model: EncoderDecoderModel = hf_models[0]
 
     # Get tokenizer and reference sentences from dataloader
     try:
@@ -32,11 +32,9 @@ def evaluation(models, config, dl, **kwargs):
         tokenizer = dl.dataset.tgt_tokenizer
         max_len = dl.dataset.tgt_tokenizer_max_len
 
-    # Get tokens
-    bos_token_id, eos_token_id, pad_token_id = get_special_token_ids(hf_model, tokenizer)
-
     ref_list = []
     hyp_list = []
+    bos_token_id, eos_token_id, pad_token_id = get_special_token_ids(hf_model, tokenizer)
 
     generation_args = {
         "bos_token_id": bos_token_id,
@@ -56,25 +54,12 @@ def evaluation(models, config, dl, **kwargs):
     with torch.no_grad():
         for batch in tqdm.tqdm(dl):
             batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
-            batch_size = batch[ref_str].shape[0]
 
-            # Getting encoder infos
-            encoder_outputs = []
-            encoder_attention_masks = []
-            for hf in models:
-                encoder_output, encoder_attention_mask = hf.encode(**batch)
-                encoder_outputs.append(encoder_output)
-                encoder_attention_masks.append(encoder_attention_mask)
-
-            encoder_outputs, encoder_attention_mask = hf.encode(**batch)
-            # BertGenerationDecoder.generate
-
-            # lets gooooo
+            input_ids = batch["input_ids"]
             hyps = hf_model.generate(
-                input_ids=torch.ones((batch_size, 1), dtype=torch.long).cuda() * bos_token_id,
-                generation_config=GenerationConfig(**generation_args),
-                encoder_hidden_states=encoder_outputs,
-                encoder_attention_mask=encoder_attention_mask
+                input_ids,
+                generation_config=GenerationConfig(
+                    **{**generation_args, "decoder_start_token_id": tokenizer.cls_token_id})
             )
 
             refs = batch[ref_str]

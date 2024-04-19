@@ -7,7 +7,6 @@ dataset:
     resize: 256
     crop: 224
     ext: .jpg
-    load_memory: False
 
   seq:
     root: data/SELFSUP/mimic-cxr/

@@ -31,7 +31,10 @@ class InitValidator(object):
         self.epoch = 0
 
         # Evaluation splits
-        self.splits = [(split, create_data_loader(self.config, split, self.logger, called_by_validator=True,
+        self.splits = [(split, create_data_loader(self.config,
+                                                  split,
+                                                  self.logger,
+                                                  called_by_validator=True,
                                                   called_by_ensemblor=not from_training))
                        for split in self.config.splits]
 

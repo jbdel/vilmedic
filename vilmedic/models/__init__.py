@@ -4,12 +4,14 @@ try:
     # pkg_resources.require("transformers==4.23.1")
     from vilmedic.models.mvqa.MVQA import MVQA
 
-    from vilmedic.models.rrs.RRS import RRS
-    from vilmedic.models.rrs.RRS_SCST import RRS_SCST
+    # from vilmedic.models.rrs.RRS import RRS
+    # from vilmedic.models.rrs.RRS_SCST import RRS_SCST
+    from vilmedic.models.rrs.RRS_HF import RRS_HF
 
+    from vilmedic.models.rrg.RRG_HF import RRG_HF
     from vilmedic.models.rrg.RRG import RRG
-    from vilmedic.models.rrg.RRG_FORCE import RRG_FORCE
-    from vilmedic.models.rrg.RRG_SCST import RRG_SCST
+    # from vilmedic.models.rrg.RRG_FORCE import RRG_FORCE
+    # from vilmedic.models.rrg.RRG_SCST import RRG_SCST
 
     from vilmedic.models.selfsup.conVIRT import ConVIRT
     from vilmedic.models.selfsup.GLoRIA import GLoRIA

@@ -25,7 +25,6 @@ REWARD_COMPLIANT = {
     "chexbert": [F1CheXbert, 1],
     "radgraph": [F1RadGraph, 1],
     "bertscore": [BertScore, 1],
-    # "MAUVE": [MauveScorer, 0],
 }
 
 
@@ -77,9 +76,6 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
             scores["bertscore"] = BertScore()(refs, hyps)[0]
         elif metric in ['ROUGE1', 'ROUGE2', 'ROUGEL']:
             scores[metric] = Rouge(rouges=[metric.lower()])(refs, hyps)[0]
-        elif metric == 'MAUVE':
-            scores["MAUVE"] = round(
-                MauveScorer(config.mauve_featurize_model_name or "distilgpt2")(refs, hyps) * 100, 2)
         elif metric == 'accuracy':
             scores["accuracy"] = round(np.mean(np.array(refs) == np.argmax(hyps, axis=-1)) * 100, 2)
         elif metric == 'f1-score':
@@ -101,7 +97,7 @@ def compute_scores(metrics, refs, hyps, split, seed, config, epoch, logger, dump
             scores["radentitynli"] = RadEntityNLI()(refs, hyps)[0]
         elif metric == 'radgraph':
             scores["radgraph_simple"], scores["radgraph_partial"], scores["radgraph_complete"] = \
-                F1RadGraph(reward_level="all")(refs=refs, hyps=hyps)[0]
+                F1RadGraph(reward_level="all", model_type="radgraph-xl")(refs=refs, hyps=hyps)[0]
         elif metric == 'stanford_ct_abd_accuracy':
             scores["stanford_ct_abd"] = StanfordCTAbdAcc()(refs=refs, hyps=hyps)[0]
         else:

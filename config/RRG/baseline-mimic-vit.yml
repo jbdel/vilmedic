@@ -10,7 +10,6 @@ dataset:
     root: data/RRG/mimic-cxr/impression/
     file: image.tok
     image_path: data/images/
-    load_memory: False
     resize: 256
     crop: 224
     ext: .jpg

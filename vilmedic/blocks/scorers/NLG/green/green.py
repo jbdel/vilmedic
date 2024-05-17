@@ -233,7 +233,7 @@ if __name__ == '__main__':
     import time
 
     model = GREEN(
-        model_id_or_path="StanfordAIMI/RewardRadLLaMA-7b",
+        model_id_or_path="StanfordAIMI/GREEN",
         do_sample=False,  # should be always False
         batch_size=32,
         return_0_if_no_green_score=True,

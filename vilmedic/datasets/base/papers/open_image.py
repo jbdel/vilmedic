@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-import cv2
+# import cv2
 
 PAPER_EXT = {".gloria_chx": "gloria_chx_open_image"}
 

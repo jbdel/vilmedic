@@ -1,7 +1,6 @@
 import tqdm
 import torch
 from transformers import EncoderDecoderModel, GenerationConfig
-import voxel as vx
 
 
 def get_special_token_ids(model, tokenizer):

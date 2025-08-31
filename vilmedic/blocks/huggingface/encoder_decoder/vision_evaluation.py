@@ -16,7 +16,17 @@ def get_special_token_ids(model, tokenizer):
 
 
 def evaluation(models, config, dl, **kwargs):
-    hf_models = [m.model for m in models]
+    # Handle both regular models and DataParallel-wrapped models
+    hf_models = []
+    for m in models:
+        if hasattr(m, 'model'):
+            hf_models.append(m.model)
+        elif hasattr(m, 'module'):
+            # DataParallel case - the actual model is in .module
+            hf_models.append(m.module.model)
+        else:
+            # Direct model case
+            hf_models.append(m)
 
     # only working with one model right now
     hf_model: VisionEncoderDecoderModel = hf_models[0]
@@ -45,9 +55,10 @@ def evaluation(models, config, dl, **kwargs):
     }
 
     # Conditionally add optional parameters if they are not None
-    if config.length_penalty is not None:
+    # first, check attributes are in config and not None
+    if hasattr(config, 'length_penalty') and config.length_penalty is not None:
         generation_args["length_penalty"] = config.length_penalty
-    if config.beam_width is not None:
+    if hasattr(config, 'beam_width') and config.beam_width is not None:
         generation_args["num_beams"] = config.beam_width
 
     with torch.no_grad():

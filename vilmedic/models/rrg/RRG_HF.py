@@ -5,12 +5,14 @@ from importlib import import_module
 from vilmedic.models.utils import get_n_params
 from transformers.models.auto.modeling_auto import MODEL_MAPPING_NAMES, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING_NAMES
-from transformers import VisionEncoderDecoderModel, AutoModel, BertLMHeadModel
+from transformers import VisionEncoderDecoderModel, AutoModel, BertLMHeadModel, AutoModelForCausalLM
 from torch.nn import CrossEntropyLoss
 
 from vilmedic.blocks.huggingface.encoder_decoder.vision_evaluation import evaluation
+from vilmedic.blocks.huggingface.encoder_decoder.vision_multi_evaluation import evaluation as evaluation_multi
 
 from omegaconf.dictconfig import DictConfig
+
 
 
 class RRG_HF(nn.Module):
@@ -18,7 +20,7 @@ class RRG_HF(nn.Module):
         super().__init__()
         assert (encoderdecoder is None) ^ (decoder is None or vision is None), \
             "Either proto should be provided, or both decoder and vision should be provided."
-
+        
         if encoderdecoder is not None:
             self.model = VisionEncoderDecoderModel.from_pretrained(encoderdecoder)
         else:
@@ -83,7 +85,7 @@ class RRG_HF(nn.Module):
                 decoder = model_class(dec_config)
 
             elif isinstance(decoder, str):
-                decoder = AutoModel.from_pretrained(decoder)
+                decoder = AutoModelForCausalLM.from_pretrained(decoder, add_cross_attention=True)
             else:
                 raise NotImplementedError(type(decoder))
 
@@ -99,41 +101,81 @@ class RRG_HF(nn.Module):
             assert self.model.decoder.config.add_cross_attention
 
             # Evaluation
-            self.eval_func = evaluation
+            self.eval_func = evaluation_multi
+
+
 
     def forward(self, input_ids, attention_mask, images, images_mask=None, epoch=None, iteration=None, **kwargs):
-        image_dim = images.dim()
-        if image_dim == 5:
-            first_image = images[:, 0, :, :, :]
-        elif image_dim == 4:
-            first_image = images
-        else:
-            raise NotImplementedError(image_dim)
+        """
+        Supports both single-image (4D) and multi-image (5D) batches.
+        Uses images_mask ([B, N]) to build a patch-level encoder_attention_mask.
+        """
+        B = images.shape[0]
+        device = images.device
 
-        encoder_outputs = self.model.encoder(
-            pixel_values=first_image.cuda(),
-        )
+        # --- MULTI-IMAGE CASE ---
+        if images.dim() == 5:
+            # images: [B, N, C, H, W]
+            B, N, C, H, W = images.shape
 
-        encoder_hidden_states = encoder_outputs[0]
+            # if no mask provided, assume all crops valid
+            if images_mask is None:
+                mask = torch.ones((B, N), dtype=torch.bool, device=device)
+            else:
+                mask = images_mask.to(device).bool()
 
-        # optionally project encoder_hidden_states
-        if (
+            # 1) flatten and encode all crops at once
+            flat_pixels = images.view(B * N, C, H, W).cuda()
+            enc_out = self.model.encoder(pixel_values=flat_pixels)
+            flat_hidden = enc_out.last_hidden_state                      # [B*N, S, D]
+            S, D = flat_hidden.shape[1], flat_hidden.shape[2]
+
+            # 2) concat along sequence axis → [B, N*S, D]
+            encoder_hidden_states = flat_hidden.view(B, N * S, D)
+
+            # 3) optional proj to decoder dim
+            if (self.model.encoder.config.hidden_size != 
+                self.model.decoder.config.hidden_size
+                and self.model.decoder.config.cross_attention_hidden_size is None):
+                encoder_hidden_states = self.model.enc_to_dec_proj(encoder_hidden_states)
+
+            # 4) build patch-level attention mask [B, N] → [B, N*S]
+            attn_mask = mask.unsqueeze(-1).expand(B, N, S).reshape(B, N * S).long()
+
+            # 5) decode with precomputed states + mask
+            decoder_outputs = self.model.decoder(
+                input_ids=input_ids.cuda(),
+                attention_mask=attention_mask.cuda(),
+                encoder_hidden_states=encoder_hidden_states.cuda(),
+                encoder_attention_mask=attn_mask.cuda(),
+                labels=input_ids.cuda(),
+            )
+
+        # --- SINGLE-IMAGE CASE (unchanged) ---
+        elif images.dim() == 4:
+            # images: [B, C, H, W]
+            enc_out = self.model.encoder(pixel_values=images.cuda())
+            encoder_hidden_states = enc_out.last_hidden_state
+
+            if (
                 self.model.encoder.config.hidden_size != self.model.decoder.config.hidden_size
                 and self.model.decoder.config.cross_attention_hidden_size is None
-        ):
-            encoder_hidden_states = self.model.enc_to_dec_proj(encoder_hidden_states)
+            ):
+                encoder_hidden_states = self.model.enc_to_dec_proj(encoder_hidden_states)
 
-        # Decode
-        decoder_outputs = self.model.decoder(
-            input_ids=input_ids.cuda(),
-            attention_mask=attention_mask.cuda(),
-            encoder_hidden_states=encoder_hidden_states.cuda(),
-            encoder_attention_mask=None,
-            labels=input_ids.cuda(),
-        )
+            decoder_outputs = self.model.decoder(
+                input_ids=input_ids.cuda(),
+                attention_mask=attention_mask.cuda(),
+                encoder_hidden_states=encoder_hidden_states.cuda(),
+                encoder_attention_mask=None,
+                labels=input_ids.cuda(),
+            )
 
-        out = vars(decoder_outputs)
-        return out
+        else:
+            raise NotImplementedError(f"Unexpected images.dim() = {images.dim()}")
+
+        return vars(decoder_outputs)
+
 
     def __repr__(self):
         s = "model: RRG_HF\n"

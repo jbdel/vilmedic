@@ -1,0 +1,68 @@
+ckpt_dir: ckpt
+dataset:
+  proto: ImSeq
+  image:
+    root: data/RRG/mimic-cxr/impression/
+    file: image.tok
+    image_path: data/images/
+    resize: 256
+    crop: 224
+    ext: .jpg
+  seq:
+    root: data/RRG/mimic-cxr/impression/
+    file: impression.tok
+    tokenizer: allenai/biomed_roberta_base
+    tokenizer_max_len: 100
+    processing: ifcc_clean_report
+    source: tgt
+
+
+model:
+  vision:
+    proto_model: deit
+    proto_config: deit
+
+
+  decoder:
+    proto_model: bert-generation
+    proto_config: bert-generation
+    proto_config_args:
+      num_hidden_layers: 2
+      hidden_size: 768
+
+trainor:
+  batch_size: 128
+  optimizer: RAdam
+  optim_params:
+    lr: 5e-5
+    weight_decay: 0.
+  lr_decay: ReduceLROnPlateau
+  lr_decay_params:
+    factor: 0.8
+    patience: 1
+    min_lr: 0.000001
+    threshold_mode: abs
+  epochs: 99
+  early_stop: 10
+  eval_start: 0
+  early_stop_metric: bertscore
+
+validator:
+  batch_size: 4
+  beam_width: 8
+  metrics:
+    - bertscore
+  splits: [validate]
+
+
+ensemblor:
+  batch_size: 4
+  beam_width: 8
+  metrics:
+    - ROUGEL
+    - BLEU
+    - METEOR
+    - chexbert
+    - radgraph
+  splits: [validate, test]
+  mode: best-1

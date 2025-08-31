@@ -21,7 +21,8 @@ class Vocab:
                  unk_token="[UNK]",
                  mask_token="[MASK]"):
         self.vocab = list(itertools.chain(*sentences))
-        self.words = [bos_token, pad_token, eos_token, unk_token, mask_token] + sorted(set(self.vocab))
+        self.words = [bos_token, pad_token, eos_token,
+                      unk_token, mask_token] + sorted(set(self.vocab))
 
     def dump(self, path):
         open(path, "w").write("\n".join(str(w) for w in self.words))
@@ -30,11 +31,14 @@ class Vocab:
 class Labels:
     def __init__(self, labels=None):
         if labels is not None:
-            self.labels = list(set([l for label in labels for l in label.split(',')]))
-            self.multi_label = max([len(label.split(',')) for label in labels]) > 1
+            self.labels = list(
+                set([l for label in labels for l in label.split(',')]))
+            self.multi_label = max([len(label.split(','))
+                                   for label in labels]) > 1
 
     def dump(self, path):
-        open(path, "w").write("\n".join(str(w) for w in ["multi-label:" + str(self.multi_label)] + self.labels))
+        open(path, "w").write("\n".join(str(w)
+                                        for w in ["multi-label:" + str(self.multi_label)] + self.labels))
 
     def load(self, path):
         self.labels = [w.strip() for w in open(path, "r").readlines()]
@@ -45,7 +49,7 @@ class Labels:
         return self
 
 
-def process_hf_dataset(datasets, hf_local: bool, hf_filter, hf_field: str, split: str) -> List:
+def process_hf_dataset(datasets, hf_local: bool, hf_filter, hf_field: str, split: str):
     # Normalize both datasets and hf_filter to lists
     if isinstance(datasets, str):
         datasets = [datasets]
@@ -65,9 +69,10 @@ def process_hf_dataset(datasets, hf_local: bool, hf_filter, hf_field: str, split
             column_name
             for column_name in dataset.column_names
             if column_name != hf_field and (
-                    isinstance(first_example[column_name], Image.Image) or
-                    (isinstance(first_example[column_name], list) and first_example[column_name] and isinstance(
-                        first_example[column_name][0], Image.Image))
+                isinstance(first_example[column_name], Image.Image) or
+                (isinstance(first_example[column_name], list) and
+                 first_example[column_name] and 
+                 isinstance(first_example[column_name][0], Image.Image))
             )
         ]
 
@@ -79,9 +84,12 @@ def process_hf_dataset(datasets, hf_local: bool, hf_filter, hf_field: str, split
 
         # Selecting field
         dataset = dataset.select_columns([hf_field])
-        return [d[hf_field] for d in tqdm.tqdm(dataset, desc=f"Loading {hf_field}")]
+        return dataset
 
-    results = []
-    for dataset_name in datasets:
-        results.extend(process_single_dataset(dataset_name))
-    return results
+    # Concatenate all datasets if multiple
+    if len(datasets) == 1:
+        return process_single_dataset(datasets[0])
+    else:
+        from datasets import concatenate_datasets
+        all_datasets = [process_single_dataset(dataset_name) for dataset_name in datasets]
+        return concatenate_datasets(all_datasets)

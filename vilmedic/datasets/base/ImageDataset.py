@@ -4,6 +4,7 @@ import pydicom
 import json
 import PIL
 import tqdm
+import numpy as np
 
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset
@@ -11,11 +12,11 @@ from torchvision.transforms import *
 from transformers.image_utils import PILImageResampling
 
 from .utils import load_file, process_hf_dataset
-from .papers.open_image import *
 from .papers.transforms import *
 from pydicom.pixel_data_handlers.util import apply_voi_lut
 from torch.utils.data._utils.collate import default_collate as pytorch_default_collate
 from transformers import ViTImageProcessor
+import multiprocessing
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # Are we sure ?
 PIL.Image.MAX_IMAGE_PIXELS = None  # Are we sure ?
@@ -65,13 +66,24 @@ def read_images(root, split, file):
         return [[x] for x in np.load(file_path)]
 
     lines = load_file(file_path)
-    return [[image for image in line.split(',')] for line in lines]
+    images = []
+    for line in lines:
+        paths = line.split(',')
+        # Assert each path exists
+        for p in paths:
+            img_path = p.strip()
+            assert os.path.exists(img_path), f"Image path does not exist: {img_path}"
+        images.append([p.strip() for p in paths])
 
+    return images
 
-def get_transforms(split, resize, crop, custom_transform_train, custom_transform_validate, ext, called_by_ensemblor):
+def get_transforms(split, resize, crop, custom_transform_train, custom_transform_validate, ext, hf_processor, called_by_ensemblor):
     # If called_by_ensemblor, return custom_transform_validate or evaluation transform
     if called_by_ensemblor:
         split = not "train"
+
+    if hf_processor is not None:
+        return hf_processor
 
     if custom_transform_train is not None and split == "train":
         return eval(custom_transform_train)
@@ -98,14 +110,12 @@ def get_transforms(split, resize, crop, custom_transform_train, custom_transform
                                  (0.229, 0.224, 0.225))])
 
 
-def open_image(image, ext, image_path):
+def open_image(image, ext):
     if isinstance(image, Image.Image):
         if image.mode == 'RGB':
             return image
         else:
             return image.convert('RGB')
-
-    image = os.path.join(image_path, image)
 
     if ext == '.jpg' or ext == '.jpeg':
         return Image.open(image).convert('RGB')
@@ -130,15 +140,12 @@ def open_image(image, ext, image_path):
             image = torch.from_numpy(image)
         return image
 
-    # Special cases
-    if ext in PAPER_EXT.keys():
-        return eval(PAPER_EXT[ext])(image)
 
     raise NotImplementedError("Image extension {} not implemented".format(ext))
 
 
-def do_images(images, transform, ext, image_path):
-    opened_images = [open_image(im, ext, image_path) for im in images]
+def do_images(images, transform, ext):
+    opened_images = [open_image(im, ext) for im in images]
     transformed_images = [transform(im) for im in opened_images]
     return transformed_images
 
@@ -160,6 +167,7 @@ class ImageDataset(Dataset):
                  hf_field=None,
                  hf_local=None,
                  hf_filter=None,
+                 hf_processor=None,
                  **kwargs):
 
         assert split is not None, "Argument split cant be None"
@@ -167,6 +175,8 @@ class ImageDataset(Dataset):
         assert hf_dataset is None or (hf_field is not None), "If 'hf_dataset' is not None, " \
                                                              "then 'hf_field' must also " \
                                                              "be not None."
+        # You cannot have file and hf_dataset at the same time
+        assert file is None or hf_dataset is None, "You cannot have file and hf_dataset at the same time"
 
         self.root = root
         self.file = file
@@ -183,13 +193,54 @@ class ImageDataset(Dataset):
 
         if hf_dataset is not None:
             dataset = process_hf_dataset(hf_dataset, hf_local, hf_filter, hf_field, split)
-
-            first_example = dataset[0]
-            if not isinstance(first_example, list):
-                assert isinstance(first_example, Image.Image) or isinstance(first_example, str)
-                self.images = [[d] for d in dataset]
+            
+            # Check if data is list or single items
+            first_example = dataset[0][hf_field]
+            is_list = isinstance(first_example, list)
+            
+            # Validate and fix paths using HF dataset's map (multithreaded)
+            def validate_and_fix_paths(example):
+                """Validate image paths and fix with image_path if needed"""
+                item = example[hf_field]
+                
+                # Handle both single items and lists
+                items = item if isinstance(item, list) else [item]
+                validated_items = []
+                
+                for img in items:
+                    if isinstance(img, str):
+                        if self.image_path:
+                            full_path = os.path.join(self.image_path, img)
+                            if os.path.exists(full_path):
+                                validated_items.append(full_path)
+                            else:
+                                raise FileNotFoundError(f"Image file not found: {img} or {full_path}")
+                        else:
+                            raise FileNotFoundError(f"Image file not found: {img}")
+          
+                    elif isinstance(img, Image.Image):
+                        validated_items.append(img)
+                    else:
+                        raise TypeError(f"Unexpected image type: {type(img)}")
+                
+                # Return in same format as input
+                example[hf_field] = validated_items if isinstance(item, list) else validated_items[0]
+                return example
+            
+            # Apply validation using map (multithreaded)
+            cpu_count = multiprocessing.cpu_count()
+            dataset = dataset.map(
+                validate_and_fix_paths,
+                desc="Validating image paths (cpu count: {})".format(cpu_count),
+                num_proc=cpu_count,
+            )
+            
+            # Convert to list format expected by rest of code
+            if not is_list:
+                self.images = [[d[hf_field]] for d in dataset]
             else:
-                self.images = dataset
+                self.images = [d[hf_field] for d in dataset]
+
 
         self.transform = get_transforms(split,
                                         self.resize,
@@ -197,29 +248,14 @@ class ImageDataset(Dataset):
                                         custom_transform_train,
                                         custom_transform_validate,
                                         self.ext,
+                                        hf_processor,
                                         called_by_ensemblor)
 
     def __len__(self):
         return len(self.images or [])
 
     def __getitem__(self, index):
-        return {'image': do_images(self.images[index], self.transform, self.ext, self.image_path)}
-
-    def inference(self, image):
-        if not isinstance(image, (list, str)):
-            raise TypeError("Input for image must be str or list")
-
-        if isinstance(image, str):
-            image = [[image]]
-
-        if isinstance(image, list):
-            for i, im in enumerate(image):
-                if isinstance(im, str):
-                    image[i] = [im]
-
-        # Image is a list of example, an example a list of images.
-        batch = [{'image': do_images(i, self.transform, self.ext, self.image_path)} for i in image]
-        return self.get_collate_fn()(batch)
+        return {'image': do_images(self.images[index], self.transform, self.ext)}
 
     def get_collate_fn(self):
         def collate_fn(batch):

@@ -17,19 +17,21 @@ class ConfigTrainor(object):
         self.config = config
         self.seed = seed
         self.state = None
-        self.ckpt_dir = self.config.ckpt_dir
-        self.ckpt = self.config.ckpt
+        self.ckpt_dir = config.ckpt_dir
+        self.ckpt = config.get('ckpt') if hasattr(config, 'ckpt') else None
 
         # Training
-        self.eval_start = self.config.eval_start or 0
-        self.decay_metric_start = self.config.decay_metric_start or 0
-        self.early_stop_start = self.config.early_stop_start or 0
-        self.grad_accu = self.config.grad_accu or 1
-        self.clip_grad_norm = self.config.clip_grad_norm
-
+        self.eval_start = config.get('eval_start', 0)
+        self.decay_metric_start = config.get('decay_metric_start', 0)
+        self.early_stop_start = config.get('early_stop_start', 0)
+        self.grad_accu = config.get('grad_accu', 1)
+        self.clip_grad_norm = config.get('clip_grad_norm') if hasattr(config, 'clip_grad_norm') else None
+        
+        # Optional optimizations
+        self.use_amp = config.get('use_amp', False) if hasattr(config, 'use_amp') else False
         # Do we resume training?
-        if config.ckpt is not None:
-            self.state = torch.load(config.ckpt)
+        if self.ckpt is not None:
+            self.state = torch.load(self.ckpt)
 
         # Logger
         self.logger = logging.getLogger(str(self.seed))
@@ -52,6 +54,7 @@ class ConfigTrainor(object):
                                   logger=self.logger,
                                   from_training=True,
                                   state_dict=self.state)
+        
 
         # Optimizer
         self.optimizer = create_optimizer(config=self.config,
@@ -89,7 +92,8 @@ class Trainor(ConfigTrainor):
 
             # Training
             for iteration, batch in enumerate(pbar, start=1):
-                with torch.cuda.amp.autocast(enabled=self.scaler.is_enabled()):
+                # Use autocast with float16 when AMP is enabled
+                with torch.autocast(device_type='cuda', dtype=torch.float16, enabled=self.scaler.is_enabled()):
                     out = self.model(**batch, epoch=epoch, iteration=iteration)
 
                 # If the model is taking care of it own training
@@ -102,17 +106,18 @@ class Trainor(ConfigTrainor):
                     loss = loss.mean()
                 self.scaler.scale(loss).backward()
 
-                if self.clip_grad_norm is not None:
-                    self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.config.clip_grad_norm)
-
                 losses.append(loss.item())
 
                 if iteration % self.grad_accu == 0:
+                    # Only unscale when we're about to step
+                    if self.clip_grad_norm is not None:
+                        self.scaler.unscale_(self.optimizer)
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.clip_grad_norm)
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
                     self.optimizer.zero_grad()
-                    self.training_scheduler.iteration_step()
+                    frac_epoch = epoch + float(iteration) / len(self.dl)
+                    self.training_scheduler.iteration_step(frac_epoch)
 
                     log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {} {}'.format(
                         epoch + 1,
@@ -121,20 +126,23 @@ class Trainor(ConfigTrainor):
                         self.training_scheduler.early_stop_metric,
                         self.training_scheduler.current_best_metric,
                         self.training_scheduler.early_stop,
-                        out["custom_print"] if "custom_print" in out else ""
+                        out.get("custom_print", "")
                     )
                     pbar.set_description(log)
 
                 # break
             # Perform last update if needed
             if (iteration % self.grad_accu != 0) and ('loss' in out):
+                # Only unscale when we're about to step
                 if self.clip_grad_norm is not None:
                     self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.config.clip_grad_norm)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.clip_grad_norm)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
-                self.training_scheduler.iteration_step()
+                # ensure final scheduler step
+                frac_epoch = epoch + float(iteration) / len(self.dl)
+                self.training_scheduler.iteration_step(frac_epoch)
 
             # End of epoch
             self.logger.info(log)
@@ -149,7 +157,8 @@ class Trainor(ConfigTrainor):
             training_loss = sum(losses) / iteration
 
             # Compute early_stop_score according to early_stop_metric if specified
-            if self.config.early_stop_metric == "training_loss" and do_earl_stop:
+            early_stop_metric = self.config.get('early_stop_metric') if hasattr(self.config, 'early_stop_metric') else None
+            if early_stop_metric == "training_loss" and do_earl_stop:
                 early_stop_score = training_loss
 
             # Do eval ?
@@ -157,8 +166,8 @@ class Trainor(ConfigTrainor):
                 self.evaluator.epoch = epoch
                 self.evaluator.start()
                 # Compute early stop according to evaluation metric if specified
-                if self.config.early_stop_metric != "training_loss" and do_earl_stop:
-                    early_stop_score = np.mean([s[self.config.early_stop_metric] for s in self.evaluator.scores])
+                if early_stop_metric != "training_loss" and do_earl_stop:
+                    early_stop_score = np.mean([s[early_stop_metric] for s in self.evaluator.scores])
 
             # Record decay_metric (will not be used further if scheduler != ReduceLROnPlateau)
             if do_lr_decay:

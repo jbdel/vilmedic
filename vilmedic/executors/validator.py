@@ -22,13 +22,21 @@ class InitValidator(object):
         self.models = models
 
         # Metrics
-        self.metrics = config.metrics
+        self.metrics = config.get('metrics', []) if hasattr(config, 'metrics') else []
         if not isinstance(self.metrics, (list, ListConfig)):
             self.metrics = [self.metrics]
 
-        self.post_processing = config.post_processing
+        # Safely handle post_processing
+        self.post_processing = config.get('post_processing', None) if hasattr(config, 'post_processing') else None
 
         self.epoch = 0
+
+        # Check if splits exist
+        if not hasattr(config, 'splits'):
+            self.logger.warning("No splits defined in config, using ['val'] as default")
+            splits = ['val']
+        else:
+            splits = config.splits
 
         # Evaluation splits
         self.splits = [(split, create_data_loader(self.config,
@@ -36,7 +44,7 @@ class InitValidator(object):
                                                   self.logger,
                                                   called_by_validator=True,
                                                   called_by_ensemblor=not from_training))
-                       for split in self.config.splits]
+                       for split in splits]
 
 
 class Validator(InitValidator):
@@ -85,15 +93,17 @@ class Validator(InitValidator):
                                      )
             scores.update(metrics)
 
-            # Dumping things for potential post processing
-            post_processing(post_processing=self.post_processing,
-                            results=results,
-                            split=split,
-                            seed=self.seed,
-                            ckpt_dir=self.config.ckpt_dir,
-                            epoch=self.epoch,
-                            dl=dl
-                            )
+            # Only run post-processing if it's defined
+            if self.post_processing is not None:
+                # Dumping things for potential post processing
+                post_processing(post_processing=self.post_processing,
+                                results=results,
+                                split=split,
+                                seed=self.seed,
+                                ckpt_dir=self.config.get('ckpt_dir') if hasattr(self.config, 'ckpt_dir') else None,
+                                epoch=self.epoch,
+                                dl=dl
+                                )
 
             # Logging scores
             self.logger.info(json.dumps(scores, indent=4, sort_keys=False))

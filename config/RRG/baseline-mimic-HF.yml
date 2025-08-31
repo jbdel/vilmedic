@@ -1,5 +1,5 @@
 includes:
-  - config/RRG/biomed-roberta-baseline-mimic.yml
+  - config/RRG/baseline-HF.yml
 name: rrg_mimic_baseline
 
 dataset:
@@ -19,10 +19,3 @@ model:
     proto_config_args:
       num_hidden_layers: 2
       hidden_size: 768
-
-
-trainor:
-  batch_size: 128
-  optim_params:
-    lr: 0.001
-

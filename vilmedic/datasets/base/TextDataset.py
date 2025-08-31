@@ -70,8 +70,10 @@ class TextDataset(Dataset):
 
         if hf_dataset is not None:
             dataset = process_hf_dataset(hf_dataset, hf_local, hf_filter, hf_field, split)
+            # Extract text from dataset and process
+            sentences = [d[hf_field] for d in tqdm.tqdm(dataset, desc=f"Loading {hf_field}")]
             self.sentences = split_sentences(
-                sentences=dataset,
+                sentences=sentences,
                 processing=self.processing
             )
 
@@ -118,12 +120,6 @@ class TextDataset(Dataset):
 
     def __len__(self):
         return len(self.sentences or [])
-
-    def inference(self, sentences):
-        if not isinstance(sentences, list):
-            sentences = [sentences]
-        batch = [{'{}_seq'.format(self.source): self.processing(s)} for s in sentences]
-        return self.get_collate_fn()(batch)
 
     def __repr__(self):
         return "TextDataset\n" + \

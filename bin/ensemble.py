@@ -38,7 +38,7 @@ def main():
     ensemble_config = get(config, 'ensemblor')
     seed = '{}_{}'.format(ensemble_config.mode, get_seed())
 
-    set_logger(config.ckpt_dir, seed, ensemble_config.log_dir)
+    set_logger(config.ckpt_dir, seed, ensemble_config.get('log_dir', None))
 
     # Nice printing the args
     print_args(config, ['ensemblor'], seed, override)
@@ -54,7 +54,8 @@ def main():
     ckpts = get_ckpts(os.path.join(evaluator.config.ckpt_dir, '*.pth'), ensemble_config.mode)
 
     # if specific checkpoint is specified
-    if ensemble_config.ckpt is not None:
+    
+    if ensemble_config.get("ckpt", None) is not None:
         if os.path.isfile(ensemble_config.ckpt):
             ckpts = [ensemble_config.ckpt]
         else:

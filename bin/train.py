@@ -21,7 +21,7 @@ def main():
     os.makedirs(config.ckpt_dir, exist_ok=True)
 
     # If ckpt is specified, we continue training. Let's extract seed
-    if config.ckpt:
+    if hasattr(config, 'ckpt') and config.get('ckpt'):
         config.ckpt = os.path.join(config.ckpt_dir, config.ckpt) if not os.path.exists(config.ckpt) else config.ckpt
         assert os.path.exists(config.ckpt), f"Path '{config.ckpt}' does not exist"
         seed = extract_seed_from_ckpt(config.ckpt)

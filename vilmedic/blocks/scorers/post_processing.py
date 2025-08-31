@@ -192,14 +192,30 @@ def post_processing(post_processing, results, ckpt_dir, seed, dl, **kwargs):
     logger = logging.getLogger(str(seed))
     pp_dir = os.path.join(ckpt_dir, 'post_processing')
     os.makedirs(pp_dir, exist_ok=True)
+    
+    # Convert post_processing to list if it's not already
+    if not isinstance(post_processing, (list, omegaconf.listconfig.ListConfig)):
+        post_processing = [post_processing]
+        
     for pp in post_processing:
-        if "plot_attention" in pp:  # Plot attention weights
+        if isinstance(pp, str):
+            if pp == "plot_attention":
+                plot_attention(results=results, pp_dir=pp_dir, seed=seed, logger=logger, **kwargs)
+            else:
+                logger.warn("Post-processing: No function implemented for string '{}'".format(pp))
+            continue
+            
+        # Handle dict or OmegaConf objects
+        if hasattr(pp, "plot_attention") or "plot_attention" in pp:  # Plot attention weights
             plot_attention(results=results, pp_dir=pp_dir, seed=seed, logger=logger, **kwargs)
-        if "plot_representation" in pp:
+        if hasattr(pp, "plot_representation") or "plot_representation" in pp:
+            plot_representation_args = pp.get("plot_representation", {}) if hasattr(pp, "get") else pp["plot_representation"]
             plot_representation(results=results, pp_dir=pp_dir, seed=seed, logger=logger, dl=dl,
-                                **pp["plot_representation"], **kwargs)
-        if "save_representation" in pp:
+                                **plot_representation_args, **kwargs)
+        if hasattr(pp, "save_representation") or "save_representation" in pp:
+            save_representation_args = pp.get("save_representation", {}) if hasattr(pp, "get") else pp["save_representation"]
             save_representation(results=results, pp_dir=pp_dir, seed=seed, logger=logger,
-                                **pp["save_representation"], **kwargs)
+                                **save_representation_args, **kwargs)
         else:
-            logger.warn("Post-processing: No function implemented for '{}'".format(pp))
+            pp_name = getattr(pp, "_content", repr(pp))
+            logger.warn("Post-processing: No function implemented for '{}'".format(pp_name))

@@ -42,6 +42,26 @@ def get_eval_func(models):
     return dummy.eval_func
 
 
+def get_safe_logger(logger, is_main_process=True):
+    """
+    Returns a logger that safely handles non-main process calls.
+    If not main process, returns a dummy logger that ignores all calls.
+    """
+    if is_main_process and logger is not None:
+        return logger
+    
+    # Create a dummy logger that does nothing
+    import logging
+    dummy = logging.getLogger('dummy')
+    dummy.addHandler(logging.NullHandler())
+    dummy.settings = lambda msg: None
+    dummy.critical = lambda msg: None
+    dummy.info = lambda msg: None
+    dummy.warning = lambda msg: None
+    dummy.error = lambda msg: None
+    return dummy
+
+
 def create_optimizer(config, logger, model_params, state_dict=None):
     if not hasattr(config, 'optim_params') or not hasattr(config.optim_params, 'lr'):
         raise ValueError("config.optim_params.lr is required")
@@ -74,7 +94,7 @@ def create_optimizer(config, logger, model_params, state_dict=None):
     return optimizer
 
 
-def create_model(config, dl, logger, from_training=True, state_dict=None):
+def create_model(config, dl, logger, from_training=True, state_dict=None, from_accelerate=False):
     # Create model, give him dataloader also
     config_copy = copy.deepcopy(config.model)
     
@@ -100,18 +120,24 @@ def create_model(config, dl, logger, from_training=True, state_dict=None):
     else:
         logger.info(model)
 
-    model = model.cuda()
+    # When using Accelerate, don't manually move to CUDA or wrap in DataParallel
+    # Accelerate's prepare() method will handle device placement and distribution
+    if not from_accelerate:
+        model = model.cuda()
 
-    if torch.cuda.device_count() > 1:
-        logger.info("Using {} GPUs!".format(torch.cuda.device_count()))
-        model = torch.nn.DataParallel(model)
-        logger.warning("Using DataParallel - expect ~60-70% GPU utilization. "
-                      "Consider using DistributedDataParallel (DDP) for better performance: "
-                      "typically 85-95% GPU utilization and better scaling.")
+        if torch.cuda.device_count() > 1:
+            logger.info("Using {} GPUs!".format(torch.cuda.device_count()))
+            model = torch.nn.DataParallel(model)
+            logger.warning("Using DataParallel - expect ~60-70% GPU utilization. "
+                          "Consider using DistributedDataParallel (DDP) for better performance: "
+                          "typically 85-95% GPU utilization and better scaling.")
+    else:
+        logger.info("Model created for Accelerate (device placement and distribution handled by Accelerate)")
+    
     return model
 
 
-def create_data_loader(config, split, logger, called_by_validator=False, called_by_ensemblor=False):
+def create_data_loader(config, split, logger, called_by_validator=False, called_by_ensemblor=False, from_accelerate=False):
     dataset_config = copy.deepcopy(config.dataset)
     
     # Check if proto exists
@@ -136,16 +162,13 @@ def create_data_loader(config, split, logger, called_by_validator=False, called_
 
     # Get batch size with fallback
     batch_size = config.get('batch_size', 1) if hasattr(config, 'batch_size') else 1
-    
-    # Get drop_last with fallback
-    drop_last = config.get('drop_last', False) if hasattr(config, 'drop_last') else False
-    
+        
     # RandomSampler for train split, during training only
     if split == 'train' and not called_by_validator:
         sampler = BatchSampler(
             RandomSampler(dataset),
             batch_size=batch_size,
-            drop_last=drop_last)
+            drop_last=True)
         logger.info('Using ' + type(sampler.sampler).__name__)
 
     else:
@@ -299,34 +322,43 @@ class LinearWarmupWrapper(object):
 
 
 class TrainingScheduler(object):
-    iter_step_scheduler = {"CyclicLR", "OneCycleLR", "CosineAnnealingWarmRestarts"}
-    epoch_step_scheduler = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", "ConstantLR", "LinearLR",
-                            "ExponentialLR", "ChainedScheduler", "SequentialLR", "CosineAnnealingLR",
-                            "LinearWarmupCosineAnnealingLR"}
-    val_step_scheduler = {"ReduceLROnPlateau"}
+    """Manages learning rate scheduling and early stopping during training."""
+    
+    # Scheduler categories for different step types
+    ITER_STEP_SCHEDULERS = {"CyclicLR", "OneCycleLR", "CosineAnnealingWarmRestarts"}
+    EPOCH_STEP_SCHEDULERS = {"LambdaLR", "MultiplicativeLR", "StepLR", "MultiStepLR", 
+                            "ConstantLR", "LinearLR", "ExponentialLR", "ChainedScheduler", 
+                            "SequentialLR", "CosineAnnealingLR", "LinearWarmupCosineAnnealingLR"}
+    VAL_STEP_SCHEDULERS = {"ReduceLROnPlateau"}
 
     def __init__(self, lr_decay_func, optimizer, early_stop_metric, early_stop_limit, lr_decay_params):
-        super().__init__()
-
-        # Initialize basic attributes
+        # Basic training state
         self.epoch = 0
-        self.early_stop = 0
-        self.early_stop_limit = early_stop_limit
-        self.early_stop_metric = early_stop_metric
         self.iteration_count = 0
         self.scheduler_name = lr_decay_func
         
-        # Convert lr_decay_params to dictionary (values already converted to proper types in config parsing)
-        if lr_decay_params is not None:
-            if hasattr(lr_decay_params, 'items'):
-                self.lr_decay_params = dict(lr_decay_params.items())
-            else:
-                self.lr_decay_params = lr_decay_params
-        else:
-            self.lr_decay_params = {}
+        # Early stopping configuration
+        self.early_stop = 0
+        self.early_stop_limit = early_stop_limit
+        self.early_stop_metric = early_stop_metric
+        self._setup_early_stopping_mode()
         
-        # Setup early stopping mode and comparison function
-        if early_stop_metric in ['validation_loss', 'training_loss']:
+        # Process lr_decay parameters
+        self.lr_decay_params = self._process_lr_params(lr_decay_params)
+        self.decay_on_training_loss = self.lr_decay_params.pop('decay_on_training_loss', False)
+        
+        # Setup warmup configuration
+        self.warmup_steps = self.lr_decay_params.pop('warmup_steps', 0)
+        self.warmup_ratio = self.lr_decay_params.pop('warmup_ratio', None)
+        self.base_lr = optimizer.param_groups[0]['lr']
+        
+        # Create scheduler with optional warmup wrapper
+        self.scheduler = self._create_scheduler(optimizer, lr_decay_func)
+        self.use_warmup = isinstance(self.scheduler, LinearWarmupWrapper)
+    
+    def _setup_early_stopping_mode(self):
+        """Configure early stopping comparison mode."""
+        if self.early_stop_metric in ['validation_loss', 'training_loss']:
             self.metric_comp_func = operator.lt
             self.mode = 'min'
             self.current_best_metric = float('inf')
@@ -334,35 +366,32 @@ class TrainingScheduler(object):
             self.metric_comp_func = operator.gt
             self.mode = 'max'
             self.current_best_metric = -float('inf')
-        
-        # Handle decay_on_training_loss flag
-        self.decay_on_training_loss = self.lr_decay_params.pop('decay_on_training_loss', False)
-        
-        # Set mode for ReduceLROnPlateau if not specified
-        if self.scheduler_name == 'ReduceLROnPlateau' and 'mode' not in self.lr_decay_params:
+    
+    def _process_lr_params(self, lr_decay_params):
+        """Convert lr_decay_params to dictionary."""
+        if lr_decay_params is None:
+            return {}
+        if hasattr(lr_decay_params, 'items'):
+            return dict(lr_decay_params.items())
+        return lr_decay_params
+    
+    def _create_scheduler(self, optimizer, lr_decay_func):
+        """Create the learning rate scheduler with optional warmup."""
+        # Set mode for ReduceLROnPlateau
+        if lr_decay_func == 'ReduceLROnPlateau' and 'mode' not in self.lr_decay_params:
             self.lr_decay_params['mode'] = self.mode
         
-        # Extract warmup parameters
-        self.warmup_steps = self.lr_decay_params.pop('warmup_steps', 0)
-        self.warmup_ratio = self.lr_decay_params.pop('warmup_ratio', None)
-        self.base_lr = optimizer.param_groups[0]['lr']
-        
-        # Create the base scheduler
+        # Create base scheduler
         if lr_decay_func is not None:
-            # Filter parameters to only those accepted by the scheduler
             self.lr_decay_params = self._filter_scheduler_params(lr_decay_func, self.lr_decay_params)
             base_scheduler = eval(lr_decay_func)(optimizer, **self.lr_decay_params)
         else:
-            # Default scheduler that does nothing
             base_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
         
         # Wrap with warmup if needed
         if self.warmup_steps > 0 or self.warmup_ratio is not None:
-            self.scheduler = LinearWarmupWrapper(base_scheduler, self.warmup_steps, self.base_lr)
-            self.use_warmup = True
-        else:
-            self.scheduler = base_scheduler
-            self.use_warmup = False
+            return LinearWarmupWrapper(base_scheduler, self.warmup_steps, self.base_lr)
+        return base_scheduler
     
     def _filter_scheduler_params(self, scheduler_name, params):
         """Filter parameters to only include those accepted by the scheduler."""
@@ -373,9 +402,7 @@ class TrainingScheduler(object):
         return {k: v for k, v in params.items() if k in sig}
 
     def iteration_step(self, epoch_value=None):
-        """
-        Step the scheduler for per-iteration schedulers (e.g., CosineAnnealingWarmRestarts).
-        Pass a fractional epoch value if provided."""
+        """Step the scheduler for per-iteration schedulers."""
         self.iteration_count += 1
         
         # Handle warmup if enabled
@@ -389,7 +416,7 @@ class TrainingScheduler(object):
                     param_group['lr'] = lr
         
         # Step iteration-based schedulers after warmup
-        if self.scheduler_name in TrainingScheduler.iter_step_scheduler:
+        if self.scheduler_name in self.ITER_STEP_SCHEDULERS:
             if not self.use_warmup or self.iteration_count > self.scheduler.warmup_steps:
                 if epoch_value is not None:
                     self.scheduler.step(epoch_value)
@@ -397,11 +424,13 @@ class TrainingScheduler(object):
                     self.scheduler.step()
 
     def epoch_step(self):
+        """Step the scheduler at epoch boundaries."""
         self.epoch = self.epoch + 1
-        if self.scheduler_name in TrainingScheduler.epoch_step_scheduler:
+        if self.scheduler_name in self.EPOCH_STEP_SCHEDULERS:
             self.scheduler.step()
 
     def eval_step(self, decay_metric=None, early_stop_score=None):
+        """Handle evaluation-based scheduling and early stopping."""
         ret = {
             "done_training": False,
             "save_state": False,
@@ -409,7 +438,7 @@ class TrainingScheduler(object):
 
         # LR scheduler (only step after warmup is complete)
         if decay_metric is not None:
-            if self.scheduler_name in TrainingScheduler.val_step_scheduler:
+            if self.scheduler_name in self.VAL_STEP_SCHEDULERS:
                 if not self.use_warmup or self.iteration_count > self.scheduler.warmup_steps:
                     if self.use_warmup:
                         # Step the wrapped scheduler

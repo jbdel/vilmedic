@@ -23,6 +23,8 @@ class InitValidator(object):
 
         # Metrics
         self.metrics = config.get('metrics', []) if hasattr(config, 'metrics') else []
+        # Don't wrap if it's already a list or ListConfig
+        from omegaconf import ListConfig
         if not isinstance(self.metrics, (list, ListConfig)):
             self.metrics = [self.metrics]
 

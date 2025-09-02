@@ -104,8 +104,14 @@ class Trainor(ConfigTrainor):
                 loss = out['loss']
                 if isinstance(self.model, torch.nn.DataParallel):
                     loss = loss.mean()
+                
+                # Check for NaN or Inf loss and skip if found
+                if torch.isnan(loss) or torch.isinf(loss):
+                    self.logger.warning(f"NaN/Inf loss detected at epoch {epoch+1}, iteration {iteration}. Skipping...")
+                    self.optimizer.zero_grad()  # Clear any accumulated gradients
+                    continue
+                
                 self.scaler.scale(loss).backward()
-
                 losses.append(loss.item())
 
                 if iteration % self.grad_accu == 0:
@@ -119,10 +125,12 @@ class Trainor(ConfigTrainor):
                     frac_epoch = epoch + float(iteration) / len(self.dl)
                     self.training_scheduler.iteration_step(frac_epoch)
 
+                    # Calculate average loss only from valid iterations
+                    avg_loss = sum(losses) / len(losses) if losses else float('nan')
                     log = 'Epoch {}, Lr {}, Loss {:.2f}, {} {:.2f}, ES {} {}'.format(
                         epoch + 1,
                         [param_group['lr'] for param_group in self.optimizer.param_groups],
-                        sum(losses) / iteration,
+                        avg_loss,
                         self.training_scheduler.early_stop_metric,
                         self.training_scheduler.current_best_metric,
                         self.training_scheduler.early_stop,
@@ -154,7 +162,8 @@ class Trainor(ConfigTrainor):
             do_earl_stop = epoch + 1 >= self.early_stop_start
             do_lr_decay = epoch + 1 >= self.decay_metric_start
             do_eval = epoch + 1 >= self.eval_start
-            training_loss = sum(losses) / iteration
+            # Calculate training loss only from valid (non-NaN) iterations
+            training_loss = sum(losses) / len(losses) if losses else float('inf')
 
             # Compute early_stop_score according to early_stop_metric if specified
             early_stop_metric = self.config.get('early_stop_metric') if hasattr(self.config, 'early_stop_metric') else None

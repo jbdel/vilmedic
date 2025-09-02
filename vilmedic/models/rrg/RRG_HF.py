@@ -176,9 +176,85 @@ class RRG_HF(nn.Module):
 
         return vars(decoder_outputs)
 
-
     def __repr__(self):
-        s = "model: RRG_HF\n"
-        s += "(model):" + str(self.model) + '\n'
-        s += "{}\n".format(get_n_params(self))
+        s = "model: RRG_HF\n"  # keep
+        try:
+            enc = getattr(self.model, "encoder", None)
+            dec = getattr(self.model, "decoder", None)
+            cfg = getattr(self.model, "config", None)
+
+            # ----- Helpers -----
+            def _cfg(o): 
+                return getattr(o, "config", None) if o is not None else None
+
+            def _get(o, name, default=None):
+                return getattr(o, name, default) if o is not None else default
+
+            def _maybe_kv(name, val):
+                return f"{name}={val}" if val is not None else None
+
+            # ----- Encoder summary -----
+            enc_cfg = _cfg(enc)
+            enc_bits = [
+                enc.__class__.__name__ if enc is not None else "None",
+                _maybe_kv("hidden", _get(enc_cfg, "hidden_size")),
+                _maybe_kv("layers", _get(enc_cfg, "num_hidden_layers", _get(enc_cfg, "num_layers"))),
+                _maybe_kv("heads", _get(enc_cfg, "num_attention_heads")),
+                _maybe_kv("image", _get(enc_cfg, "image_size")),
+                _maybe_kv("patch", _get(enc_cfg, "patch_size")),
+            ]
+            enc_bits = [b for b in enc_bits if b is not None]
+            if enc is not None:
+                enc_bits.append(f"params={get_n_params(enc)}")
+
+            # ----- Decoder summary -----
+            dec_cfg = _cfg(dec)
+            dec_bits = [
+                dec.__class__.__name__ if dec is not None else "None",
+                _maybe_kv("hidden", _get(dec_cfg, "hidden_size")),
+                _maybe_kv("layers", _get(dec_cfg, "num_hidden_layers", _get(dec_cfg, "num_layers"))),
+                _maybe_kv("heads", _get(dec_cfg, "num_attention_heads")),
+                _maybe_kv("vocab", _get(dec_cfg, "vocab_size")),
+                _maybe_kv("is_decoder", _get(dec_cfg, "is_decoder")),
+                _maybe_kv("cross_attn", _get(dec_cfg, "add_cross_attention")),
+            ]
+            dec_bits = [b for b in dec_bits if b is not None]
+            if dec is not None:
+                dec_bits.append(f"params={get_n_params(dec)}")
+
+            # ----- Tokens / config -----
+            token_bits = [
+                _maybe_kv("pad_id", _get(cfg, "pad_token_id")),
+                _maybe_kv("dec_start_id", _get(cfg, "decoder_start_token_id")),
+                _maybe_kv("bos_id", _get(dec_cfg, "bos_token_id")),
+                _maybe_kv("eos_id", _get(dec_cfg, "eos_token_id")),
+                _maybe_kv("unk_id", _get(dec_cfg, "unk_token_id")),
+                _maybe_kv("tie_word_emb", _get(cfg, "tie_word_embeddings")),
+            ]
+            token_bits = [b for b in token_bits if b is not None]
+
+            # ----- Multi-image evaluation hint -----
+            eval_mode = None
+            if hasattr(self, "eval_func"):
+                try:
+                    # If set in __init__, evaluation_multi means multi-image batches supported
+                    from vilmedic.blocks.huggingface.encoder_decoder.vision_multi_evaluation import evaluation as _eval_multi
+                    eval_mode = "multi-image" if self.eval_func is _eval_multi else "single-image"
+                except Exception:
+                    eval_mode = None
+
+            # ----- Compose pretty print -----
+            s += "components:\n"
+            s += f"  Encoder: " + " | ".join(enc_bits) + "\n"
+            s += f"  Decoder: " + " | ".join(dec_bits) + "\n"
+            if token_bits:
+                s += "tokens/config:\n"
+                s += "  " + ", ".join(token_bits) + "\n"
+            if eval_mode:
+                s += f"evaluation: {eval_mode}\n"
+
+        except Exception as e:
+            s += f"(summary unavailable: {e})\n"
+
+        s += "{}\n".format(get_n_params(self))  # keep
         return s

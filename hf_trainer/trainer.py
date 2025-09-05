@@ -3,7 +3,6 @@ from transformers import Trainer
 from typing import Dict, Union, Any, Optional, List, Tuple
 import numpy as np
 from torch import nn
-from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 
 
 class VisionLanguageTrainer(Trainer):
@@ -65,7 +64,7 @@ class VisionLanguageTrainer(Trainer):
                 generated_tokens = model.generate(
                     images=inputs["images"],
                     images_mask=inputs.get("images_mask", None),
-                    max_length=getattr(self, 'gen_max_length', 128),
+                    max_new_tokens=getattr(self, 'gen_max_length', 128),
                     num_beams=getattr(self, 'beam_width', 2),
                     early_stopping=True,
                     pad_token_id=pad_id,

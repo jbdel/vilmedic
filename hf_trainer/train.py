@@ -12,7 +12,7 @@ from transformers import (
 )
 import torch
 from omegaconf import OmegaConf
-
+from omegaconf.listconfig import ListConfig
 from utils import (
     get_args, 
     get, 
@@ -23,7 +23,7 @@ from utils import (
     calculate_warmup_params,
     get_world_size
 )
-from model import RRG_HF_Model
+from models import create_model
 from hf_trainer.dataset import create_dataset
 from metrics import compute_metrics_factory
 from trainer import VisionLanguageTrainer
@@ -46,21 +46,29 @@ def main():
     config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
     os.makedirs(config.ckpt_dir, exist_ok=True)
     
+    # Determine if this is evaluation mode
+    is_eval_only = (train_config.get('only_eval', False) or 
+                   train_config.get('eval_only', False))
+    
+    # Determine main process and setup logger
+    is_main = int(getenv("RANK", "0")) == 0
+
+
     # Extract seed from checkpoint if resuming
-    if hasattr(config, 'ckpt') and config.get('ckpt'):
+    if hasattr(config, 'ckpt') and config.get('ckpt') and not is_eval_only:
         config.ckpt = os.path.join(config.ckpt_dir, config.ckpt) if not os.path.exists(config.ckpt) else config.ckpt
         assert os.path.exists(config.ckpt), f"Path '{config.ckpt}' does not exist"
         seed = extract_seed_from_ckpt(config.ckpt)
     else:
         seed = base_seed
-    
-    # Determine main process and setup logger
-    is_main = int(getenv("RANK", "0")) == 0
+
     logger = setup_logger(config.ckpt_dir, seed, is_main)
-    
+
+    logger.info("[Mode] Running in {} mode".format("EVALUATION" if is_eval_only else "TRAINING"))
+
     # Log if resuming from checkpoint
-    if hasattr(config, 'ckpt') and config.get('ckpt'):
-        logger.info(f"[Setup] Resuming from checkpoint with seed: {seed}")
+    if hasattr(config, 'ckpt') and config.get('ckpt') and not is_eval_only:
+        logger.info(f"[Setup] Resuming training from checkpoint with seed: {seed}")
     
     # Log initialization
     logger.info("=" * 70)
@@ -78,46 +86,32 @@ def main():
                   open(config_path, "w"),
                   indent=4)
         logger.info(f"[Setup] Configuration saved to: {config_path}")
-        print_args(config, ['trainor', 'validator'], seed, override)
+        # print_args(config, ['trainor', 'validator'], seed, override)
     
-    # Determine if this is evaluation mode
-    is_eval_only = (train_config.get('only_eval', False) or 
-                   train_config.get('eval_only', False))
-    
-    if is_eval_only:
-        # Get the evaluation split from validator config
-        eval_splits = val_config.get('splits', ['val'])
-        eval_split = eval_splits[0] if isinstance(eval_splits, list) else eval_splits
-        
-        # Ensure it's not 'train'
-        if eval_split == 'train':
-            logger.error("[Mode] Cannot use 'train' split for evaluation-only mode")
-            raise ValueError("Evaluation-only mode cannot use 'train' split")
-        
-        logger.info(f"[Mode] Running in EVALUATION ONLY mode on '{eval_split}' split")
-    else:
-        logger.info("[Mode] Running in TRAINING mode")
-    
+
     # Create datasets
     logger.info("[Dataset] Loading datasets...")
-    
+
     if is_eval_only:
-        # For evaluation only, we just need the eval dataset
-        # But we create a small version of it as 'train_dataset' for model/tokenizer initialization
-        eval_split = val_config.get('splits', ['val'])[0]
-        logger.info(f"[Dataset] Creating '{eval_split}' dataset for evaluation")
+        # Get evaluation splits from validator config
+        eval_splits = val_config.get('splits', ['val'])
+        assert isinstance(eval_splits, ListConfig), "splits must be a ListConfig"
+        assert "train" not in eval_splits, "train split is not allowed in evaluation-only mode"
+        assert hasattr(config, 'ckpt') and config.ckpt and config.ckpt is not None, "ckpt must be provided in evaluation-only mode"
+        # TODO: right now, dataset crucial parameters doesnt rely on the content of the train split
+        # TODO: max_len is an hyper parameters, vocab.tgt is saved during training
+        # TODO: visual transform are set accordingly if split != "train"
         
-        # Create evaluation dataset
-        val_dataset = create_dataset(
+        first_split = eval_splits[0]
+        logger.info(f"[Dataset] Using '{first_split}' for dataset initialization")
+        init_dataset = create_dataset(
             config,
-            split=eval_split,
+            split=first_split,
             logger=logger
         )
-        
-        # Use same dataset for train_dataset (needed for model initialization)
-        # This is just for tokenizer/model setup, won't actually be used for training
-        train_dataset = val_dataset
-        logger.info(f"[Dataset] Using '{eval_split}' dataset for model initialization")
+        train_dataset = init_dataset
+        val_dataset = init_dataset
+
     else:
         # Normal training mode - create both train and validation datasets
         train_dataset = create_dataset(
@@ -135,7 +129,7 @@ def main():
     
     # Create model
     logger.info("[Model] Creating model...")
-    model = RRG_HF_Model(
+    model = create_model(
         config=config,
         train_dataset=train_dataset,
         logger=logger
@@ -167,7 +161,7 @@ def main():
     logger.info("=" * 70)
     if is_eval_only:
         logger.info("[Evaluation Configuration]")
-        logger.info(f"  Evaluation dataset size: {dataset_len:,}")
+        logger.info(f"  Evaluation splits: {eval_splits}")
         logger.info(f"  World size (GPUs): {world_size}")
         logger.info(f"  Batch size: {val_config.batch_size}")
         logger.info(f"  Beam width: {val_config.get('beam_width', 2)}")
@@ -232,12 +226,18 @@ def main():
     
     # Create compute_metrics function with seed
     logger.info(f"[Metrics] Setting up evaluation metrics: {val_config.get('metrics', ['radevalbertscore'])}")
+    metrics_context_split = None
+    if not is_eval_only:
+        # In training mode, tag predictions with the validation split name
+        metrics_context_split = val_config.get('splits', ['val'])[0]
     compute_metrics_fn = compute_metrics_factory(
         val_config.get('metrics', ['radevalbertscore']),
         train_dataset.tokenizer,
         save_dir=config.ckpt_dir,
         logger=logger,
-        seed=seed  # Pass seed for filename
+        seed=seed,
+        is_main_process=is_main,
+        context={'split': metrics_context_split} if metrics_context_split else None
     )
     
     # Setup callbacks
@@ -277,50 +277,58 @@ def main():
     logger.info(f"[Generation] Beam width: {trainer.beam_width}")
     logger.info(f"[Generation] Max generation length: {trainer.gen_max_length}")
     
-    # Load checkpoint if provided for evaluation
-    if is_eval_only and hasattr(config, 'ckpt') and config.ckpt:
-        checkpoint_path = config.ckpt
-        if not os.path.isabs(checkpoint_path):
-            checkpoint_path = os.path.join(config.ckpt_dir, checkpoint_path)
-        
-        if os.path.exists(checkpoint_path):
-            logger.info(f"[Evaluation] Loading checkpoint from: {checkpoint_path}")
-            from transformers import AutoModelForSeq2SeqLM
-            # Load the model weights
-            trainer.model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_path)
-            logger.info(f"[Evaluation] Checkpoint loaded successfully")
-        else:
-            logger.warning(f"[Evaluation] Checkpoint not found at: {checkpoint_path}")
     
     # Evaluation-only mode
     if is_eval_only:
-        eval_split = val_config.get('splits', ['val'])[0]
         logger.info("=" * 70)
-        logger.info(f"[Evaluation] Starting evaluation on '{eval_split}' split...")
-        logger.info(f"[Evaluation] Using checkpoint: {config.ckpt if hasattr(config, 'ckpt') and config.ckpt else 'No checkpoint (using initialized model)'}")
-        
-        metrics = trainer.evaluate()
-        
-        # Log metrics
-        logger.info(f"[Evaluation] Results for '{eval_split}' split:")
-        for key, value in metrics.items():
-            if isinstance(value, float):
-                logger.info(f"  {key}: {value:.4f}")
-            else:
-                logger.info(f"  {key}: {value}")
-        
-        # Save evaluation results with split name in filename
-        eval_results_path = os.path.join(config.ckpt_dir, f"eval_results_{eval_split}_seed{seed}.json")
-        with open(eval_results_path, "w") as f:
-            json.dump({
-                'split': eval_split,
-                'seed': seed,
-                'checkpoint': config.ckpt if hasattr(config, 'ckpt') and config.ckpt else None,
-                'metrics': metrics
-            }, f, indent=4)
-        logger.info(f"[Evaluation] Results saved to: {eval_results_path}")
-        
-        logger.info(f"[Evaluation] Evaluation on '{eval_split}' completed successfully!")
+        logger.info(f"[Evaluation] Starting evaluation on splits: {eval_splits}")
+        logger.info(f"[Evaluation] Using checkpoint: {config.ckpt}")
+
+        for split_name in eval_splits:
+            logger.info("-" * 70)
+            logger.info(f"[Evaluation] Split: '{split_name}' - creating dataset")
+            eval_dataset = create_dataset(
+                config,
+                split=split_name,
+                logger=logger
+            )
+
+            # Update compute_metrics with split context and (optionally) tokenizer
+            trainer.compute_metrics = compute_metrics_factory(
+                val_config.get('metrics', ['radevalbertscore']),
+                eval_dataset.tokenizer if hasattr(eval_dataset, 'tokenizer') else train_dataset.tokenizer,
+                save_dir=config.ckpt_dir,
+                logger=logger,
+                seed=seed,
+                is_main_process=is_main,
+                context={'split': split_name}
+            )
+
+            trainer._load_from_checkpoint(config.ckpt)
+            metrics = trainer.evaluate(eval_dataset=eval_dataset)
+            
+            # Log metrics
+            logger.info(f"[Evaluation] Results for '{split_name}' split:")
+            for key, value in metrics.items():
+                if isinstance(value, float):
+                    logger.info(f"  {key}: {value:.4f}")
+                else:
+                    logger.info(f"  {key}: {value}")
+
+            # Save evaluation results with split name in filename
+            if is_main:
+                eval_results_path = os.path.join(config.ckpt_dir, f"eval_results_{split_name}_seed{seed}.json")
+                with open(eval_results_path, "w") as f:
+                    json.dump({
+                        'split': split_name,
+                        'seed': seed,
+                        'checkpoint': config.ckpt,
+                        'metrics': metrics
+                    }, f, indent=4)
+                logger.info(f"[Evaluation] Results saved to: {eval_results_path}")
+
+        logger.info("=" * 70)
+        logger.info("[Evaluation] All evaluations completed successfully!")
         logger.info("=" * 70)
         return
 

@@ -6,7 +6,7 @@ from vilmedic.blocks.scorers.NLG.bertscore.bertscore import BertScore
 from vilmedic.blocks.scorers.NLG.bertscore.radevalbertscore import RadEvalBERTScorer
 
 
-def compute_metrics_factory(metrics_list, tokenizer, save_dir, logger, seed=None):
+def compute_metrics_factory(metrics_list, tokenizer, save_dir, logger, seed=None, is_main_process=True, context=None):
     """Factory function to create compute_metrics function for Trainer, also saves decoded preds/refs.
     
     Args:
@@ -17,9 +17,12 @@ def compute_metrics_factory(metrics_list, tokenizer, save_dir, logger, seed=None
         seed: Training seed to include in filename
     """
     # eval counter for file naming
-    eval_counter = {"n": 0}
+    eval_counter = {"n": 1}
     
     def compute_metrics(eval_pred: EvalPrediction):
+        # Hard guard: skip entirely on non-main processes
+        if not is_main_process:
+            return {}
         """Compute metrics for evaluation"""
         # Increase eval counter
         eval_counter["n"] += 1
@@ -59,63 +62,82 @@ def compute_metrics_factory(metrics_list, tokenizer, save_dir, logger, seed=None
         # Log evaluation info
         logger.info(f"[Metrics] Epoch {cur_eval_idx}: Processing {len(decoded_preds)} predictions")
         
-        # Save decoded preds/refs with seed in filename
+        # Save decoded preds/refs with seed in filename (main process only)
         try:
             os.makedirs(save_dir, exist_ok=True)
-            
+
+            # Optional split tag in filenames
+            split_tag = None
+            if context and isinstance(context, dict):
+                split_tag = context.get('split', None)
+
             # Add seed to prediction filename if provided
             if seed:
                 pred_filename = f"preds_epoch{cur_eval_idx}_seed{seed}.txt"
             else:
                 pred_filename = f"preds_epoch{cur_eval_idx}.txt"
-                
+
+            # Append split tag if present
+            if split_tag:
+                base, ext = os.path.splitext(pred_filename)
+                pred_filename = f"{base}_{split_tag}{ext}"
+
             # References don't need seed as they're always the same
             ref_filename = f"refs_epoch{cur_eval_idx}.txt"
-            
+            if split_tag:
+                base, ext = os.path.splitext(ref_filename)
+                ref_filename = f"{base}_{split_tag}{ext}"
+
             pred_path = os.path.join(save_dir, pred_filename)
             ref_path = os.path.join(save_dir, ref_filename)
-            
+
             with open(pred_path, "w") as f:
                 f.write("\n".join(map(str, decoded_preds)))
             with open(ref_path, "w") as f:
                 f.write("\n".join(map(str, decoded_labels)))
-                
+
             logger.info(f"[Metrics] Saved predictions to {pred_filename}")
             logger.info(f"[Metrics] Saved references to {ref_filename}")
-            
+
         except Exception as e:
             logger.error(f"[Metrics] Could not save decoded predictions: {e}")
         
         # Compute metrics
         results = {}
         logger.info(f"[Metrics] Computing {len(metrics_list)} metrics...")
-        
+
+        # Dispatch table for metrics
+        def _compute_bertscore():
+            score = BertScore()(decoded_labels, decoded_preds)[0]
+            return 'bertscore', score
+
+        def _compute_radevalbertscore():
+            scorer = RadEvalBERTScorer(
+                model_type="IAMJB/RadEvalModernBERT",
+                num_layers=22,
+                use_fast_tokenizer=True,
+                rescale_with_baseline=False
+            )
+            score = scorer.score(decoded_labels, decoded_preds)
+            return 'radevalbertscore', score
+
+        metric_dispatch = {
+            'bertscore': _compute_bertscore,
+            'radevalbertscore': _compute_radevalbertscore,
+        }
+
         for metric_name in metrics_list:
             metric_lower = metric_name.lower()
-            
-            if metric_lower == 'bertscore':
+            handler = metric_dispatch.get(metric_lower)
+
+            if handler:
                 try:
-                    score = BertScore()(decoded_labels, decoded_preds)[0]
-                    results['bertscore'] = score
-                    logger.info(f"[Metrics] BertScore: {score:.4f}")
+                    name, score = handler()
+                    results[name] = score
+                    logger.info(f"[Metrics] {name}: {score:.4f}")
                 except Exception as e:
-                    logger.error(f"[Metrics] Error computing BertScore: {e}")
-                    results['bertscore'] = 0.0
-                    
-            elif metric_lower == 'radevalbertscore':
-                try:
-                    scorer = RadEvalBERTScorer(
-                        model_type="IAMJB/RadEvalModernBERT",
-                        num_layers=22,
-                        use_fast_tokenizer=True,
-                        rescale_with_baseline=False
-                    )
-                    score = scorer.score(decoded_labels, decoded_preds)
-                    results['radevalbertscore'] = score
-                    logger.info(f"[Metrics] RadEvalBertScore: {score:.4f}")
-                except Exception as e:
-                    logger.error(f"[Metrics] Error computing RadEvalBertScore: {e}")
-                    results['radevalbertscore'] = 0.0
+                    logger.error(f"[Metrics] Error computing {metric_lower}: {e}")
+                    results[metric_lower] = 0.0
             else:
                 logger.warning(f"[Metrics] Metric {metric_name} not implemented")
         

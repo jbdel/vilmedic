@@ -25,8 +25,11 @@ class SimplifiedProgressCallback(TrainerCallback):
     
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, logs=None, **kwargs):
         """Override default logging with simplified single-line format."""
-        # Only log on main process
-        if args.local_rank not in (-1, 0):
+        # Only log on the global main process
+        if getattr(args, "process_index", 0) != 0:
+            return control
+        # Backward-compatibility fallback
+        if hasattr(args, "local_rank") and args.local_rank not in (-1, 0):
             return control
             
         if logs is None or self.total_steps is None or state.global_step == 0:
@@ -95,43 +98,67 @@ class EpochCheckpointCallback(TrainerCallback):
         """Rename checkpoint directory to include epoch number and seed after save."""
         if not self.save_epochs:
             return control
+        
+        # Only act on the global main process
+        if getattr(args, "process_index", 0) != 0:
+            return control
+        if hasattr(args, "local_rank") and args.local_rank not in (-1, 0):
+            return control
             
         # Calculate current epoch
         current_epoch = int(state.epoch)
         
         # Only rename if we haven't already renamed for this epoch
         if current_epoch > self.last_saved_epoch:
-            # Get all checkpoint directories
-            checkpoint_pattern = os.path.join(self.save_dir, "checkpoint-[0-9]*")
-            checkpoints = glob.glob(checkpoint_pattern)
-            
-            # Filter out already renamed epoch checkpoints
-            step_checkpoints = [cp for cp in checkpoints if not "epoch" in cp]
-            
-            if step_checkpoints:
-                # Get the most recent one (highest step number)
-                latest_checkpoint = max(step_checkpoints, 
-                                       key=lambda x: int(x.split('-')[-1]))
-                
-                # Create new name with epoch and seed
-                if self.seed:
-                    new_name = os.path.join(self.save_dir, 
-                                           f"checkpoint-epoch-{current_epoch}-seed-{self.seed}")
-                else:
-                    new_name = os.path.join(self.save_dir, 
-                                           f"checkpoint-epoch-{current_epoch}")
-                
-                # Remove old epoch checkpoint if it exists
+            try:
+                # Re-scan for freshly saved step checkpoint
+                checkpoint_pattern = os.path.join(self.save_dir, "checkpoint-[0-9]*")
+                checkpoints = glob.glob(checkpoint_pattern)
+                step_checkpoints = [cp for cp in checkpoints if "epoch" not in os.path.basename(cp)]
+
+                if not step_checkpoints:
+                    # Nothing to rename (could already be renamed)
+                    epoch_dir = (
+                        f"checkpoint-epoch-{current_epoch}-seed-{self.seed}"
+                        if self.seed else f"checkpoint-epoch-{current_epoch}"
+                    )
+                    if os.path.exists(os.path.join(self.save_dir, epoch_dir)):
+                        self.last_saved_epoch = current_epoch
+                    return control
+
+                # Pick the highest step checkpoint
+                def _step_num(path):
+                    try:
+                        return int(os.path.basename(path).split("-")[-1])
+                    except Exception:
+                        return -1
+                latest_checkpoint = max(step_checkpoints, key=_step_num)
+
+                if not os.path.exists(latest_checkpoint):
+                    return control
+
+                # New checkpoint directory name
+                new_name = os.path.join(
+                    self.save_dir,
+                    f"checkpoint-epoch-{current_epoch}" + (f"-seed-{self.seed}" if self.seed else "")
+                )
+
+                # If target exists, skip renaming
                 if os.path.exists(new_name):
-                    shutil.rmtree(new_name)
-                    
-                # Rename the checkpoint
+                    self.last_saved_epoch = current_epoch
+                    return control
+
+                # Perform rename
                 os.rename(latest_checkpoint, new_name)
-                
+
                 if self.logger:
-                    self.logger.info(f"[Checkpoint] Saved checkpoint for epoch {current_epoch} to: {os.path.basename(new_name)}")
-                    
+                    self.logger.info(
+                        f"[Checkpoint] Saved checkpoint for epoch {current_epoch} to: {os.path.basename(new_name)}"
+                    )
                 self.last_saved_epoch = current_epoch
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"[Checkpoint] Rename skipped due to: {e}")
         
         return control
     

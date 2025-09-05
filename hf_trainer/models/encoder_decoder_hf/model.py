@@ -7,15 +7,13 @@ from transformers.models.auto.modeling_auto import MODEL_MAPPING_NAMES, MODEL_FO
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING_NAMES
 
 
-class RRG_HF_Model(nn.Module):
+class EncoderDecoderHFModel(nn.Module):
     def __init__(self, config, train_dataset, logger):
-        super().__init__()
-        model_config = config.model
-        
+        super().__init__()       
         # Get encoder and decoder configs
-        vision_config = model_config.get('vision')
-        decoder_config = model_config.get('decoder')
-        encoderdecoder_config = model_config.get('encoderdecoder')
+        vision_config = config.get('vision')
+        decoder_config = config.get('decoder')
+        encoderdecoder_config = config.get('encoderdecoder')
         
         if encoderdecoder_config:
             self.model = VisionEncoderDecoderModel.from_pretrained(encoderdecoder_config)

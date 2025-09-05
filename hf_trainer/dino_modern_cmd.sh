@@ -14,20 +14,19 @@ do
     }
     FOLDER_NAME=$(sanitize_folder_name "$dataset")
     NUM_LAYERS=6
-    BATCH_SIZE=16
-    GRAD_ACCU=2
+    BATCH_SIZE=64
+    GRAD_ACCU=1
     MAX_EPOCHS=20
     LEARNING_RATE=2e-05
     MIN_LR=1e-07
-    WEIGHT_DECAY=0.1
+    WEIGHT_DECAY=0.05
     ADAM_BETA1=0.9
     ADAM_BETA2=0.999
     ADAM_EPSILON=1e-06
     GRAD_CLIP=1.0
-    VISION_BACKBONE=microsoft/swinv2-base-patch4-window12to24-192to384-22kto1k-ft
     NUM_GPUS=4
     MAX_GEN_LENGTH=175
-    NAME=${FOLDER_NAME}_${mode}_${NUM_LAYERS}_HF_TRAINER
+    NAME=dino_modern_${FOLDER_NAME}_${mode}_${NUM_LAYERS}_HF_TRAINER
         # Generate a unique port for this job to avoid conflicts
     # Use job name hash to generate consistent but unique port  
     PORT_OFFSET=$(echo "$NAME" | cksum | cut -d' ' -f1)
@@ -59,12 +58,14 @@ do
       dataset.image.resize=420 \
       dataset.image.crop=384 \
       dataset.image.image_path=/fss/jb/vilmedic_datasets/data/images/rex_mimic_chex/ \
-      model.proto=EncoderDecoderHF \
-      model.vision=$VISION_BACKBONE \
-      model.decoder.proto_config_args.num_hidden_layers=$NUM_LAYERS \
-      model.decoder.proto_config_args.hidden_size=1024 \
-      model.decoder.proto_config_args.hidden_dropout_prob=0.1 \
-      model.decoder.proto_config_args.attention_probs_dropout_prob=0.1 \
+      model.proto=VisionLanguageModernBert \
+      model.vision_model_name=IAMJB/maira-2-dinov2 \
+      model.tokenizer_name=answerdotai/ModernBERT-base \
+      model.decoder_config_name=jhu-clsp/ettin-decoder-17m \
+      model.decoder_config_args.num_hidden_layers=$NUM_LAYERS \
+      model.decoder_config_args.hidden_size=1024 \
+      model.decoder_config_args.hidden_dropout_prob=0.1 \
+      model.decoder_config_args.attention_probs_dropout_prob=0.1 \
       trainor.batch_size=$BATCH_SIZE \
       trainor.grad_accu=$GRAD_ACCU \
       trainor.use_amp=true \
@@ -93,8 +94,10 @@ done
 
 
 
-# eval
 
+
+
+# single 
 for dataset in IAMJB/report-generation-mimic-cxr-noimage
 do
   for mode in findings
@@ -105,20 +108,19 @@ do
     }
     FOLDER_NAME=$(sanitize_folder_name "$dataset")
     NUM_LAYERS=6
-    BATCH_SIZE=16
-    GRAD_ACCU=2
+    BATCH_SIZE=64
+    GRAD_ACCU=1
     MAX_EPOCHS=20
     LEARNING_RATE=2e-05
     MIN_LR=1e-07
-    WEIGHT_DECAY=0.1
+    WEIGHT_DECAY=0.05
     ADAM_BETA1=0.9
     ADAM_BETA2=0.999
     ADAM_EPSILON=1e-06
     GRAD_CLIP=1.0
-    VISION_BACKBONE=microsoft/swinv2-base-patch4-window12to24-192to384-22kto1k-ft
     NUM_GPUS=4
     MAX_GEN_LENGTH=175
-    NAME=${FOLDER_NAME}_${mode}_${NUM_LAYERS}_HF_TRAINER
+    NAME=dino_modern_${FOLDER_NAME}_${mode}_${NUM_LAYERS}_HF_TRAINER
         # Generate a unique port for this job to avoid conflicts
     # Use job name hash to generate consistent but unique port  
     PORT_OFFSET=$(echo "$NAME" | cksum | cut -d' ' -f1)
@@ -140,15 +142,14 @@ accelerate launch \
       dataset.image.resize=420 \
       dataset.image.crop=384 \
       dataset.image.image_path=/fss/jb/vilmedic_datasets/data/images/rex_mimic_chex/ \
-      model.proto=EncoderDecoderHF \
-      model.vision=$VISION_BACKBONE \
-      model.decoder.proto_model=bert-generation \
-      model.decoder.proto_config=bert-generation \
-      model.decoder.proto_config_args.num_hidden_layers=$NUM_LAYERS \
-      model.decoder.proto_config_args.num_hidden_layers=$NUM_LAYERS \
-      model.decoder.proto_config_args.hidden_size=1024 \
-      model.decoder.proto_config_args.hidden_dropout_prob=0.1 \
-      model.decoder.proto_config_args.attention_probs_dropout_prob=0.1 \
+      model.proto=VisionLanguageModernBert \
+      model.vision_model_name=IAMJB/maira-2-dinov2 \
+      model.tokenizer_name=answerdotai/ModernBERT-base \
+      model.decoder_config_name=jhu-clsp/ettin-decoder-17m \
+      model.decoder_config_args.num_hidden_layers=$NUM_LAYERS \
+      model.decoder_config_args.hidden_size=1024 \
+      model.decoder_config_args.hidden_dropout_prob=0.1 \
+      model.decoder_config_args.attention_probs_dropout_prob=0.1 \
       trainor.batch_size=$BATCH_SIZE \
       trainor.grad_accu=$GRAD_ACCU \
       trainor.use_amp=true \
@@ -170,19 +171,7 @@ accelerate launch \
       validator.metrics=[radevalbertscore] \
       validator.splits=[val,test] \
       ckpt_dir=ckpt \
-      name=${NAME} \
-      eval_only=true \
-      ckpt=/fss/jb/vilmedic/ckpt/IAMJB_report-generation-mimic-cxr-noimage_findings_6_HF_TRAINER/checkpoint-epoch-16-seed-166520
-  done
+      name=${NAME}  
+    done
 done
 
-
-
-model.proto=VisionLanguageModernBert \
-model.vision_model_name=IAMJB/maira-2-dinov2 \
-model.tokenizer_name=answerdotai/ModernBERT-base \
-model.decoder_config_name=jhu-clsp/ettin-decoder-17m \
-model.decoder_config_args.num_hidden_layers=$NUM_LAYERS \
-model.decoder_config_args.hidden_size=1024 \
-model.decoder_config_args.hidden_dropout_prob=0.1 \
-model.decoder_config_args.attention_probs_dropout_prob=0.1

@@ -1,5 +1,8 @@
 import os
 import tqdm
+import time
+import logging
+from filelock import FileLock
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer, BertTokenizer
 from .utils_hf import load_hf_dataset
@@ -58,21 +61,15 @@ class TextDataset(Dataset):
             if vocab_file is None:
                 assert ckpt_dir is not None, "ckpt_dir must be provided to generate vocab file"
                 vocab_file = os.path.join(ckpt_dir, f'vocab.{source}')
-                if split == 'train':
-                    # Build vocab from tokenized sentences
-                    words = set()
-                    for tokens in self.sentences:
-                        for t in tokens:
-                            words.add(t)
-                    special = ['[CLS]', '[PAD]', '[SEP]', '[UNK]', '[MASK]']
-                    vocab_list = special + sorted(words)
-                    if not os.path.exists(vocab_file):
-                        tmp_path = vocab_file + '.tmp'
-                        with open(tmp_path, 'w') as f:
-                            f.write("\n".join(vocab_list))
-                        os.replace(tmp_path, vocab_file)
+                vocab_file = self._ensure_vocab_file(vocab_file)
+            else:
+                # Ensure file exists or build it if missing
+                vocab_file = self._ensure_vocab_file(vocab_file)
             # Instantiate tokenizer from vocab
             self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_basic_tokenize=False)
+
+        # Keep track of the resolved vocab file path
+        self.vocab_file = vocab_file
 
         self.tokenizer_args = {'return_tensors': 'pt', 'padding': True, 'add_special_tokens': True}
         if self.source == 'src':
@@ -97,5 +94,42 @@ class TextDataset(Dataset):
             "TextDataset(HF-only)\n" +
             f"source={self.source}, len={len(self)}, tokenizer={self.tokenizer.name_or_path}, max_len={self.tokenizer_max_len}"
         )
+
+    def _ensure_vocab_file(self, vocab_file_path: str) -> str:
+        """Ensure a vocab file exists at the given path; build it under a file lock if missing.
+
+        This uses a single-writer, multi-reader pattern with FileLock, and will build the
+        vocabulary from this dataset's tokenized sentences if the file does not exist.
+
+        Returns the path to the ensured vocab file.
+        """
+        # Quick path if exists
+        if os.path.exists(vocab_file_path):
+            return vocab_file_path
+
+        # Build under lock (wait up to 10 minutes)
+        lock_path = vocab_file_path + '.lock'
+        with FileLock(lock_path, timeout=600):
+            # Re-check after acquiring the lock
+            if os.path.exists(vocab_file_path):
+                return vocab_file_path
+
+            # Build vocab from tokenized sentences
+            words = set()
+            for tokens in self.sentences:
+                for token in tokens:
+                    words.add(token)
+
+            special_tokens = ['[CLS]', '[PAD]', '[SEP]', '[UNK]', '[MASK]']
+            vocab_list = special_tokens + sorted(words)
+
+            tmp_path = vocab_file_path + '.tmp'
+            with open(tmp_path, 'w') as f:
+                f.write("\n".join(vocab_list))
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, vocab_file_path)
+
+        return vocab_file_path
 
 

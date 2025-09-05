@@ -2,8 +2,8 @@ import os
 import numpy as np
 import logging
 from transformers import EvalPrediction
-from vilmedic.blocks.scorers.NLG.bertscore import BertScore
-from vilmedic.blocks.scorers.NLG.bertscore import RadEvalBERTScorer
+from vilmedic.blocks.scorers.NLG.bertscore.bertscore import BertScore
+from vilmedic.blocks.scorers.NLG.bertscore.radevalbertscore import RadEvalBERTScorer
 
 
 def compute_metrics_factory(metrics_list, tokenizer, save_dir, logger, seed=None):

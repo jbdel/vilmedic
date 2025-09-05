@@ -1,11 +1,11 @@
-# squeue -u $USER
-
+squeue -u $USER
+scancel -u $USER
 dataset1=IAMJB/report-generation-rexgradient-noimage
 dataset2=IAMJB/report-generation-chexpert-png-noimage
 dataset3=IAMJB/report-generation-mimic-cxr-noimage
 
 
-for dataset in IAMJB/report-generation-mimic-cxr-noimage IAMJB/report-generation-chexpert-png-noimage IAMJB/report-generation-mimic-cxr-noimage
+for dataset in IAMJB/report-generation-rexgradient-noimage IAMJB/report-generation-chexpert-png-noimage IAMJB/report-generation-mimic-cxr-noimage
 do
   for mode in impression findings
   do

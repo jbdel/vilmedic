@@ -260,6 +260,8 @@ class VisionLanguageModernBertModel(nn.Module):
             eos_token_id=getattr(tokenizer, 'sep_token_id', None),
         )
         self.model = VisionLanguageModel(hf_config)
+        # Expose HF config upstream so Trainer can toggle flags if needed
+        self.config = self.model.config
 
         # Expose logger
         self.logger = logger
@@ -272,6 +274,8 @@ class VisionLanguageModernBertModel(nn.Module):
             pixel_values=images,
             images_mask=images_mask,
             labels=input_ids,
+            # allow upstream to pass memory/control kwargs
+            **kwargs,
         )
 
     def generate(self, images, images_mask=None, **kwargs):

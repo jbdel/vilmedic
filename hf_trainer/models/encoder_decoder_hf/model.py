@@ -5,6 +5,7 @@ from omegaconf.dictconfig import DictConfig
 from importlib import import_module
 from transformers.models.auto.modeling_auto import MODEL_MAPPING_NAMES, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING_NAMES
+from transformers import VisionEncoderDecoderModel as HFVisionEncoderDecoderModel
 
 
 class EncoderDecoderHFModel(nn.Module):

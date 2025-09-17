@@ -20,7 +20,12 @@ class VisionLanguageTrainer(Trainer):
             input_ids=labels,
             attention_mask=inputs["attention_mask"],
             images=inputs["images"],
-            images_mask=inputs.get("images_mask", None)
+            images_mask=inputs.get("images_mask", None),
+            # Avoid returning massive caches/aux tensors during training
+            use_cache=False,
+            output_attentions=False,
+            output_hidden_states=False,
+            return_dict=True,
         )
         
         # Get loss from outputs
@@ -48,7 +53,12 @@ class VisionLanguageTrainer(Trainer):
                 input_ids=labels,
                 attention_mask=inputs["attention_mask"],
                 images=inputs["images"],
-                images_mask=inputs.get("images_mask", None)
+                images_mask=inputs.get("images_mask", None),
+                # Keep eval forward light; generation happens separately
+                use_cache=False,
+                output_attentions=False,
+                output_hidden_states=False,
+                return_dict=True,
             )
             loss = outputs.loss if hasattr(outputs, 'loss') else outputs['loss']
             
@@ -71,6 +81,9 @@ class VisionLanguageTrainer(Trainer):
                     bos_token_id=bos_id,
                     eos_token_id=eos_id,
                     decoder_start_token_id=bos_id,
+                    use_cache=True,
+                    output_attentions=False,
+                    output_hidden_states=False,
                 )
                 return (loss, generated_tokens, labels)
             else:

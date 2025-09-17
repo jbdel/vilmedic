@@ -1,5 +1,7 @@
 import sys
 import os
+import json
+import re
 import logging
 import math
 import socket
@@ -132,3 +134,28 @@ def get_world_size() -> int:
         pass
     
     return world_size
+
+
+def extract_epoch_from_config(config):
+    # If resuming, infer starting epoch from provided checkpoint so eval counter matches
+    start_epoch_for_metrics = None
+    try:
+        if hasattr(config, 'ckpt') and config.get('ckpt'):
+            # Prefer trainer_state.json inside checkpoint
+            state_path = os.path.join(config.ckpt, "trainer_state.json")
+            if os.path.exists(state_path):
+                with open(state_path, "r") as f:
+                    _state = json.load(f)
+                _epoch = _state.get("epoch", None)
+                if _epoch is not None:
+                    start_epoch_for_metrics = int(_epoch)
+            # Fallback: parse from checkpoint directory name like checkpoint-epoch-<n>[-seed-<s>]
+            if start_epoch_for_metrics is None:
+                base = os.path.basename(config.ckpt.rstrip('/'))
+                m = re.search(r"checkpoint-epoch-(\d+)", base)
+                if m:
+                    start_epoch_for_metrics = int(m.group(1))
+    except Exception:
+        # Keep default behavior if anything goes wrong
+        start_epoch_for_metrics = None
+    return start_epoch_for_metrics

@@ -6,6 +6,7 @@ import glob
 import shutil
 from transformers import TrainerCallback, TrainerControl, TrainerState
 from transformers.training_args import TrainingArguments
+import torch
 
 
 class SimplifiedProgressCallback(TrainerCallback):
@@ -161,9 +162,44 @@ class EpochCheckpointCallback(TrainerCallback):
                     self.logger.warning(f"[Checkpoint] Rename skipped due to: {e}")
         
         return control
-    
+
+
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         """Log epoch completion."""
         epoch_num = int(state.epoch)
         self.logger.info(f"[Training] Completed epoch {epoch_num}/{int(args.num_train_epochs)}")
         return control
+
+class MemoryCleanupCallback(TrainerCallback):
+    """Clear CUDA caches after heavy phases to reduce fragmentation between epochs."""
+
+    def __init__(self, logger=None):
+        self.logger = logger or logging.getLogger("training")
+
+    def _cleanup(self):
+        try:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+        except Exception:
+            pass
+
+    def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        self._cleanup()
+        if self.logger:
+            self.logger.info("[Memory] Cleaned CUDA cache after evaluation")
+        return control
+
+    def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        self._cleanup()
+        if self.logger:
+            self.logger.info("[Memory] Cleaned CUDA cache after checkpoint save")
+        return control
+
+    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        self._cleanup()
+        if self.logger:
+            self.logger.info("[Memory] Cleaned CUDA cache at epoch end")
+        return control
+    
+ 

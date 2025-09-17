@@ -19,7 +19,7 @@ class ImSeq(Dataset):
         self.image_cfg = image
         self.image_path = image.get("image_path", None)
         self.multi_image = image.get("multi_image", 0) or 0
-        self.ext = image.get("ext", ".jpg")
+        self.skip_open_image = image.get("skip_open_image", False)
 
         hf_name = image.get("hf_dataset")
         hf_local = image.get("hf_local")
@@ -27,7 +27,7 @@ class ImSeq(Dataset):
         field = image.get("hf_field")
 
         dataset = load_hf_dataset(hf_name, hf_local=hf_local, hf_filter=hf_filter, hf_field=field, split=split)
-        dataset = resolve_image_field(dataset, field, base_path=self.image_path, num_proc=8)
+        dataset = resolve_image_field(dataset, field, base_path=self.image_path, num_proc=128)
         self.images = [ex[field] for ex in dataset]
 
         # Transforms identical to original defaults
@@ -42,7 +42,6 @@ class ImSeq(Dataset):
             crop,
             custom_transform_train,
             custom_transform_validate,
-            self.ext,
             hf_processor,
         )
 
@@ -56,7 +55,7 @@ class ImSeq(Dataset):
 
     def __getitem__(self, index):
         imgs = self.images[index]
-        pil_list = [open_image(p, self.ext) for p in imgs]
+        pil_list = [open_image(p, self.skip_open_image) for p in imgs]
         tensor_list = [self.transform(im) for im in pil_list]
         text = self.seq.__getitem__(index)
         # merge image list with text fields

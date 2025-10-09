@@ -14,7 +14,7 @@ def find_log_files(patterns: Iterable[str]) -> List[str]:
     return sorted(set(matched_files))
 
 
-def parse_best_radeval_score(log_path: str) -> Tuple[Optional[float], Optional[int]]:
+def parse_best_radeval_score(log_path: str, min_epoch: int) -> Tuple[Optional[float], Optional[int]]:
     """Parse a log file and return the best radeval score and its epoch.
 
     The function looks for patterns like:
@@ -50,6 +50,8 @@ def parse_best_radeval_score(log_path: str) -> Tuple[Optional[float], Optional[i
                 if epoch_match:
                     if last_seen_score is not None:
                         epoch_num = int(epoch_match.group(1))
+                        if epoch_num < min_epoch:
+                            continue
                         if best_score is None or last_seen_score > best_score:
                             best_score = last_seen_score
                             best_epoch = epoch_num
@@ -86,8 +88,14 @@ def main() -> None:
         default="model",
         help="Sort output by model name or best score (descending for score).",
     )
+    parser.add_argument(
+        "--min_epoch",
+        type=int,
+        default=15,
+        help="Minimum epoch to consider for best score.",
+    )
     args = parser.parse_args()
-
+    print(args)
     log_files = find_log_files(args.patterns)
     if not log_files:
         print("No log files found. Adjust --patterns if needed.")
@@ -95,7 +103,7 @@ def main() -> None:
 
     results = []
     for log_path in log_files:
-        best_score, best_epoch = parse_best_radeval_score(log_path)
+        best_score, best_epoch = parse_best_radeval_score(log_path, args.min_epoch)
         model_name = model_name_from_log_path(log_path)
         results.append((model_name, best_score, best_epoch, log_path))
 

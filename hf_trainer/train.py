@@ -2,8 +2,9 @@
 from callbacks import SimplifiedProgressCallback, EpochCheckpointCallback, MemoryCleanupCallback
 from trainer import VisionLanguageTrainer
 from metrics import compute_metrics_factory
-from hf_trainer.dataset import create_dataset
+from hf_trainer.datasets.dataset import create_dataset
 from models import create_model
+
 from utils import (
     get_args,
     get,
@@ -13,7 +14,8 @@ from utils import (
     setup_logger,
     calculate_warmup_params,
     get_world_size,
-    extract_epoch_from_config
+    extract_epoch_from_config,
+    get_accelerate_mixed_precision
 )
 from omegaconf.listconfig import ListConfig
 from omegaconf import OmegaConf
@@ -31,6 +33,10 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
+
+
 def main():
     # Parse config
     config, override = get_args()
@@ -39,11 +45,6 @@ def main():
     train_config = get(config, 'trainor')
     val_config = get(config, 'validator')
 
-    # Setup seed
-
-    # Create checkpoint dir
-    config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
-    os.makedirs(config.ckpt_dir, exist_ok=True)
 
     # Determine if this is evaluation mode
     is_eval_only = (train_config.get('only_eval', False) or
@@ -53,16 +54,20 @@ def main():
     is_main = int(getenv("RANK", "0")) == 0
 
     # Extract seed from checkpoint if resuming
-    if hasattr(config, 'ckpt') and config.get('ckpt') and not is_eval_only:
-        config.ckpt = os.path.join(config.ckpt_dir, config.ckpt) if not os.path.exists(
-            config.ckpt) else config.ckpt
+    if hasattr(config, 'ckpt') and config.get('ckpt'):
         assert os.path.exists(
             config.ckpt), f"Path '{config.ckpt}' does not exist"
-        seed = extract_seed_from_ckpt(config.ckpt)
         resume_epoch = extract_epoch_from_config(config)
+        seed = extract_seed_from_ckpt(config.ckpt)
+        # infer ckpt dir and name from checkpoint path
+        parts = config.ckpt.split(os.sep)
+        config.name = parts[-2]
+        config.ckpt_dir = os.path.join( parts[-3], config.name)
     else:
         seed = get_seed()
         resume_epoch = 1
+        config.ckpt_dir = os.path.join(config.ckpt_dir, config.name)
+        os.makedirs(config.ckpt_dir, exist_ok=True)
 
     set_seed(seed)
     logger = setup_logger(config.ckpt_dir, seed, is_main)
@@ -98,15 +103,20 @@ def main():
 
     if is_eval_only:
         # Get evaluation splits from validator config
-        eval_splits = val_config.get('splits', ['val'])
+        eval_splits = val_config.get('splits', [])
+        splits_tag = val_config.get('splits_tag', [])
         assert isinstance(
-            eval_splits, ListConfig), "splits must be a ListConfig"
+            eval_splits, ListConfig), "splits must be a list"
+        assert len(eval_splits) > 0, "splits must be a non-empty list"
+        if splits_tag:
+            assert len(splits_tag) == len(eval_splits), "splits_tag must be the same length as splits"
         assert "train" not in eval_splits, "train split is not allowed in evaluation-only mode"
         assert hasattr(
             config, 'ckpt') and config.ckpt and config.ckpt is not None, "ckpt must be provided in evaluation-only mode"
         # TODO: right now, dataset crucial parameters doesnt rely on the content of the train split
         # TODO: max_len is an hyper parameters, vocab.tgt is saved during training
         # TODO: visual transform are set accordingly if split != "train"
+        # if this changes, we need to change the dataset creation by passing "train" as split and take into account downstream implication
 
         first_split = eval_splits[0]
         logger.info(
@@ -165,6 +175,7 @@ def main():
         warmup_steps = 0
         warmup_ratio_pct = 0
 
+    mixed_precision = get_accelerate_mixed_precision()
     # Log configuration
     logger.info("=" * 70)
     if is_eval_only:
@@ -195,7 +206,7 @@ def main():
             f"  Weight decay: {train_config.optim_params.get('weight_decay', 0.0)}")
         logger.info(f"  Scheduler: Linear warmup + Cosine decay")
         logger.info(
-            f"  Mixed precision (AMP): {train_config.get('use_amp', False)}")
+            f"  Mixed precision: {mixed_precision}")
     logger.info("=" * 70)
 
     # Configure training arguments with proper epoch-based checkpointing
@@ -227,8 +238,12 @@ def main():
         greater_is_better=True,
         load_best_model_at_end=True if not is_eval_only else False,
         save_safetensors=False,
-        fp16=train_config.get('use_amp', False),
-        dataloader_num_workers=4,
+        fp16=(mixed_precision == "fp16"),
+        bf16=(mixed_precision == "bf16"),
+        dataloader_num_workers=6,
+        dataloader_prefetch_factor=4,
+        dataloader_persistent_workers=True,
+        dataloader_pin_memory=True,
         remove_unused_columns=False,
         report_to="none",
         seed=seed,
@@ -304,7 +319,7 @@ def main():
             f"[Evaluation] Starting evaluation on splits: {eval_splits}")
         logger.info(f"[Evaluation] Using checkpoint: {config.ckpt}")
 
-        for split_name in eval_splits:
+        for i, split_name in enumerate(eval_splits):
             logger.info("-" * 70)
             logger.info(
                 f"[Evaluation] Split: '{split_name}' - creating dataset")
@@ -313,8 +328,13 @@ def main():
                 split=split_name,
                 logger=logger
             )
+            if splits_tag:
+                split_tag = splits_tag[i] 
+                logger.info(
+                f"[Evaluation] Using split tag: '{split_tag}'")
+            else:
+                split_tag = split_name
 
-            # Update compute_metrics with split context and (optionally) tokenizer
             trainer.compute_metrics = compute_metrics_factory(
                 val_config.get('metrics', ['radevalbertscore']),
                 eval_dataset.tokenizer if hasattr(
@@ -323,7 +343,7 @@ def main():
                 logger=logger,
                 seed=seed,
                 is_main_process=is_main,
-                split_tag=split_name,
+                split_tag="inference_" + split_tag,
                 start_epoch=resume_epoch
             )
 
@@ -382,3 +402,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

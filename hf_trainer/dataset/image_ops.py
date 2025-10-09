@@ -43,18 +43,20 @@ def _dcm_to_pil_rgb(path: str) -> Image.Image:
 
     return Image.fromarray(img).convert("RGB")
 
-def _local_read_jp2_file(file_path):
-    with open(file_path, 'rb') as f:
-        return Image.open(BytesIO(f.read()))
-
-def normalize_to_uint8(arr16: np.ndarray) -> np.ndarray:
-    arr16 = arr16.astype(np.float32)
-    vmin, vmax = float(arr16.min()), float(arr16.max())
+def load_jp2_and_to_rgb_u8(path: str):
+    # 1) Avoid extra copy
+    jp2 = Image.open(path)
+    # 2) Get a 16-bit array once
+    arr16 = np.asarray(jp2, dtype=np.uint16)
+    # 3) Normalize to uint8 (vectorized)
+    vmin = arr16.min()
+    vmax = arr16.max()
     if vmax <= vmin:
-        return np.zeros_like(arr16, dtype=np.uint8)
-    arr8 = (arr16 - vmin) / (vmax - vmin) * 255.0
-    return arr8.astype(np.uint8)
-
+        arr8 = np.zeros_like(arr16, dtype=np.uint8)
+    else:
+        arr8 = ((arr16 - vmin) * (255.0 / (vmax - vmin))).astype(np.uint8)
+    # 4) Make PIL image without round-tripping formats multiple times
+    return Image.fromarray(arr8, mode="L").convert("RGB")
 
 def get_transforms(split, resize, crop, custom_transform_train, custom_transform_validate, hf_processor):
     if hf_processor is not None:
@@ -91,11 +93,7 @@ def open_image(image, skip_open_image):
             return Image.open(image).convert('RGB')
 
         if os.path.splitext(image)[1].lower() in BINARY_EXTS:
-            jp2 = _local_read_jp2_file(image)
-            arr16 = np.array(jp2, dtype=np.uint16)
-            arr8  = normalize_to_uint8(arr16)      
-            img_L   = Image.fromarray(arr8, mode="L")
-            return img_L.convert("RGB")
+            return load_jp2_and_to_rgb_u8(image)
 
         if os.path.splitext(image)[1].lower() == '.dcm':
             return _dcm_to_pil_rgb(image)

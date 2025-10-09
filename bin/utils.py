@@ -15,9 +15,12 @@ import yaml
 
 
 def extract_seed_from_ckpt(ckpt):
-    # 1.68_10_560435.pth to 560435
-    assert os.path.exists(ckpt), '{} does not exist'.format(ckpt)
-    return re.match(".*_(.*?).pth", ckpt).group(1)
+    # Example: "...checkpoint-epoch-9-seed-797456" -> "797456"
+    assert os.path.exists(ckpt), f"{ckpt} does not exist"
+    match = re.search(r"seed-(\d+)", ckpt)
+    if not match:
+        raise ValueError(f"Seed not found in checkpoint path: {ckpt}")
+    return int(match.group(1))
 
 
 def print_args(config, splits, seed, override):
@@ -101,6 +104,9 @@ def get_args():
 
     # Get configs
     config = OmegaConf.load(args.config)
+    if config is None:
+        config = OmegaConf.create()
+
     includes = config.get("includes", [])
 
     if not isinstance(includes, collections.abc.Sequence):

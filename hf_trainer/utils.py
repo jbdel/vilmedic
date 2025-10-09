@@ -24,6 +24,10 @@ from bin.utils import (
 )
 from bin.logger import set_logger
 
+def get_accelerate_mixed_precision(default="no"):
+    mp = os.environ.get("ACCELERATE_MIXED_PRECISION", "").lower()
+    return mp if mp in {"no", "fp16", "bf16"} else default
+
 
 def setup_logger(ckpt_dir: str, seed: int, is_main_process: bool) -> logging.Logger:
     """Setup logger for training, handling both main and worker processes.

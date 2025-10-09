@@ -18,16 +18,23 @@ class VisionLanguageConfig(PretrainedConfig):
         pad_token_id: Optional[int] = None,
         bos_token_id: Optional[int] = None,
         eos_token_id: Optional[int] = None,
+        attn_implementation: Optional[str]="flash_attention_2",
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.vision_model_name = vision_model_name
         # Auto-populate ModernBert decoder config if not provided (align with maira2-defn.py)
         if text_model_config is None:
-            _ = AutoTokenizer.from_pretrained(tokenizer_name)
-            self.text_config = ModernBertDecoderConfig.from_pretrained("jhu-clsp/ettin-decoder-17m")
+            self.text_config = ModernBertDecoderConfig.from_pretrained(
+                "jhu-clsp/ettin-decoder-17m",
+                attn_implementation=attn_implementation
+            )
         else:
             self.text_config = text_model_config
+            if attn_implementation is not None:
+                self.text_config.attn_implementation = attn_implementation
+
+        
         self.tokenizer_name = tokenizer_name
         # Token ids are stored here for convenience by the wrapper
         self.pad_token_id = pad_token_id
